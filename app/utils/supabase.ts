@@ -2,120 +2,162 @@ import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types/supabase';
 
+
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// Configure Supabase client with proper options for web environment
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false, // Don't persist auth state
+    detectSessionInUrl: false, // Don't detect OAuth redirects
+    autoRefreshToken: false, // Don't auto refresh token
+    storage: {
+      // Implement in-memory storage for web
+      getItem: (key: string) => {
+        try {
+          const value = sessionStorage.getItem(key);
+          return value ? JSON.parse(value) : null;
+        } catch {
+          return null;
+        }
+      },
+      setItem: (key: string, value: any) => {
+        try {
+          sessionStorage.setItem(key, JSON.stringify(value));
+        } catch {}
+      },
+      removeItem: (key: string) => {
+        try {
+          sessionStorage.removeItem(key);
+        } catch {}
+      },
+    },
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'expo-web',
+    },
+  },
+});
 
-export type UserRole = 'super_admin' | 'trainer' | 'member';
+export async function login(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
+  });
+  localStorage.setItem('loginUser', JSON.stringify(data));
+  console.log('login: ', data);
+  return data;
+}
 
-export async function shareWorkoutStats(workoutId: string) {
+export function getLoggedInUser() {
+  return JSON.parse(localStorage.getItem('loginUser'));
+}
+
+export function logout() {
+  return localStorage.setItem('loginUser', null);
+}
+
+// Helper function to check onboarding status with error handling
+export async function checkOnboardingStatus() {
+  const loginUser = await getLoggedInUser();
+
   try {
-    // For demo/test workouts, return mock data
-    if (workoutId === 'exercise-workout-id' || !workoutId) {
-      return `
-🏋️‍♂️ Squad Fit Workout Stats
+    const { data, error } = await supabase
+      .from('users')
+      .select(
+        `
+        onboarding_status,
+        email,
+        display_name,
+        goals,
+        experience_level,
+        medical_conditions,
+        preferred_workout_times,
+        gender,
+        age,
+        dietary_restrictions,
+        available_equipment
+      `
+      )
+      .eq('id', loginUser.user.id)
+      .single();
 
-Morning HIIT @ FitSquad
-${new Date().toLocaleDateString()}
+    console.log('profile: ', data);
 
-Top Performers:
-1. Sarah Chen - 98%
-2. Alex Wong - 94%
-3. Mike Ross - 88%
-
-Join our squad! 💪
-`;
+    if (error) {
+      console.error('Supabase error:', error);
+      return {
+        isComplete: false,
+        userData: null,
+      };
     }
 
-    const { data: workout } = await supabase
-      .from('workouts')
-      .select(`
-        *,
-        squad:squads(name),
-        participants:workout_participants(
-          user:users(display_name),
-          performance_score,
-          mvp_votes,
-          slacker_votes
-        )
-      `)
-      .eq('id', workoutId)
-      .single();
-
-    if (!workout) throw new Error('Workout not found');
-
-    const shareText = `
-🏋️‍♂️ Squad Fit Workout Stats
-
-${workout.title} @ ${workout.squad.name}
-${new Date(workout.scheduled_time).toLocaleDateString()}
-
-Top Performers:
-${workout.participants
-  .sort((a, b) => (b.performance_score || 0) - (a.performance_score || 0))
-  .slice(0, 3)
-  .map((p, i) => `${i + 1}. ${p.user.display_name} - ${p.performance_score}%`)
-  .join('\n')}
-
-Join our squad! 💪
-`;
-
-    return shareText;
+    return {
+      isComplete: data?.onboarding_status === 'completed',
+      userData: data,
+    };
   } catch (error) {
-    console.error('Error generating share text:', error);
-    return `
-🏋️‍♂️ Squad Fit Workout Stats
-
-Join our amazing fitness community! 💪
-`;
+    console.error('Error checking onboarding status:', error);
+    return {
+      isComplete: false,
+      userData: null,
+    };
   }
 }
 
-export async function shareChallenge(challengeId: string) {
+// Helper function to update user profile with error handling
+export async function updateUserProfile(profileData: any) {
+  const loginUser = await getLoggedInUser();
+
   try {
-    const { data: challenge } = await supabase
-      .from('challenges')
-      .select(`
-        title,
-        description,
-        reward,
-        participants
-      `)
-      .eq('id', challengeId)
-      .single();
-
-    if (!challenge) throw new Error('Challenge not found');
-
-    const shareText = `
-🏋️‍♂️ Join me on FitSquad!
-
-${challenge.title}
-${challenge.description}
-
-💪 ${challenge.participants} squad members already joined
-⚡ ${challenge.reward} points reward
-
-Join our fitness journey! 🎯
-`;
-
-    return shareText;
-  } catch (error) {
-    console.error('Error generating share text:', error);
-    throw error;
-  }
-}
-export async function getUserRole(userId: string): Promise<UserRole> {
-  try {
-    const { data: user } = await supabase
+    const { error } = await supabase
       .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single();
+      .update(profileData)
+      .eq('id', loginUser.user.id);
 
-    return user?.role || 'member';
+    if (error) {
+      console.error('Supabase error:', error);
+      return false;
+    }
+    return true;
   } catch (error) {
-    console.error('Error getting user role:', error);
-    return 'member';
+    console.error('Error updating user profile:', error);
+    return false;
+  }
+}
+
+// Helper function to complete onboarding with error handling
+export async function completeOnboarding(profileData: any) {
+  const loginUser = await getLoggedInUser();
+
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({
+        display_name: profileData.name,
+        gender: profileData.gender,
+        age: parseInt(profileData.age),
+        goals: profileData.goals,
+        experience_level: profileData.activityLevel,
+        medical_conditions: profileData.medicalConditions
+          ? [profileData.medicalConditions]
+          : null,
+        dietary_restrictions: profileData.dietaryRestrictions,
+        preferred_workout_times: profileData.preferredWorkoutTimes,
+        available_equipment: profileData.availableEquipment,
+        onboarding_status: 'completed',
+      })
+      .eq('id', loginUser.user.id);
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error completing onboarding:', error);
+    return false;
   }
 }

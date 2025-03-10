@@ -1,365 +1,417 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useState, useCallback } from 'react';
-import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import Logo from '../components/Logo';
+import { colors, shadows, spacing, borderRadius, typography } from '../constants/theme';
+import HabitTracker from '../components/HabitTracker';
+import AccountabilityPartner from '../components/AccountabilityPartner';
+import { format, isSameDay, isAfter, isBefore, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 
-const VOTE_TYPES = {
-  MVP: 'mvp',
-  SLACKER: 'slacker'
-} as const;
-
-const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const CURRENT_DATE = new Date();
-const TRAINING_DAYS = ['Tue', 'Thu', 'Sat'];
-
-const SCHEDULE_DATA = [
-  {
+const WORKOUT_DATA = {
+  '2025-03-06': {
     id: '1',
-    time: '06:30 AM',
     title: 'Morning HIIT',
+    time: '06:30 AM',
     trainer: 'Sarah Chen',
-    participants: 8,
-    maxParticipants: 12,
-    intensity: 'High',
-    duration: '45 min',
     completed: true,
-    color: '#FFE1E1',
-    participants: [
-      {
-        id: '1',
-        name: 'Sarah Chen',
-        mvpVotes: 5,
-        slackerVotes: 0,
-        performance: 95
-      },
-      {
-        id: '2',
-        name: 'Mike Ross',
-        mvpVotes: 3,
-        slackerVotes: 2,
-        performance: 88
-      },
-      {
-        id: '3',
-        name: 'Alex Wong',
-        mvpVotes: 4,
-        slackerVotes: 1,
-        performance: 92
-      }
-    ],
-    participantCount: 8,
+    energyPoints: 450,
+    votingPending: true,
     exercises: [
-      { 
-        name: 'Burpees',
-        sets: 3,
-        reps: 15,
-        votes: 8,
-        difficulty: 9.2,
-      },
-      { 
-        name: 'Mountain Climbers',
-        sets: 3,
-        reps: 30,
-        votes: 3,
-        difficulty: 7.5,
-      },
-      { 
-        name: 'Jump Squats',
-        sets: 4,
-        reps: 20,
-        votes: 5,
-        difficulty: 8.3,
-      },
+      { name: 'Burpees', sets: 3, reps: 15, energyPoints: 150 },
+      { name: 'Mountain Climbers', sets: 3, reps: 30, energyPoints: 120 },
+      { name: 'Jump Squats', sets: 4, reps: 20, energyPoints: 180 },
+    ],
+    participants: [
+      { id: '1', name: 'Mike Ross', mvpVotes: 3, slackerVotes: 0, hasVoted: false },
+      { id: '2', name: 'Alex Wong', mvpVotes: 5, slackerVotes: 1, hasVoted: true },
+      { id: '3', name: 'Emma Chen', mvpVotes: 4, slackerVotes: 0, hasVoted: false },
+    ],
+    toughestExercises: [
+      { id: '1', name: 'Burpees', votes: 8, difficulty: 9.2, hasVoted: false },
+      { id: '2', name: 'Mountain Climbers', votes: 5, difficulty: 8.5, hasVoted: false },
+      { id: '3', name: 'Jump Squats', votes: 6, difficulty: 8.8, hasVoted: false },
     ],
   },
-];
+  '2025-03-07': {
+    id: '2',
+    title: 'Strength Training',
+    time: '07:00 AM',
+    trainer: 'Mike Ross',
+    completed: false,
+    energyPoints: 500,
+    exercises: [
+      { name: 'Deadlifts', sets: 4, reps: 10, energyPoints: 200 },
+      { name: 'Bench Press', sets: 4, reps: 12, energyPoints: 180 },
+      { name: 'Squats', sets: 4, reps: 15, energyPoints: 220 },
+    ],
+    participants: [],
+    toughestExercises: [],
+  },
+};
 
-function CalendarStrip({ onDateSelect }: { onDateSelect: (date: Date) => void }) {
-  const dates = [...Array(14)].map((_, index) => {
-    const date = new Date();
-    date.setDate(CURRENT_DATE.getDate() + index - 7);
-    return date;
+export default function Home() {
+  const CURRENT_DATE = new Date();
+  const [selectedDate, setSelectedDate] = useState(CURRENT_DATE);
+  const [userVotes, setUserVotes] = useState<{
+    mvp: string | null;
+    slacker: string | null;
+    toughest: string | null;
+  }>({
+    mvp: null,
+    slacker: null,
+    toughest: null,
   });
 
-  const [selectedDate, setSelectedDate] = useState(CURRENT_DATE);
-  const [workouts, setWorkouts] = useState(SCHEDULE_DATA);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const selectedWorkout = WORKOUT_DATA[format(selectedDate, 'yyyy-MM-dd')];
+  const isPastDate = isBefore(selectedDate, new Date(new Date().setHours(0, 0, 0, 0)));
+  const isFutureDate = isAfter(selectedDate, new Date(new Date().setHours(23, 59, 59, 999)));
 
-  const handleDateSelect = (date: Date) => {
-    setIsLoading(true);
-    setError(null);
+  const handleVote = (type: 'mvp' | 'slacker' | 'toughest', id: string) => {
+    setUserVotes(prev => {
+      const newVotes = { ...prev };
+      if (prev[type] === id) {
+        newVotes[type] = null;
+      } else {
+        newVotes[type] = id;
+      }
+      return newVotes;
+    });
+  };
+
+  const getCalendarDays = () => {
+    const start = startOfMonth(selectedDate);
+    const end = endOfMonth(selectedDate);
+    return eachDayOfInterval({ start, end });
+  };
+
+  const getWorkoutIndicator = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const workout = WORKOUT_DATA[dateStr];
     
-    setSelectedDate(date);
+    if (!workout) return null;
     
-    try {
-      // Simulate API call
-      setTimeout(() => {
-        if (TRAINING_DAYS.includes(WEEK_DAYS[date.getDay()])) {
-          setWorkouts(SCHEDULE_DATA);
-        } else {
-          setWorkouts([]);
-        }
-        setIsLoading(false);
-      }, 500);
-    } catch (err) {
-      setError('Failed to load workouts. Please try again.');
-      setIsLoading(false);
+    if (isBefore(date, new Date()) && workout.completed && workout.votingPending) {
+      return 'votingPending';
+    } else if (workout.completed) {
+      return 'completed';
+    } else {
+      return 'planned';
     }
-    
-    onDateSelect(date);
+  };
+
+  const getEnergyPoints = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return WORKOUT_DATA[dateStr]?.energyPoints || 0;
   };
 
   return (
-    <ScrollView
-      horizontal
-      initialScrollOffset={120}
-      decelerationRate="fast"
-      snapToInterval={56}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.calendarStrip}
-      contentOffset={{ x: 120, y: 0 }}
-    >
-      {dates.map((date, index) => {
-        const isToday = date.getDate() === CURRENT_DATE.getDate();
-        const isSelected = date.getDate() === selectedDate.getDate();
-        const dayName = WEEK_DAYS[date.getDay()];
-        const isTrainingDay = TRAINING_DAYS.includes(dayName);
+    <ScrollView style={styles.container}>
+      <LinearGradient
+        colors={[colors.accent.coral, colors.accent.mint]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Logo size="large" />
+          <Text style={styles.greeting}>Welcome back, Alex!</Text>
+          <Text style={styles.subtitle}>Let's crush today's goals! 💪</Text>
+        </View>
+      </LinearGradient>
 
-        return (
-          <Pressable
-            key={index}
-            style={[
-              styles.dateItem,
-              { opacity: isTrainingDay ? 1 : 0.5 },
-              isTrainingDay && styles.trainingDayItem,
-              isSelected && styles.selectedDateItem
-            ]}
-            disabled={!isTrainingDay}
-            onPress={() => handleDateSelect(date)}
+      <View style={styles.calendarContainer}>
+        <View style={styles.monthHeader}>
+          <Text style={styles.monthText}>
+            {format(selectedDate, 'MMMM yyyy')}
+          </Text>
+        </View>
+        
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.calendar}
+        >
+          {getCalendarDays().map((date) => {
+            const isToday = isSameDay(date, CURRENT_DATE);
+            const isSelected = isSameDay(date, selectedDate);
+            const workoutIndicator = getWorkoutIndicator(date);
+            const energyPoints = getEnergyPoints(date);
+            
+            return (
+              <Pressable
+                key={date.toISOString()}
+                style={[
+                  styles.calendarDay,
+                  isSelected && styles.selectedDay,
+                  isToday && styles.today,
+                ]}
+                onPress={() => setSelectedDate(date)}
+              >
+                <Text style={[
+                  styles.dayName,
+                  isSelected && styles.selectedDayText,
+                ]}>{format(date, 'EEE')}</Text>
+                <Text style={[
+                  styles.dayNumber,
+                  isSelected && styles.selectedDayText,
+                ]}>{format(date, 'd')}</Text>
+                
+                {workoutIndicator && (
+                  <View style={[
+                    styles.workoutIndicator,
+                    workoutIndicator === 'completed' && styles.completedWorkout,
+                    workoutIndicator === 'planned' && styles.plannedWorkout,
+                    workoutIndicator === 'votingPending' && styles.votingPendingWorkout,
+                  ]}>
+                    {energyPoints > 0 && (
+                      <Text style={styles.energyPoints}>
+                        {energyPoints}⚡
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <View style={styles.content}>
+        {/* Daily Habits & Accountability */}
+        <Animated.View entering={FadeInUp.delay(200)}>
+          <Pressable 
+            style={[styles.card, { backgroundColor: colors.transparent.coral }]}
+            onPress={() => router.push('/habits')}
           >
-            <Text style={[
-              styles.dayText,
-              isSelected && styles.selectedDayText
-            ]}>
-              {WEEK_DAYS[date.getDay()]}
-            </Text>
-            <Text style={[
-              styles.dateText,
-              isSelected && styles.selectedDateText
-            ]}>
-              {date.getDate()}
-            </Text>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardTitleContainer}>
+                <Ionicons name="list" size={24} color={colors.primary.dark} />
+                <Text style={styles.cardTitle}>Daily Check-in</Text>
+              </View>
+              <BlurView intensity={80} style={styles.cardBadge}>
+                <Text style={styles.cardBadgeText}>Important</Text>
+              </BlurView>
+            </View>
+            
+            <HabitTracker preview={true} />
+            <AccountabilityPartner preview={true} />
+
+            <View style={styles.cardFooter}>
+              <Text style={styles.cardFooterText}>View full details</Text>
+              <Ionicons name="arrow-forward" size={20} color={colors.primary.dark} />
+            </View>
           </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
-}
+        </Animated.View>
 
-function WorkoutCard({ workout, index }: { workout: typeof SCHEDULE_DATA[0]; index: number }) {
-  const [showVoting, setShowVoting] = useState(false);
-  const [selectedVoteType, setSelectedVoteType] = useState<typeof VOTE_TYPES[keyof typeof VOTE_TYPES] | null>(null);
-
-  const toughestExercise = workout.exercises.reduce((prev, current) => 
-    (current.votes > prev.votes) ? current : prev
-  );
-  const mvp = workout.participants.reduce((prev, current) => 
-    (current.mvpVotes > prev.mvpVotes) ? current : prev
-  );
-  const slacker = workout.participants.reduce((prev, current) => 
-    (current.slackerVotes > prev.slackerVotes) ? current : prev
-  );
-
-  const handleVote = (participantId: string) => {
-    // Here you would implement the actual voting logic
-    console.log(`Voted for ${participantId} as ${selectedVoteType}`);
-  };
-
-  return (
-    <Animated.View
-      entering={FadeInUp.delay(index * 200)}
-      style={[styles.workoutCard, { backgroundColor: workout.color }]}
-    >
-      <BlurView intensity={80} style={styles.workoutHeader}>
-        <View>
-          <Text style={styles.workoutTime}>{workout.time}</Text>
-          <Text style={styles.workoutTitle}>{workout.title}</Text>
-        </View>
-        <View style={[styles.intensityBadge, { backgroundColor: workout.intensity === 'High' ? '#FFE1E1' : '#E1F5FF' }]}>
-          <Ionicons 
-            name={workout.intensity === 'High' ? 'flame' : 'fitness'} 
-            size={14} 
-            color={workout.intensity === 'High' ? '#FF3B30' : '#32ADE6'} 
-          />
-          <Text style={[
-            styles.intensityText,
-            { color: workout.intensity === 'High' ? '#FF3B30' : '#32ADE6' }
-          ]}>
-            {workout.intensity}
-          </Text>
-        </View>
-      </BlurView>
-
-      <View style={styles.workoutInfo}>
-        <View style={styles.infoRow}>
-          <View style={styles.infoItem}>
-            <Ionicons name="time-outline" size={16} color="#000000" />
-            <Text style={styles.infoText}>{workout.duration}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Ionicons name="people-outline" size={16} color="#000000" />
-            <Text style={styles.infoText}>
-              {workout.participantCount}/{workout.maxParticipants}
-            </Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Ionicons name="person-outline" size={16} color="#000000" />
-            <Text style={styles.infoText}>{workout.trainer}</Text>
-          </View>
-        </View>
-      </View>
-      
-      <View style={styles.highlightsSection}>
-        <Pressable 
-          style={[styles.highlightCard, selectedVoteType === VOTE_TYPES.MVP && styles.selectedHighlight]}
-          onPress={() => setSelectedVoteType(VOTE_TYPES.MVP)}
-        >
-          <View style={styles.highlightHeader}>
-            <Ionicons name="trophy" size={20} color="#F59E0B" />
-            <Text style={styles.highlightTitle}>Squad MVP</Text>
-          </View>
-          <Text style={styles.highlightValue}>{mvp.name}</Text>
-          <Text style={styles.highlightSubtext}>
-            {mvp.mvpVotes} votes • Performance: {mvp.performance}%
-          </Text>
-        </Pressable>
-
-        <Pressable 
-          style={[styles.highlightCard, selectedVoteType === VOTE_TYPES.SLACKER && styles.selectedHighlight]}
-          onPress={() => setSelectedVoteType(VOTE_TYPES.SLACKER)}
-        >
-          <View style={styles.highlightHeader}>
-            <Ionicons name="cafe" size={20} color="#9333EA" />
-            <Text style={styles.highlightTitle}>Squad Slacker</Text>
-          </View>
-          <Text style={styles.highlightValue}>{slacker.name}</Text>
-          <Text style={styles.highlightSubtext}>
-            {slacker.slackerVotes} votes • "Taking it easy" 😴
-          </Text>
-        </Pressable>
-      </View>
-
-      {selectedVoteType && (
-        <View style={styles.votingPanel}>
-          <Text style={styles.votingTitle}>
-            Vote for {selectedVoteType === VOTE_TYPES.MVP ? 'MVP' : 'Slacker'}
-          </Text>
-          {workout.participants.map((participant) => (
-            <Pressable
-              key={participant.id}
-              style={styles.participantVoteButton}
-              onPress={() => handleVote(participant.id)}
-            >
-              <Text style={styles.participantName}>{participant.name}</Text>
-              <View style={styles.voteCount}>
-                <Text style={styles.voteCountText}>
-                  {selectedVoteType === VOTE_TYPES.MVP 
-                    ? `${participant.mvpVotes} votes`
-                    : `${participant.slackerVotes} votes`
-                  }
+        {/* Workout Review */}
+        <Animated.View entering={FadeInUp.delay(300)}>
+          <View style={[styles.card, { backgroundColor: colors.transparent.mint }]}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardTitleContainer}>
+                <Ionicons name="fitness" size={24} color={colors.primary.dark} />
+                <Text style={styles.cardTitle}>
+                  {isFutureDate ? 'Upcoming Workout' : 'Workout Review'}
                 </Text>
               </View>
-            </Pressable>
-          ))}
-        </View>
-      )}
-
-      <View style={styles.exerciseList}>
-        <View style={styles.exerciseHeader}>
-          <Text style={styles.exerciseTitle}>Exercise Breakdown</Text>
-          {workout.completed && (
-            <Pressable 
-              style={styles.voteButton}
-              onPress={() => setShowVoting(!showVoting)}
-            >
-              <Text style={styles.voteButtonText}>
-                {showVoting ? 'Hide Voting' : 'Vote Now'}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-
-        {workout.exercises.map((exercise, index) => (
-          <View key={index} style={styles.exerciseItem}>
-            <View style={styles.exerciseInfo}>
-              <Text style={styles.exerciseName}>{exercise.name}</Text>
-              <Text style={styles.exerciseDetails}>
-                {exercise.sets} × {exercise.reps}
-              </Text>
-            </View>
-            {showVoting && (
-              <View style={styles.votingSection}>
-                <Pressable style={styles.voteTag}>
-                  <Ionicons name="flame" size={14} color="#FF3B30" />
-                  <Text style={styles.voteCount}>{exercise.votes}</Text>
-                </Pressable>
-                <BlurView intensity={80} style={styles.difficultyTag}>
-                  <Text style={styles.difficultyValue}>
-                    {exercise.difficulty.toFixed(1)}
-                  </Text>
+              {selectedWorkout?.completed && (
+                <BlurView intensity={80} style={[styles.cardBadge, { backgroundColor: `${colors.semantic.success}20` }]}>
+                  <Text style={[styles.cardBadgeText, { color: colors.semantic.success }]}>Completed</Text>
                 </BlurView>
+              )}
+            </View>
+
+            {selectedWorkout ? (
+              <>
+                <View style={styles.workoutSummary}>
+                  <Text style={styles.workoutTitle}>{selectedWorkout.title}</Text>
+                  <Text style={styles.workoutTime}>
+                    {selectedWorkout.time} with {selectedWorkout.trainer}
+                  </Text>
+                  {selectedWorkout.completed && (
+                    <View style={styles.energyPoints}>
+                      <Ionicons name="flash" size={20} color={colors.semantic.warning} />
+                      <Text style={styles.energyPointsText}>
+                        {selectedWorkout.energyPoints} Energy Points Earned
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {selectedWorkout.completed && (
+                  <>
+                    <View style={styles.exercisesList}>
+                      <Text style={styles.exercisesTitle}>Workout Summary</Text>
+                      {selectedWorkout.exercises.map((exercise, index) => (
+                        <View key={index} style={styles.exerciseItem}>
+                          <View style={styles.exerciseInfo}>
+                            <Text style={styles.exerciseName}>{exercise.name}</Text>
+                            <Text style={styles.exerciseDetails}>
+                              {exercise.sets} × {exercise.reps}
+                            </Text>
+                          </View>
+                          <View style={styles.exercisePoints}>
+                            <Ionicons name="flash" size={16} color={colors.semantic.warning} />
+                            <Text style={styles.pointsText}>{exercise.energyPoints}</Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+
+                    <View style={styles.votingSection}>
+                      <Text style={styles.votingTitle}>Cast Your Votes</Text>
+                      
+                      {/* MVP Voting */}
+                      <View style={styles.votingCategory}>
+                        <Text style={styles.votingCategoryTitle}>MVP of the Session</Text>
+                        <ScrollView 
+                          horizontal 
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.votingOptions}
+                        >
+                          {selectedWorkout.participants.map((participant) => (
+                            <Pressable 
+                              key={participant.id} 
+                              style={[
+                                styles.participantCard,
+                                userVotes.mvp === participant.id && styles.selectedVoteCard,
+                                participant.hasVoted && styles.votedCard
+                              ]}
+                              onPress={() => !participant.hasVoted && handleVote('mvp', participant.id)}
+                              disabled={participant.hasVoted}
+                            >
+                              <View style={styles.participantAvatar}>
+                                <Text style={styles.participantInitials}>
+                                  {participant.name.split(' ').map(n => n[0]).join('')}
+                                </Text>
+                              </View>
+                              <Text style={styles.participantName}>{participant.name}</Text>
+                              <View style={styles.voteCount}>
+                                <Ionicons name="trophy" size={16} color={colors.accent.coral} />
+                                <Text style={styles.voteCountText}>{participant.mvpVotes}</Text>
+                              </View>
+                              {participant.hasVoted && (
+                                <BlurView intensity={80} style={styles.votedBadge}>
+                                  <Ionicons name="checkmark" size={16} color={colors.semantic.success} />
+                                  <Text style={styles.votedText}>Voted</Text>
+                                </BlurView>
+                              )}
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      </View>
+
+                      {/* Toughest Exercise Voting */}
+                      <View style={styles.votingCategory}>
+                        <Text style={styles.votingCategoryTitle}>Toughest Exercise</Text>
+                        <ScrollView 
+                          horizontal 
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.votingOptions}
+                        >
+                          {selectedWorkout.toughestExercises.map((exercise) => (
+                            <Pressable 
+                              key={exercise.id} 
+                              style={[
+                                styles.exerciseCard,
+                                userVotes.toughest === exercise.id && styles.selectedVoteCard,
+                                exercise.hasVoted && styles.votedCard
+                              ]}
+                              onPress={() => !exercise.hasVoted && handleVote('toughest', exercise.id)}
+                              disabled={exercise.hasVoted}
+                            >
+                              <Text style={styles.exerciseName}>{exercise.name}</Text>
+                              <View style={styles.exerciseStats}>
+                                <View style={styles.statItem}>
+                                  <Ionicons name="flame" size={16} color={colors.semantic.error} />
+                                  <Text style={styles.statText}>{exercise.votes}</Text>
+                                </View>
+                                <View style={styles.statItem}>
+                                  <Text style={styles.difficultyText}>{exercise.difficulty}</Text>
+                                </View>
+                              </View>
+                              {exercise.hasVoted && (
+                                <BlurView intensity={80} style={styles.votedBadge}>
+                                  <Ionicons name="checkmark" size={16} color={colors.semantic.success} />
+                                  <Text style={styles.votedText}>Voted</Text>
+                                </BlurView>
+                              )}
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      </View>
+
+                      {/* Needs Improvement Voting */}
+                      <View style={styles.votingCategory}>
+                        <Text style={styles.votingCategoryTitle}>Needs More Effort</Text>
+                        <ScrollView 
+                          horizontal 
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.votingOptions}
+                        >
+                          {selectedWorkout.participants.map((participant) => (
+                            <Pressable 
+                              key={participant.id} 
+                              style={[
+                                styles.participantCard,
+                                userVotes.slacker === participant.id && styles.selectedVoteCard,
+                                participant.hasVoted && styles.votedCard
+                              ]}
+                              onPress={() => !participant.hasVoted && handleVote('slacker', participant.id)}
+                              disabled={participant.hasVoted}
+                            >
+                              <View style={styles.participantAvatar}>
+                                <Text style={styles.participantInitials}>
+                                  {participant.name.split(' ').map(n => n[0]).join('')}
+                                </Text>
+                              </View>
+                              <Text style={styles.participantName}>{participant.name}</Text>
+                              <View style={styles.voteCount}>
+                                <Ionicons name="warning" size={16} color={colors.semantic.warning} />
+                                <Text style={styles.voteCountText}>{participant.slackerVotes}</Text>
+                              </View>
+                              {participant.hasVoted && (
+                                <BlurView intensity={80} style={styles.votedBadge}>
+                                  <Ionicons name="checkmark" size={16} color={colors.semantic.success} />
+                                  <Text style={styles.votedText}>Voted</Text>
+                                </BlurView>
+                              )}
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    </View>
+                  </>
+                )}
+
+                {isFutureDate && (
+                  <View style={styles.upcomingWorkout}>
+                    <Text style={styles.upcomingTitle}>Workout Plan</Text>
+                    {selectedWorkout.exercises.map((exercise, index) => (
+                      <View key={index} style={styles.upcomingExercise}>
+                        <Text style={styles.upcomingExerciseName}>{exercise.name}</Text>
+                        <Text style={styles.upcomingExerciseDetails}>
+                          {exercise.sets} × {exercise.reps}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.noWorkout}>
+                <Ionicons name="calendar" size={48} color={colors.gray[300]} />
+                <Text style={styles.noWorkoutText}>No workout scheduled</Text>
+                <Text style={styles.noWorkoutSubtext}>
+                  Take a rest day or join an available session
+                </Text>
               </View>
             )}
           </View>
-        ))}
-      </View>
-    </Animated.View>
-  );
-}
-
-export default function Schedule() {  
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <LinearGradient
-          colors={['#FFE1E1', '#FFE8D9']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.headerContent}
-        >
-          <Logo size="large" />
-          <Text style={styles.greeting}>Welcome back, Alex!</Text>
-          <Text style={styles.subtitle}>Let's crush today's workout! 💪</Text>
-        </LinearGradient>
-      </View>
-
-      <View style={[styles.calendar, { backgroundColor: '#E1F5FF' }]}>
-        <View style={styles.calendarHeader}>
-          <Text style={styles.calendarTitle}>Your Active Days</Text>
-          <Text style={styles.calendarMonth}>November</Text>
-        </View>
-        <CalendarStrip onDateSelect={(date) => console.log('Selected date:', date)} />
-      </View>
-
-      <View style={styles.activities}>
-        <View style={styles.activitiesHeader}>
-          <Text style={styles.sectionTitle}>My Activities</Text>
-          <Text style={styles.activitiesCount}>You have 3 planned activities</Text>
-        </View>
-        
-        {SCHEDULE_DATA.map((workout, index) => (
-          <WorkoutCard key={workout.id} workout={workout} index={index} />
-        ))}
-        
-        <Pressable style={[styles.addActivityButton, { backgroundColor: '#FFE8D9' }]}>
-          <Ionicons name="add" size={24} color="#FF3B30" />
-          <Text style={[styles.addActivityText, { color: '#FF3B30' }]}>Add Activity</Text>
-        </Pressable>
+        </Animated.View>
       </View>
     </ScrollView>
   );
@@ -368,353 +420,371 @@ export default function Schedule() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.primary.light,
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   headerContent: {
-    margin: 20,
     padding: 20,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 2,
-    gap: 16,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: typography.size['2xl'],
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.dark,
+    marginTop: 20,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#000000',
-  },
-  calendar: {
-    padding: 20,
-    marginHorizontal: 20,
-    borderRadius: 20,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  calendarTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  calendarMonth: {
-    fontSize: 16,
-    color: '#000000',
-  },
-  activities: {
-    padding: 20,
-  },
-  activitiesHeader: {
-    marginBottom: 16,
-  },
-  activitiesCount: {
-    fontSize: 14,
-    color: '#8E8E93',
+    fontSize: typography.size.lg,
+    color: colors.primary.dark,
+    opacity: 0.8,
     marginTop: 4,
   },
-  addActivityButton: {
-    flexDirection: 'row',
+  calendarContainer: {
+    backgroundColor: colors.primary.light,
+    paddingVertical: spacing.md,
+    marginTop: -spacing.xl,
+    ...shadows.md,
+  },
+  monthHeader: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  monthText: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+  },
+  calendar: {
+    paddingHorizontal: spacing.md,
+  },
+  calendarDay: {
+    width: 64,
+    height: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginTop: 20,
+    marginRight: spacing.sm,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.gray[100],
   },
-  addActivityText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
+  selectedDay: {
+    backgroundColor: colors.primary.dark,
   },
-  calendarStrip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  dateItem: {
-    width: 48,
-    height: 65,
-    marginHorizontal: 6,
-    borderRadius: 16,
-    backgroundColor: 'white',
+  today: {
     borderWidth: 2,
-    borderColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: colors.primary.dark,
   },
-  selectedDateItem: {
-    backgroundColor: '#000000',
-    transform: [{ scale: 1.1 }],
+  dayName: {
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
+    marginBottom: spacing.xs,
   },
-  trainingDayItem: {
-    borderColor: '#000000',
-  },
-  dayText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#8E8E93',
-    marginBottom: 6,
-    textAlign: 'center',
+  dayNumber: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
   },
   selectedDayText: {
-    color: '#FFFFFF',
+    color: colors.primary.light,
   },
-  dateText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
+  workoutIndicator: {
+    width: '80%',
+    height: 4,
+    borderRadius: 2,
+    marginTop: spacing.xs,
   },
-  selectedDateText: {
-    color: '#FFFFFF',
+  completedWorkout: {
+    backgroundColor: colors.semantic.success,
+  },
+  plannedWorkout: {
+    backgroundColor: colors.primary.dark,
+  },
+  votingPendingWorkout: {
+    backgroundColor: colors.semantic.warning,
+  },
+  energyPoints: {
+    fontSize: typography.size.xs,
+    color: colors.semantic.warning,
+    marginTop: 2,
   },
   content: {
-    flex: 1,
-    paddingHorizontal: 20,
+    padding: spacing.md,
   },
-  upcomingHeader: {
+  card: {
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    ...shadows.md,
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 20,
+    marginBottom: spacing.md,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  filterButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'white',
-  },
-  workoutCard: {
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 3,
-  },
-  workoutHeader: {
+  cardTitleContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 16,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  workoutTime: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#8E8E93',
-    marginBottom: 4,
+  cardTitle: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+  },
+  cardBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary.dark + '20',
+  },
+  cardBadgeText: {
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium as any,
+    color: colors.primary.dark,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.primary.dark + '20',
+  },
+  cardFooterText: {
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
+  },
+  workoutSummary: {
+    marginBottom: spacing.md,
   },
   workoutTitle: {
-    fontSize: 18,
-    color: '#000000',
-    fontWeight: '600',
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.xs,
   },
-  intensityBadge: {
+  workoutTime: {
+    fontSize: typography.size.md,
+    color: colors.gray[500],
+    marginBottom: spacing.sm,
+  },
+  energyPoints: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
+    gap: spacing.xs,
+    backgroundColor: colors.semantic.warning + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
   },
-  intensityText: {
-    fontSize: 12,
-    fontWeight: '600',
+  energyPointsText: {
+    fontSize: typography.size.sm,
+    color: colors.semantic.warning,
+    fontWeight: typography.weight.medium as any,
   },
-  workoutInfo: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    margin: 16,
-    padding: 16,
+  exercisesList: {
+    marginBottom: spacing.md,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  highlightsSection: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  highlightCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    borderRadius: 12,
-    padding: 12,
-  },
-  selectedHighlight: {
-    borderColor: '#000000',
-  },
-  highlightHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  highlightTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
-    marginLeft: 6,
-  },
-  highlightValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  highlightSubtext: {
-    fontSize: 12,
-    color: '#8E8E93',
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoText: {
-    marginLeft: 6,
-    fontSize: 14,
-    color: '#000000',
-  },
-  exerciseList: {
-    borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
-    margin: 16,
-    marginTop: 0,
-  },
-  exerciseHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  exerciseTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  voteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000000',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  voteButtonText: {
-    marginLeft: 4,
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
+  exercisesTitle: {
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.sm,
   },
   exerciseItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    backgroundColor: colors.primary.light,
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
   },
   exerciseInfo: {
     flex: 1,
   },
   exerciseName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000000',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.xs,
   },
   exerciseDetails: {
-    fontSize: 14,
-    color: '#8E8E93',
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
+  },
+  exercisePoints: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  pointsText: {
+    fontSize: typography.size.sm,
+    color: colors.semantic.warning,
+    fontWeight: typography.weight.medium as any,
   },
   votingSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  voteTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFE1E1',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  voteCount: {
-    color: '#000000',
-    fontSize: 14,
-  },
-  difficultyTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-  },
-  difficultyValue: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#8E8E93',
-  },
-  votingPanel: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    margin: 16,
-    padding: 16,
+    gap: spacing.md,
   },
   votingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 12,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.sm,
   },
-  participantVoteButton: {
+  votingCategory: {
+    marginBottom: spacing.md,
+  },
+  votingCategoryTitle: {
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.medium as any,
+    color: colors.gray[500],
+    marginBottom: spacing.sm,
+  },
+  votingOptions: {
+    marginHorizontal: -spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  participantCard: {
+    backgroundColor: colors.primary.light,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    alignItems: 'center',
+    marginRight: spacing.sm,
+    width: 100,
+    position: 'relative',
+  },
+  selectedVoteCard: {
+    borderWidth: 2,
+    borderColor: colors.primary.dark,
+  },
+  votedCard: {
+    opacity: 0.7,
+  },
+  participantAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary.dark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  participantInitials: {
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.light,
+  },
+  participantName: {
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium as any,
+    color: colors.primary.dark,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  voteCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  voteCountText: {
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium as any,
+    color: colors.primary.dark,
+  },
+  exerciseCard: {
+    backgroundColor: colors.primary.light,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginRight: spacing.sm,
+    width: 150,
+    position: 'relative',
+  },
+  exerciseStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
   },
-  participantName: {
-    fontSize: 14,
-    color: '#000000',
-    fontWeight: '500',
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  voteCountText: {
-    fontSize: 12,
-    color: '#8E8E93',
+  statText: {
+    fontSize: typography.size.sm,
+    color: colors.semantic.error,
+    fontWeight: typography.weight.medium as any,
+  },
+  difficultyText: {
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
+    fontWeight: typography.weight.semibold as any,
+  },
+  votedBadge: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.semantic.success + '20',
+  },
+  votedText: {
+    fontSize: typography.size.xs,
+    color: colors.semantic.success,
+    fontWeight: typography.weight.medium as any,
+  },
+  upcomingWorkout: {
+    backgroundColor: colors.primary.light,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+  },
+  upcomingTitle: {
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.sm,
+  },
+  upcomingExercise: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  upcomingExerciseName: {
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
+  },
+  upcomingExerciseDetails: {
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
+  },
+  noWorkout: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  noWorkoutText: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginTop: spacing.sm,
+  },
+  noWorkoutSubtext: {
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
 });

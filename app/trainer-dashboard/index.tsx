@@ -1,26 +1,27 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import Logo from '../components/Logo';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../utils/supabase';
 
 const QUICK_ACTIONS = [
   {
-    id: 'create-squad',
-    title: 'Create Squad',
+    id: 'manage-squads',
+    title: 'Manage Squads',
     icon: 'people',
     color: '#FF3B30',
-    route: '/trainer-dashboard/create-squad',
+    route: '/trainer-dashboard/manage-squads',
   },
   {
     id: 'manage-members',
     title: 'Manage Members',
     icon: 'person-add',
     color: '#32ADE6',
-    route: '/trainer-dashboard/manage-members',
+    route: '/trainer-dashboard/members',
   },
   {
     id: 'workout-plans',
@@ -296,20 +297,13 @@ export default function TrainerDashboard() {
                     </BlurView>
                   </View>
                 </View>
-                <View style={styles.sessionActions}>
-                  <Pressable 
-                    style={[styles.actionButton, styles.primaryButton]}
-                    onPress={() => router.push(`/trainer-dashboard/session/${session.id}/start`)}
-                  >
-                    <Text style={styles.actionButtonText}>Start Session</Text>
-                  </Pressable>
-                  <Pressable 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/session/${session.id}`)}
-                  >
-                    <Text style={styles.secondaryButtonText}>View Details</Text>
-                  </Pressable>
-                </View>
+                <Pressable 
+                  style={styles.startSessionButton}
+                  onPress={() => router.push(`/trainer-dashboard/session/${session.id}`)}
+                >
+                  <Ionicons name="play-circle" size={20} color="#FFFFFF" />
+                  <Text style={styles.startSessionText}>Start Session</Text>
+                </Pressable>
               </Pressable>
             </Animated.View>
           ))}
@@ -583,27 +577,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000000',
   },
-  sessionActions: {
+  startSessionButton: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
     paddingVertical: 12,
     borderRadius: 12,
-    alignItems: 'center',
+    gap: 8,
   },
-  primaryButton: {
-    backgroundColor: '#4F46E5',
-  },
-  actionButtonText: {
+  startSessionText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  secondaryButtonText: {
-    color: '#4F46E5',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   createSessionButton: {

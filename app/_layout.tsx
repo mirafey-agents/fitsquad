@@ -1,7 +1,11 @@
 import { useEffect } from 'react';
+import { Stack, router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+
 import { Drawer } from 'expo-router/drawer';
 import Logo from './components/Logo';
-import { StatusBar } from 'expo-status-bar';
+import { getLoggedInUser } from './utils/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +25,11 @@ declare global {
 }
 
 export default function RootLayout() {
+  useFrameworkReady();
+  useEffect(() => {
+    window.frameworkReady?.();
+  }, []);
+
   const drawerProgress = useSharedValue(0);
 
   const drawerAnimatedStyle = useAnimatedStyle(() => {
@@ -32,6 +41,20 @@ export default function RootLayout() {
       borderRadius,
     };
   });
+
+  console.log('loggedInUser: ', getLoggedInUser());
+
+  if (getLoggedInUser() == null) {
+    // return (
+    //   <>
+    //     <StatusBar style="dark" />
+    //     <Stack screenOptions={{ headerShown: false }}>
+    //       <Stack.Screen name="login" options={{ headerShown: false }} />
+    //     </Stack>
+    //   </>
+    // );
+    // router.replace('/login');
+  }
 
   const onDrawerStateChange = (isOpen: boolean) => {
     drawerProgress.value = withSpring(isOpen ? 1 : 0);
@@ -47,7 +70,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
-      <Drawer 
+      <Drawer
         screenOptions={{
           headerShown: true,
           headerTransparent: true,
@@ -77,7 +100,8 @@ export default function RootLayout() {
         screenListeners={{
           drawerOpen: () => onDrawerStateChange(true),
           drawerClose: () => onDrawerStateChange(false),
-        }}>
+        }}
+      >
         <Drawer.Screen
           name="(tabs)"
           options={{
@@ -97,9 +121,9 @@ export default function RootLayout() {
           }}
         />
         <Drawer.Screen
-          name="onboarding"
+          name="login"
           options={{
-            drawerLabel: 'Switch Profile',
+            drawerLabel: 'Logout',
             drawerIcon: ({ color }) => (
               <Ionicons name="swap-horizontal" size={22} color={color} />
             ),

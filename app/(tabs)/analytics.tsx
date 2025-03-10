@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { colors, shadows, typography, spacing, borderRadius } from '../constants/theme';
 
 const SQUAD_MEMBERS = [
   {
@@ -118,7 +119,7 @@ export default function Analytics() {
                   <Text style={styles.memberName}>{member.name}</Text>
                   <View style={styles.memberStats}>
                     <View style={styles.statBadge}>
-                      <Ionicons name="calendar" size={14} color="#000000" />
+                      <Ionicons name="calendar" size={14} color={colors.primary.dark} />
                       <Text style={styles.statText}>{member.attendance}%</Text>
                     </View>
                     <View style={styles.statBadge}>
@@ -167,7 +168,7 @@ export default function Analytics() {
               </View>
               <View style={styles.exerciseStats}>
                 <View style={styles.votesContainer}>
-                  <Ionicons name="flame" size={16} color="#FF3B30" />
+                  <Ionicons name="flame" size={16} color={colors.semantic.error} />
                   <Text style={styles.votesText}>{exercise.votes} votes</Text>
                 </View>
                 <BlurView intensity={80} style={styles.rankBadge}>
@@ -195,7 +196,7 @@ export default function Analytics() {
                   onPress={() => setSelectedExercise(null)}
                   style={styles.closeButton}
                 >
-                  <Ionicons name="close" size={24} color="#000000" />
+                  <Ionicons name="close" size={24} color={colors.primary.dark} />
                 </Pressable>
               </View>
               
@@ -212,7 +213,7 @@ export default function Analytics() {
                   </View>
                   
                   <View style={styles.exerciseDetailVotes}>
-                    <Ionicons name="flame" size={20} color="#FF3B30" />
+                    <Ionicons name="flame" size={20} color={colors.semantic.error} />
                     <Text style={styles.exerciseDetailVotesText}>{exercise.votes} squad members found this challenging</Text>
                   </View>
                   
@@ -222,7 +223,7 @@ export default function Analytics() {
                     <Text style={styles.impactTitle}>Impact Areas</Text>
                     {exercise.impact.map((area, index) => (
                       <View key={index} style={styles.impactItem}>
-                        <Ionicons name="checkmark-circle" size={20} color="#000000" />
+                        <Ionicons name="checkmark-circle" size={20} color={colors.primary.dark} />
                         <Text style={styles.impactText}>{area}</Text>
                       </View>
                     ))}
@@ -250,7 +251,7 @@ export default function Analytics() {
                   onPress={() => setSelectedMember(null)}
                   style={styles.closeButton}
                 >
-                  <Ionicons name="close" size={24} color="#000000" />
+                  <Ionicons name="close" size={24} color={colors.primary.dark} />
                 </Pressable>
               </View>
               
@@ -298,146 +299,150 @@ export default function Analytics() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.primary.light,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
   },
   headerTitle: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: typography.size['3xl'],
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.dark,
   },
   section: {
-    padding: 20,
+    padding: spacing.md,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 4,
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.xs,
   },
   sectionSubtitle: {
-    fontSize: 15,
-    color: '#8E8E93',
-    marginBottom: 16,
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
+    marginBottom: spacing.md,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
   },
   statCard: {
     flex: 1,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
+    ...shadows.sm,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 4,
+    fontSize: typography.size['2xl'],
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.xs,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#8E8E93',
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
   },
   memberCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    ...shadows.sm,
   },
   memberHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: spacing.sm,
   },
   memberInfo: {
     flex: 1,
   },
   memberName: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.sm,
   },
   memberStats: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   statBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    gap: spacing.xs,
+    backgroundColor: colors.primary.light,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
   },
   statText: {
-    fontSize: 14,
-    color: '#000000',
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
   },
   scoreContainer: {
     alignItems: 'flex-end',
   },
   totalScore: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: typography.size['2xl'],
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.dark,
   },
   rankText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
   },
   achievementsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   achievement: {
-    fontSize: 14,
-    color: '#000000',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
+    backgroundColor: colors.primary.light,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
   },
   exerciseCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    ...shadows.sm,
   },
   exerciseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   exerciseName: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 4,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.xs,
   },
   exerciseType: {
-    fontSize: 14,
-    color: '#8E8E93',
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
   },
   difficultyBadge: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: colors.primary.light,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
   },
   difficultyText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
   },
   exerciseStats: {
     flexDirection: 'row',
@@ -447,11 +452,17 @@ const styles = StyleSheet.create({
   votesContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   votesText: {
-    fontSize: 14,
-    color: '#000000',
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
+  },
+  rankBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   modalOverlay: {
     flex: 1,
@@ -459,174 +470,174 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 8,
+    backgroundColor: colors.primary.light,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    paddingTop: spacing.sm,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: colors.gray[200],
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
   },
   closeButton: {
-    padding: 8,
+    padding: spacing.sm,
   },
   modalBody: {
-    padding: 20,
+    padding: spacing.md,
   },
   exerciseDetailCard: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
   },
   exerciseDetailHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   exerciseDetailType: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: colors.primary.light,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
   },
   exerciseDetailTypeText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000000',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium as any,
+    color: colors.primary.dark,
   },
   exerciseDetailDifficulty: {
     alignItems: 'center',
   },
   exerciseDetailDifficultyLabel: {
-    fontSize: 13,
-    color: '#8E8E93',
-    marginBottom: 4,
+    fontSize: typography.size.xs,
+    color: colors.gray[500],
+    marginBottom: spacing.xs,
   },
   exerciseDetailDifficultyValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: typography.size['2xl'],
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.dark,
   },
   exerciseDetailVotes: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#FFFFFF',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
+    gap: spacing.sm,
+    backgroundColor: colors.primary.light,
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
   },
   exerciseDetailVotesText: {
-    fontSize: 14,
-    color: '#000000',
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
   },
   exerciseDetailDescription: {
-    fontSize: 15,
+    fontSize: typography.size.sm,
     lineHeight: 22,
-    color: '#000000',
-    marginBottom: 20,
+    color: colors.primary.dark,
+    marginBottom: spacing.md,
   },
   impactSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.primary.light,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
   },
   impactTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 12,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.sm,
   },
   impactItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   impactText: {
-    fontSize: 15,
-    color: '#000000',
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
   },
   memberDetailCard: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
   },
   scoreBreakdownTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 16,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.md,
   },
   scoreBreakdown: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+    backgroundColor: colors.primary.light,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
   scoreItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: colors.gray[200],
   },
   scoreLabel: {
-    fontSize: 15,
-    color: '#8E8E93',
+    fontSize: typography.size.sm,
+    color: colors.gray[500],
   },
   scoreValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
   },
   totalScoreItem: {
     borderBottomWidth: 0,
-    marginTop: 8,
-    paddingTop: 16,
+    marginTop: spacing.sm,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
+    borderTopColor: colors.gray[200],
   },
   totalScoreLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
   },
   totalScoreValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: typography.size['2xl'],
+    fontWeight: typography.weight.bold as any,
+    color: colors.primary.dark,
   },
   achievementsSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.primary.light,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
   },
   achievementsTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 12,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.primary.dark,
+    marginBottom: spacing.sm,
   },
   achievementItem: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.sm,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
   },
   achievementText: {
-    fontSize: 15,
-    color: '#000000',
+    fontSize: typography.size.sm,
+    color: colors.primary.dark,
   },
 });

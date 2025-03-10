@@ -1,13 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../../utils/supabase';
-
-// Demo user UUID - using a fixed UUID for demo purposes
-const DEMO_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 interface Exercise {
   id: number;
@@ -19,36 +16,26 @@ interface Exercise {
   reps: string;
   sets: number;
   energy_points: number;
-}
-
-interface SelectedExercise extends Exercise {
+  section?: 'warmup' | 'module' | 'challenge' | 'cooldown';
   customSets?: number;
   customReps?: string;
+  customMenWeight?: number;
+  customWomenWeight?: number;
   notes?: string;
 }
 
-const EXERCISE_CATEGORIES = [
-  'Kettlebell',
-  'Body Weight',
-  'Resistance Band',
-  'Dumbbell',
-  'Stretching',
-  'Mobility',
-  'Barbell',
-  'Isometric',
-  'Cardio',
-  'Warm-up',
-];
+const SECTIONS = ['warmup', 'module', 'challenge', 'cooldown'] as const;
 
 export default function CreateWorkoutPlan() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [selectedExercises, setSelectedExercises] = useState<SelectedExercise[]>([]);
   const [planName, setPlanName] = useState('');
   const [planDescription, setPlanDescription] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [currentSection, setCurrentSection] = useState<typeof SECTIONS[number]>('warmup');
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showDraft, setShowDraft] = useState(false);
 
   useEffect(() => {
     fetchExercises();
@@ -72,7 +59,7 @@ export default function CreateWorkoutPlan() {
       setExercises(data || []);
     } catch (error) {
       console.error('Error fetching exercises:', error);
-      setError('Failed to load exercises. Please try again.');
+      setError('Failed to load exercises');
     } finally {
       setLoading(false);
     }
@@ -86,26 +73,37 @@ export default function CreateWorkoutPlan() {
       } else {
         return [...prev, { 
           ...exercise,
+          section: currentSection,
           customSets: exercise.sets,
           customReps: exercise.reps,
+          customMenWeight: exercise.men_weight,
+          customWomenWeight: exercise.women_weight,
           notes: ''
         }];
       }
     });
   };
 
-  const updateExerciseDetails = (exerciseId: number, updates: Partial<SelectedExercise>) => {
+  const updateExerciseDetails = (exercise: Exercise) => {
     setSelectedExercises(prev => 
-      prev.map(exercise => 
-        exercise.id === exerciseId 
-          ? { ...exercise, ...updates }
-          : exercise
-      )
+      prev.map(e => e.id === exercise.id ? exercise : e)
     );
+    setEditingExercise(null);
   };
 
   const handleSave = async () => {
+    if (!planName.trim()) {
+      setError('Please enter a plan name');
+      return;
+    }
+
+    if (selectedExercises.length === 0) {
+      setError('Please select at least one exercise');
+      return;
+    }
+
     try {
+      setLoading(true);
       setError(null);
 
       const { data: plan, error: planError } = await supabase
@@ -113,7 +111,7 @@ export default function CreateWorkoutPlan() {
         .insert({
           name: planName,
           description: planDescription,
-          created_by: DEMO_USER_ID
+          created_by: '00000000-0000-0000-0000-000000000000'
         })
         .select()
         .single();
@@ -126,7 +124,10 @@ export default function CreateWorkoutPlan() {
         order: index + 1,
         sets: exercise.customSets,
         reps: exercise.customReps,
-        notes: exercise.notes
+        men_weight: exercise.customMenWeight,
+        women_weight: exercise.customWomenWeight,
+        notes: exercise.notes,
+        section: exercise.section
       }));
 
       const { error: exercisesError } = await supabase
@@ -135,11 +136,18 @@ export default function CreateWorkoutPlan() {
 
       if (exercisesError) throw exercisesError;
 
+      Alert.alert('Success', 'Workout plan created successfully');
       router.back();
     } catch (error: any) {
       console.error('Error saving workout plan:', error);
-      setError(error.message || 'Failed to save workout plan. Please try again.');
+      setError(error.message || 'Failed to save workout plan');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const getExercisesBySection = (section: typeof SECTIONS[number]) => {
+    return selectedExercises.filter(e => e.section === section);
   };
 
   return (
@@ -149,21 +157,15 @@ export default function CreateWorkoutPlan() {
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </Pressable>
         <Text style={styles.title}>Create Workout Plan</Text>
-        <View style={styles.headerActions}>
-          <Pressable 
-            style={styles.draftButton}
-            onPress={() => setShowDraft(!showDraft)}
-          >
-            <Ionicons name="list" size={20} color="#4F46E5" />
-          </Pressable>
-          <Pressable 
-            style={[styles.saveButton, (!planName || selectedExercises.length === 0) && styles.disabledButton]}
-            onPress={handleSave}
-            disabled={!planName || selectedExercises.length === 0}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </Pressable>
-        </View>
+        <Pressable 
+          style={[styles.saveButton, loading && styles.disabledButton]}
+          onPress={handleSave}
+          disabled={loading}
+        >
+          <Text style={styles.saveButtonText}>
+            {loading ? 'Saving...' : 'Save'}
+          </Text>
+        </Pressable>
       </View>
 
       {error && (
@@ -172,172 +174,254 @@ export default function CreateWorkoutPlan() {
         </View>
       )}
 
-      <View style={styles.content}>
-        <ScrollView style={styles.mainContent}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Plan Details</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Plan Name"
-              value={planName}
-              onChangeText={setPlanName}
-              placeholderTextColor="#64748B"
-            />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description"
-              value={planDescription}
-              onChangeText={setPlanDescription}
-              multiline
-              numberOfLines={4}
-              placeholderTextColor="#64748B"
-            />
-          </View>
+      <ScrollView style={styles.content}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Plan Details</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Plan Name"
+            value={planName}
+            onChangeText={setPlanName}
+            placeholderTextColor="#64748B"
+          />
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Description"
+            value={planDescription}
+            onChangeText={setPlanDescription}
+            multiline
+            numberOfLines={4}
+            placeholderTextColor="#64748B"
+          />
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Exercise Categories</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoriesContainer}
-            >
-              {EXERCISE_CATEGORIES.map((category) => (
-                <Pressable
-                  key={category}
-                  style={[
-                    styles.categoryChip,
-                    selectedCategory === category && styles.selectedCategory
-                  ]}
-                  onPress={() => setSelectedCategory(category)}
-                >
-                  <Text 
-                    style={[
-                      styles.categoryText,
-                      selectedCategory === category && styles.selectedCategoryText
-                    ]}
-                  >
-                    {category}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Exercises</Text>
-            {loading ? (
-              <Text style={styles.loadingText}>Loading exercises...</Text>
-            ) : exercises.length === 0 ? (
-              <Text style={styles.emptyText}>No exercises found</Text>
-            ) : (
-              exercises.map((exercise, index) => (
-                <Animated.View
-                  key={exercise.id}
-                  entering={FadeInUp.delay(index * 100)}
-                >
-                  <Pressable
-                    style={[
-                      styles.exerciseCard,
-                      selectedExercises.some(e => e.id === exercise.id) && styles.selectedExercise
-                    ]}
-                    onPress={() => toggleExercise(exercise)}
-                  >
-                    <View style={styles.exerciseHeader}>
-                      <View>
-                        <Text style={styles.exerciseName}>{exercise.name}</Text>
-                        <Text style={styles.exerciseType}>{exercise.module_type} • {exercise.level}</Text>
-                      </View>
-                      {selectedExercises.some(e => e.id === exercise.id) && (
-                        <BlurView intensity={80} style={styles.selectedBadge}>
-                          <Ionicons name="checkmark" size={20} color="#22C55E" />
-                        </BlurView>
-                      )}
-                    </View>
-
-                    <View style={styles.exerciseDetails}>
-                      <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Sets</Text>
-                        <Text style={styles.detailValue}>{exercise.sets}</Text>
-                      </View>
-                      <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Reps</Text>
-                        <Text style={styles.detailValue}>{exercise.reps}</Text>
-                      </View>
-                      <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Weight (M/W)</Text>
-                        <Text style={styles.detailValue}>
-                          {exercise.men_weight}/{exercise.women_weight}kg
-                        </Text>
-                      </View>
-                      <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Energy</Text>
-                        <Text style={styles.detailValue}>{exercise.energy_points} pts</Text>
-                      </View>
-                    </View>
-                  </Pressable>
-                </Animated.View>
-              ))
-            )}
-          </View>
-        </ScrollView>
-
-        {showDraft && (
-          <Animated.View 
-            entering={FadeInUp}
-            style={styles.draftPanel}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Sections</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.sectionsContainer}
           >
-            <View style={styles.draftHeader}>
-              <Text style={styles.draftTitle}>Draft Plan</Text>
-              <Pressable onPress={() => setShowDraft(false)}>
-                <Ionicons name="close" size={24} color="#1E293B" />
+            {SECTIONS.map((section) => (
+              <Pressable
+                key={section}
+                style={[
+                  styles.sectionButton,
+                  currentSection === section && styles.selectedSection
+                ]}
+                onPress={() => setCurrentSection(section)}
+              >
+                <Text style={[
+                  styles.sectionButtonText,
+                  currentSection === section && styles.selectedSectionText
+                ]}>
+                  {section.charAt(0).toUpperCase() + section.slice(1)}
+                  {' '}
+                  ({getExercisesBySection(section).length})
+                </Text>
               </Pressable>
-            </View>
-            <ScrollView style={styles.draftContent}>
-              {selectedExercises.map((exercise, index) => (
-                <View key={exercise.id} style={styles.draftExercise}>
-                  <Text style={styles.draftExerciseName}>
-                    {index + 1}. {exercise.name}
-                  </Text>
-                  <View style={styles.draftExerciseInputs}>
-                    <View style={styles.draftInputGroup}>
-                      <Text style={styles.draftInputLabel}>Sets</Text>
-                      <TextInput
-                        style={styles.draftInput}
-                        value={String(exercise.customSets)}
-                        onChangeText={(text) => 
-                          updateExerciseDetails(exercise.id, { 
-                            customSets: parseInt(text) || exercise.sets 
-                          })
-                        }
-                        keyboardType="numeric"
-                      />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Available Exercises</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoriesContainer}
+          >
+            {['Kettlebell', 'Body Weight', 'Resistance Band', 'Dumbbell', 'Stretching', 'Mobility'].map((category) => (
+              <Pressable
+                key={category}
+                style={[
+                  styles.categoryButton,
+                  selectedCategory === category && styles.selectedCategory
+                ]}
+                onPress={() => setSelectedCategory(category)}
+              >
+                <Text style={[
+                  styles.categoryButtonText,
+                  selectedCategory === category && styles.selectedCategoryText
+                ]}>
+                  {category}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {loading ? (
+            <Text style={styles.loadingText}>Loading exercises...</Text>
+          ) : exercises.length === 0 ? (
+            <Text style={styles.emptyText}>No exercises found</Text>
+          ) : (
+            exercises.map((exercise, index) => (
+              <Animated.View
+                key={exercise.id}
+                entering={FadeInUp.delay(index * 100)}
+              >
+                <Pressable
+                  style={[
+                    styles.exerciseCard,
+                    selectedExercises.some(e => e.id === exercise.id) && styles.selectedExercise
+                  ]}
+                  onPress={() => toggleExercise(exercise)}
+                >
+                  <View style={styles.exerciseHeader}>
+                    <View>
+                      <Text style={styles.exerciseName}>{exercise.name}</Text>
+                      <Text style={styles.exerciseType}>
+                        {exercise.module_type} • {exercise.level}
+                      </Text>
                     </View>
-                    <View style={styles.draftInputGroup}>
-                      <Text style={styles.draftInputLabel}>Reps</Text>
-                      <TextInput
-                        style={styles.draftInput}
-                        value={exercise.customReps}
-                        onChangeText={(text) => 
-                          updateExerciseDetails(exercise.id, { customReps: text })
-                        }
-                      />
+                    {selectedExercises.some(e => e.id === exercise.id) && (
+                      <BlurView intensity={80} style={styles.selectedBadge}>
+                        <Ionicons name="checkmark" size={20} color="#22C55E" />
+                      </BlurView>
+                    )}
+                  </View>
+
+                  <View style={styles.exerciseDetails}>
+                    <View style={styles.detailItem}>
+                      <Text style={styles.detailLabel}>Sets</Text>
+                      <Text style={styles.detailValue}>{exercise.sets}</Text>
+                    </View>
+                    <View style={styles.detailItem}>
+                      <Text style={styles.detailLabel}>Reps</Text>
+                      <Text style={styles.detailValue}>{exercise.reps}</Text>
+                    </View>
+                    <View style={styles.detailItem}>
+                      <Text style={styles.detailLabel}>Energy</Text>
+                      <Text style={styles.detailValue}>{exercise.energy_points} pts</Text>
                     </View>
                   </View>
-                  <TextInput
-                    style={styles.draftNotes}
-                    placeholder="Add notes..."
-                    value={exercise.notes}
-                    onChangeText={(text) => 
-                      updateExerciseDetails(exercise.id, { notes: text })
-                    }
-                    multiline
-                  />
-                </View>
-              ))}
-            </ScrollView>
-          </Animated.View>
+                </Pressable>
+              </Animated.View>
+            ))
+          )}
+        </View>
+
+        {selectedExercises.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Selected Exercises</Text>
+            {SECTIONS.map(section => (
+              <View key={section}>
+                <Text style={styles.subsectionTitle}>
+                  {section.charAt(0).toUpperCase() + section.slice(1)}
+                </Text>
+                {getExercisesBySection(section).map((exercise, index) => (
+                  <Animated.View
+                    key={exercise.id}
+                    entering={FadeInUp.delay(index * 100)}
+                  >
+                    <Pressable 
+                      style={styles.selectedExerciseCard}
+                      onPress={() => setEditingExercise(exercise)}
+                    >
+                      <View style={styles.selectedExerciseHeader}>
+                        <Text style={styles.selectedExerciseName}>{exercise.name}</Text>
+                        <Pressable
+                          style={styles.removeButton}
+                          onPress={() => toggleExercise(exercise)}
+                        >
+                          <Ionicons name="close" size={20} color="#EF4444" />
+                        </Pressable>
+                      </View>
+
+                      <View style={styles.customizationSection}>
+                        <View style={styles.customizationRow}>
+                          <View style={styles.customizationField}>
+                            <Text style={styles.fieldLabel}>Sets</Text>
+                            <TextInput
+                              style={styles.fieldInput}
+                              value={String(exercise.customSets)}
+                              onChangeText={(text) => {
+                                const value = parseInt(text) || exercise.sets;
+                                updateExerciseDetails({
+                                  ...exercise,
+                                  customSets: value
+                                });
+                              }}
+                              keyboardType="numeric"
+                              placeholder={String(exercise.sets)}
+                            />
+                          </View>
+                          <View style={styles.customizationField}>
+                            <Text style={styles.fieldLabel}>Reps</Text>
+                            <TextInput
+                              style={styles.fieldInput}
+                              value={exercise.customReps}
+                              onChangeText={(text) => {
+                                updateExerciseDetails({
+                                  ...exercise,
+                                  customReps: text
+                                });
+                              }}
+                              placeholder={exercise.reps}
+                            />
+                          </View>
+                        </View>
+
+                        <View style={styles.customizationRow}>
+                          <View style={styles.customizationField}>
+                            <Text style={styles.fieldLabel}>Men Weight (kg)</Text>
+                            <TextInput
+                              style={styles.fieldInput}
+                              value={exercise.customMenWeight?.toString()}
+                              onChangeText={(text) => {
+                                const value = parseFloat(text) || exercise.men_weight;
+                                updateExerciseDetails({
+                                  ...exercise,
+                                  customMenWeight: value
+                                });
+                              }}
+                              keyboardType="numeric"
+                              placeholder={exercise.men_weight?.toString()}
+                            />
+                          </View>
+                          <View style={styles.customizationField}>
+                            <Text style={styles.fieldLabel}>Women Weight (kg)</Text>
+                            <TextInput
+                              style={styles.fieldInput}
+                              value={exercise.customWomenWeight?.toString()}
+                              onChangeText={(text) => {
+                                const value = parseFloat(text) || exercise.women_weight;
+                                updateExerciseDetails({
+                                  ...exercise,
+                                  customWomenWeight: value
+                                });
+                              }}
+                              keyboardType="numeric"
+                              placeholder={exercise.women_weight?.toString()}
+                            />
+                          </View>
+                        </View>
+
+                        <View style={styles.notesField}>
+                          <Text style={styles.fieldLabel}>Notes</Text>
+                          <TextInput
+                            style={[styles.fieldInput, styles.notesInput]}
+                            value={exercise.notes}
+                            onChangeText={(text) => {
+                              updateExerciseDetails({
+                                ...exercise,
+                                notes: text
+                              });
+                            }}
+                            multiline
+                            numberOfLines={2}
+                            placeholder="Add notes for this exercise..."
+                          />
+                        </View>
+                      </View>
+                    </Pressable>
+                  </Animated.View>
+                ))}
+              </View>
+            ))}
+          </View>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -365,14 +449,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  draftButton: {
-    padding: 8,
-  },
   saveButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -390,8 +466,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     backgroundColor: '#FEE2E2',
     padding: 12,
-    marginHorizontal: 20,
-    marginTop: 20,
+    margin: 20,
     borderRadius: 8,
   },
   errorText: {
@@ -399,21 +474,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   content: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  mainContent: {
-    flex: 1,
     padding: 20,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1E293B',
     marginBottom: 12,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 12,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -429,25 +506,43 @@ const styles = StyleSheet.create({
     height: 120,
     textAlignVertical: 'top',
   },
-  categoriesContainer: {
-    paddingVertical: 8,
-    gap: 8,
+  sectionsContainer: {
+    marginBottom: 16,
   },
-  categoryChip: {
+  sectionButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
+    backgroundColor: '#F1F5F9',
+    marginRight: 8,
+  },
+  selectedSection: {
+    backgroundColor: '#4F46E5',
+  },
+  sectionButtonText: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  selectedSectionText: {
+    color: '#FFFFFF',
+  },
+  categoriesContainer: {
+    marginBottom: 16,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    marginRight: 8,
   },
   selectedCategory: {
     backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
   },
-  categoryText: {
+  categoryButtonText: {
     fontSize: 14,
-    color: '#1E293B',
+    color: '#64748B',
     fontWeight: '500',
   },
   selectedCategoryText: {
@@ -520,67 +615,60 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
-  draftPanel: {
-    width: 320,
+  selectedExerciseCard: {
     backgroundColor: '#FFFFFF',
-    borderLeftWidth: 1,
-    borderLeftColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  draftHeader: {
+  selectedExerciseHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  draftTitle: {
+  selectedExerciseName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1E293B',
   },
-  draftContent: {
-    padding: 20,
+  removeButton: {
+    padding: 4,
   },
-  draftExercise: {
-    marginBottom: 20,
-    padding: 16,
+  customizationSection: {
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
+    padding: 12,
   },
-  draftExerciseName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 12,
-  },
-  draftExerciseInputs: {
+  customizationRow: {
     flexDirection: 'row',
     gap: 12,
     marginBottom: 12,
   },
-  draftInputGroup: {
+  customizationField: {
     flex: 1,
   },
-  draftInputLabel: {
+  fieldLabel: {
     fontSize: 12,
     color: '#64748B',
     marginBottom: 4,
   },
-  draftInput: {
+  fieldInput: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 8,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    fontSize: 14,
+    color: '#1E293B',
   },
-  draftNotes: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    minHeight: 60,
+  notesField: {
+    marginTop: 8,
+  },
+  notesInput: {
+    height: 80,
     textAlignVertical: 'top',
   },
 });

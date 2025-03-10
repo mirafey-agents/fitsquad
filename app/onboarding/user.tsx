@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, TextInput, Pressable, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  ScrollView,
+} from 'react-native';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -58,10 +65,16 @@ export default function UserOnboarding() {
             {EXPERIENCE_LEVELS.map((level) => (
               <Pressable key={level.id} style={styles.experienceCard}>
                 <BlurView intensity={80} style={styles.experienceIcon}>
-                  <Ionicons name={level.icon as any} size={24} color="#4F46E5" />
+                  <Ionicons
+                    name={level.icon as any}
+                    size={24}
+                    color="#4F46E5"
+                  />
                 </BlurView>
                 <Text style={styles.experienceTitle}>{level.title}</Text>
-                <Text style={styles.experienceDescription}>{level.description}</Text>
+                <Text style={styles.experienceDescription}>
+                  {level.description}
+                </Text>
               </Pressable>
             ))}
           </View>

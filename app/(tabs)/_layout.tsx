@@ -1,128 +1,137 @@
 import { Tabs } from 'expo-router';
-import { Platform, StyleSheet, Pressable, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Logo from '../components/Logo';
 import { BlurView } from 'expo-blur';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DrawerToggleButton } from '@react-navigation/drawer';
-import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { colors, shadows, typography, spacing } from '../constants/theme';
+import * as Haptics from 'expo-haptics';
 
 export default function TabLayout() {
-  const insets = useSafeAreaInsets();
+  const handleTabPress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
 
   return (
-    <>
-      <Stack.Screen 
+    <Tabs
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: colors.primary.light,
+        },
+        headerTitleStyle: {
+          fontSize: typography.size.lg,
+          fontWeight: typography.weight.semibold as any,
+        },
+        headerLeft: () => (
+          <View style={styles.headerLeft}>
+            <DrawerToggleButton tintColor={colors.primary.dark} />
+          </View>
+        ),
+        headerTitle: () => <Logo size="small" />,
+        headerShadowVisible: false,
+        tabBarStyle: {
+          backgroundColor: colors.primary.light,
+          borderTopColor: colors.gray[200],
+          borderTopWidth: 0.5,
+          height: Platform.select({
+            ios: 88,
+            android: 68,
+            default: 58
+          }),
+          paddingBottom: Platform.select({
+            ios: 34,
+            android: 10,
+            default: 0
+          }),
+          ...shadows.md
+        },
+        tabBarBackground: () => (
+          <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill}>
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.primary.light, opacity: 0.95 }]} />
+          </BlurView>
+        ),
+        tabBarActiveTintColor: colors.primary.dark,
+        tabBarInactiveTintColor: colors.gray[500],
+        tabBarLabelStyle: {
+          fontSize: typography.size.xs,
+          fontWeight: typography.weight.medium as any,
+        },
+      }}
+      screenListeners={{
+        tabPress: () => handleTabPress(),
+      }}
+    >
+      <Tabs.Screen
+        name="index"
         options={{
-          headerShown: true,
-          headerTransparent: false,
-          headerTitle: () => <Logo size="small" />,
-          headerLeft: () => <DrawerToggleButton tintColor="#000000" />,
-          headerStyle: {
-            backgroundColor: '#F2F2F7',
-          },
-          headerShadowVisible: false,
-        }} 
-      />
-      <Tabs 
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            position: 'absolute',
-            backgroundColor: '#FFFFFF',
-            borderTopColor: '#F2F2F7',
-            borderTopWidth: 0.5,
-            height: Platform.select({
-              ios: 88,
-              android: 68,
-              default: 58
-            }),
-            paddingBottom: Platform.select({
-              ios: insets.bottom,
-              android: 10,
-              default: 0
-            }),
-          },
-          tabBarBackground: () => (
-            <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill}>
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: '#FFFFFF', opacity: 0.95 }]} />
-            </BlurView>
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
           ),
-          tabBarActiveTintColor: '#000000',
-          tabBarInactiveTintColor: '#8E8E93',
-          tabBarHideOnKeyboard: true,
-        }}>
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="analytics"
-          options={{
-            title: 'Insights',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="pulse" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="workout"
-          options={{
-            title: 'Workout',
-            tabBarLabelStyle: {
-              marginTop: -4,
-            },
-            tabBarIcon: ({ color }) => (
-              <View style={styles.addButton}>
-                <Ionicons name="add" size={28} color="#FFFFFF" />
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="challenges"
-          options={{
-            title: 'Challenges',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="trophy" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
-    </>
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Insights',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="pulse" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="workout"
+        options={{
+          title: 'Workout',
+          tabBarLabelStyle: {
+            marginTop: -4,
+          },
+          tabBarIcon: ({ color }) => (
+            <View style={styles.addButton}>
+              <Ionicons name="add" size={28} color={colors.primary.light} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          title: 'Progress',
+          headerShown: true,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trending-up" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="challenges"
+        options={{
+          title: 'Challenges',
+          headerShown: true,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trophy" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
+  headerLeft: {
+    marginLeft: Platform.OS === 'ios' ? -8 : 0,
+    marginRight: spacing.sm,
+  },
   addButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#000000',
+    backgroundColor: colors.primary.dark,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -20,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    ...shadows.md
   },
 });

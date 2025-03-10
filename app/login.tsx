@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,7 +35,6 @@ export default function Login() {
     try {
       setLoading(true);
       const data = await login(email, password);
-
       if (data?.user) {
         router.replace('/');
       }
@@ -46,7 +45,9 @@ export default function Login() {
     }
   };
 
-  logout();
+  useEffect(()=>{
+    logout();
+  }, [])
 
   return (
     <View style={styles.container}>

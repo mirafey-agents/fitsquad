@@ -44,18 +44,6 @@ export default function RootLayout() {
 
   console.log('loggedInUser: ', getLoggedInUser());
 
-  if (getLoggedInUser() == null) {
-    // return (
-    //   <>
-    //     <StatusBar style="dark" />
-    //     <Stack screenOptions={{ headerShown: false }}>
-    //       <Stack.Screen name="login" options={{ headerShown: false }} />
-    //     </Stack>
-    //   </>
-    // );
-    // router.replace('/login');
-  }
-
   const onDrawerStateChange = (isOpen: boolean) => {
     drawerProgress.value = withSpring(isOpen ? 1 : 0);
     if (Platform.OS !== 'web') {
@@ -65,6 +53,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     window.frameworkReady?.();
+    if (getLoggedInUser() == null) {
+      console.log("logged in user is null");
+      router.push('/login');
+    }
   }, []);
 
   return (

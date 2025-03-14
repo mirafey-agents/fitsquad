@@ -77,7 +77,7 @@ export default function RootLayout() {
             paddingVertical: 4,
           },
           drawerLabelStyle: {
-            marginLeft: -16,
+            marginLeft: 0,
             fontSize: 16,
             fontWeight: '500',
           },
@@ -92,7 +92,7 @@ export default function RootLayout() {
         }}
       >
         <Drawer.Screen
-          name="(tabs)"
+          name="index"
           options={{
             drawerLabel: 'Home',
             drawerIcon: ({ color }) => (
@@ -101,41 +101,33 @@ export default function RootLayout() {
           }}
         />
         <Drawer.Screen
-          name="progress"
+          name="about-us"
           options={{
-            drawerLabel: 'Progress',
+            drawerLabel: 'About Us',
             drawerIcon: ({ color }) => (
-              <Ionicons name="trending-up" size={22} color={color} />
+              <Ionicons name="people" size={22} color={color} />
             ),
           }}
         />
         <Drawer.Screen
-          name="challenges"
-          options={{
-            drawerLabel: 'Challenges',
-            drawerIcon: ({ color }) => (
-              <Ionicons name="trophy" size={22} color={color} />
-            ),
-          }}
-        />
-        <Drawer.Screen
-          name="trainer-dashboard"
-          options={{
-            drawerLabel: 'Trainer Dashboard',
-            drawerIcon: ({ color }) => (
-              <Ionicons name="fitness" size={22} color={color} />
-            ),
-          }}
-        />
-        <Drawer.Screen
-          name="login"
+          name="logout"
           options={{
             drawerLabel: 'Logout',
             drawerIcon: ({ color }) => (
-              <Ionicons name="swap-horizontal" size={22} color={color} />
+              <Ionicons name="log-out" size={22} color={color} />
             ),
           }}
         />
+        <Drawer.Screen name="+not-found" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="habits" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="onboarding" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="group-management" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="trainer" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="member" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="progress" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="challenges" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="login" options={{ drawerItemStyle: { display: 'none' } }} />
+
       </Drawer>
     </>
   );

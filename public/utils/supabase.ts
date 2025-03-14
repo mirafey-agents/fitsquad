@@ -46,65 +46,43 @@ export async function login(email, password) {
     email: email,
     password: password,
   });
-  localStorage.setItem('loginUser', JSON.stringify(data));
   console.log('login: ', data);
-  return data;
+
+  const profile = await supabase.from('users').select('*').eq('id', data.user.id).single();
+  console.log('profile: ', profile);
+
+  const res = {user: data.user, profile: profile.data};
+
+  localStorage.setItem('loggedinUser', JSON.stringify(res));
+
+  return res;
 }
 
 export function getLoggedInUser() {
-  return JSON.parse(localStorage.getItem('loginUser'));
+  return JSON.parse(localStorage.getItem('loggedinUser'));
 }
 
 export function logout() {
-  return localStorage.setItem('loginUser', null);
+  return localStorage.setItem('loggedinUser', null);
 }
 
 // Helper function to check onboarding status with error handling
 export async function checkOnboardingStatus() {
-  const loginUser = await getLoggedInUser();
+  const loggedinUser = getLoggedInUser();
 
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select(
-        `
-        onboarding_status,
-        email,
-        display_name,
-        goals,
-        experience_level,
-        medical_conditions,
-        preferred_workout_times,
-        gender,
-        age,
-        dietary_restrictions,
-        available_equipment
-      `
-      )
-      .eq('id', loginUser.user.id)
-      .single();
-
-    console.log('profile: ', data);
-
-    if (error) {
-      console.error('Supabase error:', error);
+  if (!loggedinUser || loggedinUser.user === null || 
+    loggedinUser.profile === null || 
+    loggedinUser.profile.onboarding_status != 'completed') {
       return {
         isComplete: false,
         userData: null,
       };
     }
-
-    return {
-      isComplete: data?.onboarding_status === 'completed',
-      userData: data,
-    };
-  } catch (error) {
-    console.error('Error checking onboarding status:', error);
-    return {
-      isComplete: false,
-      userData: null,
-    };
-  }
+    
+  return {
+    isComplete: true,
+    userData: loggedinUser.profile,
+  };
 }
 
 // Helper function to update user profile with error handling

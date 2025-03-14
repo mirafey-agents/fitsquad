@@ -1,10 +1,20 @@
 {
   "hosting": {
     "public": "public/dist",
+    "rewrites": [
+      {
+        "source": "/assets/**",
+        "destination": "/assets/**"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "node_modules/**"
     ]
   }
 }

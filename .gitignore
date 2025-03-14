@@ -9,7 +9,7 @@ dist/
 web-build/
 
 # Firebase
-.firebase/
+.firebase/*
 firebase-debug.log*
 # Native
 *.orig.*

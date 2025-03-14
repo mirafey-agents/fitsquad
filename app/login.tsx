@@ -35,6 +35,7 @@ export default function Login() {
     try {
       setLoading(true);
       const data = await login(email, password);
+
       if (data?.user) {
         router.replace('/');
       }
@@ -45,9 +46,9 @@ export default function Login() {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     logout();
-  }, [])
+  }, []);
 
   return (
     <View style={styles.container}>

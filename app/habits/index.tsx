@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import HabitTracker from '../components/HabitTracker';
-import AccountabilityPartner from '../components/AccountabilityPartner';
+import DailyChallenges from '../components/DailyChallenges';
 import { colors, spacing } from '../constants/theme';
 
 export default function HabitsPage() {
@@ -8,7 +8,7 @@ export default function HabitsPage() {
     <View style={styles.container}>
       <ScrollView style={styles.content}>
         <HabitTracker />
-        <AccountabilityPartner />
+        <DailyChallenges />
       </ScrollView>
     </View>
   );

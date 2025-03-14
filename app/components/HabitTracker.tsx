@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '../constants/theme';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 
 const PRESET_HABITS = {
   health: [
@@ -48,24 +47,44 @@ const PRESET_HABITS = {
       description: 'Strength training session',
     },
   ],
-  mindfulness: [
+  diet: [
     {
       id: '7',
-      name: 'Meditation',
-      icon: 'leaf',
-      description: '10 minutes of meditation',
+      name: 'Healthy Breakfast',
+      icon: 'nutrition',
+      description: 'Start day with protein-rich meal',
     },
     {
       id: '8',
-      name: 'Journaling',
-      icon: 'journal',
-      description: 'Daily reflection',
+      name: 'Meal Prep',
+      icon: 'restaurant',
+      description: 'Prepare healthy meals',
     },
     {
       id: '9',
-      name: 'Reading',
-      icon: 'book',
-      description: '30 minutes reading',
+      name: 'Track Calories',
+      icon: 'calculator',
+      description: 'Log daily food intake',
+    },
+  ],
+  avoid: [
+    {
+      id: '10',
+      name: 'No Junk Food',
+      icon: 'fast-food',
+      description: 'Avoid processed foods',
+    },
+    {
+      id: '11',
+      name: 'No Late Snacks',
+      icon: 'moon',
+      description: 'No eating after 8 PM',
+    },
+    {
+      id: '12',
+      name: 'No Sugary Drinks',
+      icon: 'cafe',
+      description: 'Avoid sodas and sugary beverages',
     },
   ],
 };
@@ -121,11 +140,6 @@ export default function HabitTracker({ preview = false }) {
           const today = new Date().toISOString().split('T')[0];
           const wasCompletedToday = h.lastCompleted === today;
           
-          // Notify accountability partner
-          if (!wasCompletedToday) {
-            notifyPartner(h.name);
-          }
-          
           return {
             ...h,
             completed: !wasCompletedToday,
@@ -136,15 +150,6 @@ export default function HabitTracker({ preview = false }) {
         return h;
       })
     );
-  };
-
-  const notifyPartner = async (habitName: string) => {
-    try {
-      // In a real app, this would send a notification to the accountability partner
-      console.log(`Notifying partner about completed habit: ${habitName}`);
-    } catch (error) {
-      console.error('Error notifying partner:', error);
-    }
   };
 
   const addHabit = (habit: typeof PRESET_HABITS[keyof typeof PRESET_HABITS][0]) => {
@@ -206,6 +211,26 @@ export default function HabitTracker({ preview = false }) {
     );
   };
 
+  const addCustomHabit = () => {
+    if (!customHabit.name || !customHabit.description) {
+      Alert.alert('Missing Information', 'Please fill in all fields.');
+      return;
+    }
+
+    const newHabit = {
+      id: `custom-${Date.now()}`,
+      ...customHabit,
+      streak: 0,
+      completed: false,
+      category: 'custom',
+    };
+
+    setSelectedHabits(prev => [...prev, newHabit]);
+    setCustomHabit({ name: '', description: '', icon: 'star' });
+    setShowCustomHabit(false);
+    setShowHabitPicker(false);
+  };
+
   if (preview) {
     return (
       <View style={styles.container}>
@@ -254,29 +279,92 @@ export default function HabitTracker({ preview = false }) {
     );
   }
 
-  const addCustomHabit = () => {
-    if (!customHabit.name || !customHabit.description) {
-      Alert.alert('Missing Information', 'Please fill in all fields.');
-      return;
-    }
-
-    const newHabit = {
-      id: `custom-${Date.now()}`,
-      ...customHabit,
-      streak: 0,
-      completed: false,
-      category: 'custom',
-    };
-
-    setSelectedHabits(prev => [...prev, newHabit]);
-    setCustomHabit({ name: '', description: '', icon: 'star' });
-    setShowCustomHabit(false);
-    setShowHabitPicker(false);
-  };
-
   return (
     <View style={styles.container}>
-      {/* Habit Picker Modal */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Daily Habits</Text>
+        <Pressable
+          style={styles.addButton}
+          onPress={() => setShowHabitPicker(true)}
+        >
+          <Ionicons name="add" size={20} color={colors.primary.dark} />
+          <Text style={styles.addButtonText}>Add Habit</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.habitsContainer}>
+        {selectedHabits.map((habit, index) => (
+          <Animated.View
+            key={habit.id}
+            entering={FadeInUp.delay(index * 100)}
+            style={styles.habitCard}
+          >
+            <Pressable
+              style={styles.habitContent}
+              onPress={() => handleHabitPress(habit)}
+              onLongPress={() => removeHabit(habit.id)}
+            >
+              <View style={styles.habitInfo}>
+                <BlurView
+                  intensity={80}
+                  style={[
+                    styles.habitIcon,
+                    habit.completed && styles.completedHabitIcon,
+                  ]}
+                >
+                  <Ionicons
+                    name={habit.icon as any}
+                    size={24}
+                    color={habit.completed ? colors.primary.light : colors.primary.dark}
+                  />
+                </BlurView>
+                <View style={styles.habitDetails}>
+                  <Text style={styles.habitName}>{habit.name}</Text>
+                  <Text style={styles.habitDescription}>{habit.description}</Text>
+                  <View style={styles.habitActions}>
+                    <Pressable
+                      style={styles.editButton}
+                      onPress={() => editHabit(habit.id)}
+                    >
+                      <Ionicons name="create" size={16} color={colors.primary.dark} />
+                    </Pressable>
+                    <Pressable
+                      style={styles.deleteButton}
+                      onPress={() => removeHabit(habit.id)}
+                    >
+                      <Ionicons name="trash" size={16} color={colors.semantic.error} />
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.habitStatus}>
+                <View style={styles.streakContainer}>
+                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
+                  <Text style={styles.streakText}>{habit.streak} days</Text>
+                </View>
+                <View style={styles.checkContainer}>
+                  <Ionicons
+                    name={habit.completed ? "checkmark-circle" : "checkmark-circle-outline"}
+                    size={32}
+                    color={habit.completed ? colors.semantic.success : colors.gray[300]}
+                  />
+                </View>
+              </View>
+            </Pressable>
+          </Animated.View>
+        ))}
+
+        {selectedHabits.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="list" size={48} color={colors.gray[300]} />
+            <Text style={styles.emptyStateText}>No habits added yet</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Add up to 3 habits to track your daily progress
+            </Text>
+          </View>
+        )}
+      </View>
+
       {showHabitPicker && (
         <BlurView intensity={80} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -422,7 +510,6 @@ export default function HabitTracker({ preview = false }) {
         </BlurView>
       )}
       
-      {/* Edit Habit Dialog */}
       {editingHabit && (
         <BlurView intensity={80} style={styles.modalOverlay}>
           <View style={styles.editModalContent}>
@@ -454,92 +541,6 @@ export default function HabitTracker({ preview = false }) {
           </View>
         </BlurView>
       )}
-
-      <View style={styles.header}>
-        <Text style={styles.title}>Daily Habits</Text>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => setShowHabitPicker(true)}
-        >
-          <Ionicons name="add" size={20} color={colors.primary.dark} />
-          <Text style={styles.addButtonText}>Add Habit</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.habitsContainer}>
-        {selectedHabits.map((habit, index) => (
-          <Animated.View
-            key={habit.id}
-            entering={FadeInUp.delay(index * 100)}
-            style={styles.habitCard}
-          >
-            <Pressable
-              style={styles.habitContent}
-              onPress={() => handleHabitPress(habit)}
-              onLongPress={() => removeHabit(habit.id)}
-            >
-              <View style={styles.habitInfo}>
-                <BlurView
-                  intensity={80}
-                  style={[
-                    styles.habitIcon,
-                    habit.completed && styles.completedHabitIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name={habit.icon as any}
-                    size={24}
-                    color={habit.completed ? colors.primary.light : colors.primary.dark}
-                  />
-                </BlurView>
-                <View style={styles.habitDetails}>
-                  <Text style={styles.habitName}>{habit.name}</Text>
-                  <Text style={styles.habitDescription}>{habit.description}</Text>
-                  <View style={styles.habitActions}>
-                    <Pressable
-                      style={styles.editButton}
-                      onPress={() => editHabit(habit.id)}
-                    >
-                      <Ionicons name="create" size={16} color={colors.primary.dark} />
-                    </Pressable>
-                    <Pressable
-                      style={styles.deleteButton}
-                      onPress={() => removeHabit(habit.id)}
-                    >
-                      <Ionicons name="trash" size={16} color={colors.semantic.error} />
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.habitStatus}>
-                <View style={styles.streakContainer}>
-                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                  <Text style={styles.streakText}>{habit.streak} days</Text>
-                </View>
-                {habit.completed ? (
-                  <View style={styles.completedBadge}>
-                    <Ionicons name="checkmark-circle" size={24} color={colors.semantic.success} />
-                  </View>
-                ) : (
-                  <View style={styles.progressRing}>
-                    <View style={styles.progressBackground} />
-                  </View>
-                )}
-              </View>
-            </Pressable>
-          </Animated.View>
-        ))}
-
-        {selectedHabits.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="list" size={48} color={colors.gray[300]} />
-            <Text style={styles.emptyStateText}>No habits added yet</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Add up to 3 habits to track your daily progress
-            </Text>
-          </View>
-        )}
-      </View>
     </View>
   );
 }
@@ -673,30 +674,8 @@ const styles = StyleSheet.create({
     color: colors.accent.coral,
     fontWeight: typography.weight.medium as any,
   },
-  completedBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressRing: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 3,
-    borderColor: colors.gray[200],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressBackground: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 16,
-    borderWidth: 3,
-    borderColor: colors.primary.dark,
-    opacity: 0.2,
+  checkContainer: {
+    marginTop: spacing.sm,
   },
   emptyState: {
     alignItems: 'center',
@@ -727,7 +706,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: Platform.OS === 'web' ? 9999999 : 99999,
     height: Platform.OS === 'web' ? '100vh' : '100%',
-    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
     width: '100%',
     pointerEvents: 'auto',
   },
@@ -775,11 +753,13 @@ const styles = StyleSheet.create({
   },
   categoryTabs: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     padding: spacing.md,
     gap: spacing.sm,
   },
   categoryTab: {
     flex: 1,
+    minWidth: '30%',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.full,

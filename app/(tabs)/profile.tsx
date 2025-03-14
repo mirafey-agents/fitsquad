@@ -1,32 +1,41 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Image,
+} from 'react-native';
 import { useState, useEffect } from 'react';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { colors, shadows, typography, spacing, borderRadius } from '../constants/theme';
+import {
+  colors,
+  shadows,
+  typography,
+  spacing,
+  borderRadius,
+} from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingFlow from '../components/OnboardingFlow';
 import { checkOnboardingStatus } from '../utils/supabase';
 
 const PROFILE_DATA = {
-  name: 'Alex Wong',
-  email: 'alex@example.com',
+  name: 'Guest',
+  email: 'guest@fitsquad.com',
   memberSince: '2024',
   stats: {
     workouts: 48,
     attendance: 92,
     calories: '12.4k',
-    achievements: 15
+    achievements: 15,
   },
-  goals: [
-    'Weight Loss',
-    'Muscle Gain',
-    'Improved Fitness'
-  ],
+  goals: ['Weight Loss', 'Muscle Gain', 'Improved Fitness'],
   preferences: {
     workoutTimes: ['Morning', 'Evening'],
     fitnessLevel: 'Intermediate',
-    focusAreas: ['Upper Body', 'Core', 'Cardio']
+    focusAreas: ['Upper Body', 'Core', 'Cardio'],
   },
   achievements: [
     {
@@ -34,22 +43,22 @@ const PROFILE_DATA = {
       title: 'Perfect Week',
       description: 'Completed all scheduled workouts',
       date: '2024-02-20',
-      icon: '🎯'
+      icon: '🎯',
     },
     {
       id: '2',
       title: 'Early Bird',
       description: 'Completed 5 morning workouts',
       date: '2024-02-15',
-      icon: '🌅'
+      icon: '🌅',
     },
     {
       id: '3',
       title: 'Squad Leader',
       description: 'Top performer in group challenges',
       date: '2024-02-10',
-      icon: '👑'
-    }
+      icon: '👑',
+    },
   ],
   upcomingWorkouts: [
     {
@@ -57,16 +66,16 @@ const PROFILE_DATA = {
       title: 'Morning HIIT',
       time: '06:30 AM',
       trainer: 'Sarah Chen',
-      type: 'Group'
+      type: 'Group',
     },
     {
       id: '2',
       title: 'Strength Training',
       time: '05:30 PM',
       trainer: 'Mike Ross',
-      type: 'Personal'
-    }
-  ]
+      type: 'Personal',
+    },
+  ],
 };
 
 export default function Profile() {
@@ -91,7 +100,12 @@ export default function Profile() {
   };
 
   if (showOnboarding) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} initialData={userData} />;
+    return (
+      <OnboardingFlow
+        onComplete={handleOnboardingComplete}
+        initialData={userData}
+      />
+    );
   }
 
   return (
@@ -105,31 +119,44 @@ export default function Profile() {
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200&auto=format&fit=crop' }}
+              source={{
+                uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200&auto=format&fit=crop',
+              }}
               style={styles.avatar}
             />
             <View style={styles.editAvatarButton}>
               <Ionicons name="camera" size={16} color={colors.primary.light} />
             </View>
           </View>
-          <Text style={styles.name}>{userData?.display_name || PROFILE_DATA.name}</Text>
-          <Text style={styles.email}>{userData?.email || PROFILE_DATA.email}</Text>
-          <Text style={styles.memberSince}>Member since {PROFILE_DATA.memberSince}</Text>
+          <Text style={styles.name}>
+            {userData?.display_name || PROFILE_DATA.name}
+          </Text>
+          <Text style={styles.email}>
+            {userData?.email || PROFILE_DATA.email}
+          </Text>
+          <Text style={styles.memberSince}>
+            Member since {PROFILE_DATA.memberSince}
+          </Text>
         </View>
       </LinearGradient>
 
       {!isOnboardingComplete && (
         <View style={styles.onboardingBanner}>
           <View style={styles.bannerContent}>
-            <Ionicons name="information-circle" size={24} color={colors.semantic.info} />
+            <Ionicons
+              name="information-circle"
+              size={24}
+              color={colors.semantic.info}
+            />
             <View style={styles.bannerText}>
               <Text style={styles.bannerTitle}>Complete Your Profile</Text>
               <Text style={styles.bannerDescription}>
-                Take a moment to set up your profile for a personalized fitness experience.
+                Take a moment to set up your profile for a personalized fitness
+                experience.
               </Text>
             </View>
           </View>
-          <Pressable 
+          <Pressable
             style={styles.completeButton}
             onPress={() => setShowOnboarding(true)}
           >
@@ -139,20 +166,34 @@ export default function Profile() {
       )}
 
       <View style={styles.statsContainer}>
-        <Animated.View entering={FadeInUp.delay(100)} style={[styles.statCard, { backgroundColor: '#FFE1E1' }]}>
+        <Animated.View
+          entering={FadeInUp.delay(100)}
+          style={[styles.statCard, { backgroundColor: '#FFE1E1' }]}
+        >
           <Text style={styles.statValue}>{PROFILE_DATA.stats.workouts}</Text>
           <Text style={styles.statLabel}>Workouts</Text>
         </Animated.View>
-        <Animated.View entering={FadeInUp.delay(200)} style={[styles.statCard, { backgroundColor: '#E1F5FF' }]}>
+        <Animated.View
+          entering={FadeInUp.delay(200)}
+          style={[styles.statCard, { backgroundColor: '#E1F5FF' }]}
+        >
           <Text style={styles.statValue}>{PROFILE_DATA.stats.attendance}%</Text>
           <Text style={styles.statLabel}>Attendance</Text>
         </Animated.View>
-        <Animated.View entering={FadeInUp.delay(300)} style={[styles.statCard, { backgroundColor: '#FFE8D9' }]}>
+        <Animated.View
+          entering={FadeInUp.delay(300)}
+          style={[styles.statCard, { backgroundColor: '#FFE8D9' }]}
+        >
           <Text style={styles.statValue}>{PROFILE_DATA.stats.calories}</Text>
           <Text style={styles.statLabel}>Calories</Text>
         </Animated.View>
-        <Animated.View entering={FadeInUp.delay(400)} style={[styles.statCard, { backgroundColor: '#E8FFE1' }]}>
-          <Text style={styles.statValue}>{PROFILE_DATA.stats.achievements}</Text>
+        <Animated.View
+          entering={FadeInUp.delay(400)}
+          style={[styles.statCard, { backgroundColor: '#E8FFE1' }]}
+        >
+          <Text style={styles.statValue}>
+            {PROFILE_DATA.stats.achievements}
+          </Text>
           <Text style={styles.statLabel}>Achievements</Text>
         </Animated.View>
       </View>
@@ -174,14 +215,24 @@ export default function Profile() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
-        <Animated.View entering={FadeInUp.delay(800)} style={styles.preferencesCard}>
+        <Animated.View
+          entering={FadeInUp.delay(800)}
+          style={styles.preferencesCard}
+        >
           <View style={styles.preferenceItem}>
             <Ionicons name="time" size={20} color={colors.primary.dark} />
             <View style={styles.preferenceContent}>
-              <Text style={styles.preferenceLabel}>Preferred Workout Times</Text>
+              <Text style={styles.preferenceLabel}>
+                Preferred Workout Times
+              </Text>
               <View style={styles.preferenceChips}>
-                {(userData?.preferred_workout_times || PROFILE_DATA.preferences.workoutTimes).map((time) => (
-                  <Text key={time} style={styles.preferenceChip}>{time}</Text>
+                {(
+                  userData?.preferred_workout_times ||
+                  PROFILE_DATA.preferences.workoutTimes
+                ).map((time) => (
+                  <Text key={time} style={styles.preferenceChip}>
+                    {time}
+                  </Text>
                 ))}
               </View>
             </View>
@@ -190,7 +241,10 @@ export default function Profile() {
             <Ionicons name="fitness" size={20} color={colors.primary.dark} />
             <View style={styles.preferenceContent}>
               <Text style={styles.preferenceLabel}>Fitness Level</Text>
-              <Text style={styles.preferenceValue}>{userData?.experience_level || PROFILE_DATA.preferences.fitnessLevel}</Text>
+              <Text style={styles.preferenceValue}>
+                {userData?.experience_level ||
+                  PROFILE_DATA.preferences.fitnessLevel}
+              </Text>
             </View>
           </View>
           <View style={styles.preferenceItem}>
@@ -199,7 +253,9 @@ export default function Profile() {
               <Text style={styles.preferenceLabel}>Focus Areas</Text>
               <View style={styles.preferenceChips}>
                 {PROFILE_DATA.preferences.focusAreas.map((area) => (
-                  <Text key={area} style={styles.preferenceChip}>{area}</Text>
+                  <Text key={area} style={styles.preferenceChip}>
+                    {area}
+                  </Text>
                 ))}
               </View>
             </View>
@@ -220,12 +276,14 @@ export default function Profile() {
             </View>
             <View style={styles.achievementContent}>
               <Text style={styles.achievementTitle}>{achievement.title}</Text>
-              <Text style={styles.achievementDescription}>{achievement.description}</Text>
+              <Text style={styles.achievementDescription}>
+                {achievement.description}
+              </Text>
               <Text style={styles.achievementDate}>
                 {new Date(achievement.date).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
-                  year: 'numeric'
+                  year: 'numeric',
                 })}
               </Text>
             </View>
@@ -258,11 +316,15 @@ export default function Profile() {
         ))}
       </View>
 
-      <Pressable 
+      <Pressable
         style={styles.editProfileButton}
         onPress={() => setShowOnboarding(true)}
       >
-        <Ionicons name="create-outline" size={20} color={colors.primary.light} />
+        <Ionicons
+          name="create-outline"
+          size={20}
+          color={colors.primary.light}
+        />
         <Text style={styles.editProfileText}>Edit Profile</Text>
       </Pressable>
 

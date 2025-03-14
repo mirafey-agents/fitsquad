@@ -40,7 +40,7 @@ export default function TrainerDashboardLayout() {
           android: {
             headerStyle: {
               backgroundColor: colors.primary.light,
-              height: 64 + spacing.xl, // Add extra space for Android status bar
+              height: 64 + spacing.xl,
             },
           },
         }),
@@ -107,7 +107,7 @@ export default function TrainerDashboardLayout() {
 
 const styles = StyleSheet.create({
   headerLeft: {
-    marginLeft: Platform.OS === 'ios' ? -8 : 0, // Adjust for iOS
+    marginLeft: Platform.OS === 'ios' ? -8 : 0,
     marginRight: spacing.sm,
   },
 });

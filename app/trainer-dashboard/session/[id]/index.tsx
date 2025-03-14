@@ -7,196 +7,90 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../../utils/supabase';
 
-// Update the SESSION_DATA constant to use a valid UUID
-const SESSION_DATA = {
-  id: '123e4567-e89b-12d3-a456-426614174000', // Valid UUID format
-  title: 'Morning HIIT',
-  time: '06:30 AM',
-  trainer: 'Sarah Chen',
-  participants: [
-    {
-      id: '123e4567-e89b-12d3-a456-426614174001',
-      name: 'Mike Ross',
-      attendance: 'pending',
-      performance: null,
-      comments: '',
-      bestExercise: null,
-      needsImprovement: null,
-      media: []
-    },
-    {
-      id: '123e4567-e89b-12d3-a456-426614174002',
-      name: 'Alex Wong',
-      attendance: 'pending',
-      performance: null,
-      comments: '',
-      bestExercise: null,
-      needsImprovement: null,
-      media: []
-    }
-  ],
-  exercises: [
-    {
-      id: 1,
-      name: 'Burpees',
-      sets: 3,
-      reps: 15
-    },
-    {
-      id: 2,
-      name: 'Mountain Climbers',
-      sets: 3,
-      reps: 30
-    },
-    {
-      id: 3,
-      name: 'Jump Squats',
-      sets: 4,
-      reps: 20
-    }
-  ]
-};
+interface Session {
+  id: string;
+  title: string;
+  time: string;
+  participants: Array<{
+    id: string;
+    name: string;
+    attendance: string;
+    performance: number;
+    comments: string;
+    bestExercise: string | null;
+    needsImprovement: string | null;
+    media: string[];
+  }>;
+  exercises: Array<{
+    id: string;
+    name: string;
+    sets: number;
+    reps: string;
+  }>;
+}
 
-export default function WorkoutSession() {
+export default function SessionDetails() {
   const { id } = useLocalSearchParams();
-  const [session, setSession] = useState(SESSION_DATA);
-  const [selectedParticipant, setSelectedParticipant] = useState(null);
+  const [session, setSession] = useState<Session>({
+    id: id as string,
+    title: 'Morning HIIT',
+    time: '06:30 AM',
+    participants: [
+      {
+        id: '1',
+        name: 'Sarah Chen',
+        attendance: 'present',
+        performance: 95,
+        comments: 'Excellent form and energy throughout the session.',
+        bestExercise: 'Burpees',
+        needsImprovement: 'Mountain Climbers',
+        media: [
+          'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=800&auto=format&fit=crop'
+        ]
+      },
+      {
+        id: '2',
+        name: 'Mike Ross',
+        attendance: 'present',
+        performance: 88,
+        comments: 'Good effort, needs to work on pacing.',
+        bestExercise: 'Jump Squats',
+        needsImprovement: 'Burpees',
+        media: [
+          'https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?q=80&w=800&auto=format&fit=crop'
+        ]
+      }
+    ],
+    exercises: [
+      {
+        id: '1',
+        name: 'Burpees',
+        sets: 3,
+        reps: '15'
+      },
+      {
+        id: '2',
+        name: 'Mountain Climbers',
+        sets: 3,
+        reps: '30'
+      },
+      {
+        id: '3',
+        name: 'Jump Squats',
+        sets: 4,
+        reps: '20'
+      }
+    ]
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id as string)) {
-      setError('Invalid session ID format');
-      return;
-    }
-
-    // Fetch session data
-    fetchSessionData();
-  }, [id]);
-
-  const fetchSessionData = async () => {
-    try {
-      setLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from('workouts')
-        .select(`
-          *,
-          participants:workout_participants(*)
-        `)
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-      if (data) {
-        setSession(prev => ({
-          ...prev,
-          ...data,
-          participants: data.participants || prev.participants
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching session:', error);
-      setError('Failed to load session data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAttendance = (participantId: string, status: 'present' | 'absent') => {
-    setSession(prev => ({
-      ...prev,
-      participants: prev.participants.map(p => 
-        p.id === participantId ? { ...p, attendance: status } : p
-      )
-    }));
-  };
-
-  const handlePerformance = (participantId: string, rating: number) => {
-    setSession(prev => ({
-      ...prev,
-      participants: prev.participants.map(p => 
-        p.id === participantId ? { ...p, performance: rating } : p
-      )
-    }));
-  };
-
-  const handleComments = (participantId: string, comments: string) => {
-    setSession(prev => ({
-      ...prev,
-      participants: prev.participants.map(p => 
-        p.id === participantId ? { ...p, comments } : p
-      )
-    }));
-  };
-
-  const handleExerciseSelection = (participantId: string, exerciseId: string, type: 'best' | 'improvement') => {
-    setSession(prev => ({
-      ...prev,
-      participants: prev.participants.map(p => 
-        p.id === participantId 
-          ? { 
-              ...p, 
-              bestExercise: type === 'best' ? exerciseId : p.bestExercise,
-              needsImprovement: type === 'improvement' ? exerciseId : p.needsImprovement
-            } 
-          : p
-      )
-    }));
-  };
-
-  const handleMediaCapture = async (participantId: string) => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-
-      if (!result.canceled) {
-        setSession(prev => ({
-          ...prev,
-          participants: prev.participants.map(p => 
-            p.id === participantId 
-              ? { ...p, media: [...p.media, result.assets[0].uri] }
-              : p
-          )
-        }));
-      }
-    } catch (error) {
-      console.error('Error capturing media:', error);
-    }
-  };
 
   const handleSave = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Validate UUID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(id as string)) {
-        throw new Error('Invalid session ID format');
-      }
-
-      // Save session data to Supabase
-      const { error: saveError } = await supabase
-        .from('workout_participants')
-        .upsert(session.participants.map(p => ({
-          workout_id: id,
-          user_id: p.id,
-          attendance_status: p.attendance,
-          performance_score: p.performance,
-          trainer_comments: p.comments,
-          best_exercise: p.bestExercise,
-          needs_improvement: p.needsImprovement,
-          media_urls: p.media
-        })));
-
-      if (saveError) throw saveError;
-      
       Alert.alert(
         'Success',
         'Session data saved successfully',
@@ -210,6 +104,42 @@ export default function WorkoutSession() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const pickImage = async (participantId: string) => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        setSession(prev => ({
+          ...prev,
+          participants: prev.participants.map(p => 
+            p.id === participantId 
+              ? { ...p, media: [...p.media, result.assets[0].uri] }
+              : p
+          )
+        }));
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const updateParticipant = (participantId: string, updates: Partial<Session['participants'][0]>) => {
+    setSession(prev => ({
+      ...prev,
+      participants: prev.participants.map(p => 
+        p.id === participantId 
+          ? { ...p, ...updates }
+          : p
+      )
+    }));
   };
 
   return (
@@ -230,30 +160,28 @@ export default function WorkoutSession() {
         </Pressable>
       </View>
 
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       <ScrollView style={styles.content}>
         <View style={styles.sessionInfo}>
           <Text style={styles.sessionTitle}>{session.title}</Text>
           <Text style={styles.sessionTime}>{session.time}</Text>
-          <Text style={styles.sessionTrainer}>Trainer: {session.trainer}</Text>
         </View>
 
-        <View style={styles.instructionsCard}>
-          <Ionicons name="information-circle" size={24} color="#4F46E5" />
-          <View style={styles.instructionsContent}>
-            <Text style={styles.instructionsTitle}>How to use this page:</Text>
-            <Text style={styles.instructionsText}>
-              1. Mark each participant as present or absent
-            </Text>
-            <Text style={styles.instructionsText}>
-              2. Tap on a participant's card to provide detailed feedback
-            </Text>
-            <Text style={styles.instructionsText}>
-              3. Rate performance, add comments, and select best/improvement exercises
-            </Text>
-            <Text style={styles.instructionsText}>
-              4. Click Save when you're done with all participants
-            </Text>
-          </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Exercises</Text>
+          {session.exercises.map((exercise, index) => (
+            <View key={exercise.id} style={styles.exerciseCard}>
+              <Text style={styles.exerciseName}>{exercise.name}</Text>
+              <Text style={styles.exerciseDetails}>
+                {exercise.sets} × {exercise.reps}
+              </Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.section}>
@@ -262,200 +190,110 @@ export default function WorkoutSession() {
             <Animated.View
               key={participant.id}
               entering={FadeInUp.delay(index * 100)}
+              style={styles.participantCard}
             >
-              <Pressable 
-                style={[
-                  styles.participantCard,
-                  selectedParticipant?.id === participant.id && styles.selectedCard
-                ]}
-                onPress={() => setSelectedParticipant(participant)}
-              >
-                <View style={styles.participantHeader}>
-                  <View style={styles.participantInfo}>
-                    <Text style={styles.participantName}>{participant.name}</Text>
-                    {selectedParticipant?.id !== participant.id && (
-                      <Text style={styles.tapToRateText}>
-                        Tap to provide detailed feedback
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.attendanceButtons}>
-                    <Pressable
-                      style={[
-                        styles.attendanceButton,
-                        participant.attendance === 'present' && styles.presentButton
-                      ]}
-                      onPress={() => handleAttendance(participant.id, 'present')}
-                    >
-                      <Ionicons 
-                        name={participant.attendance === 'present' ? "checkmark-circle" : "checkmark-circle-outline"} 
-                        size={18} 
-                        color={participant.attendance === 'present' ? "#FFFFFF" : "#22C55E"} 
-                      />
-                      <Text style={[
-                        styles.attendanceButtonText,
-                        participant.attendance === 'present' && styles.attendanceButtonTextActive
-                      ]}>Present</Text>
-                    </Pressable>
-                    <Pressable
-                      style={[
-                        styles.attendanceButton,
-                        participant.attendance === 'absent' && styles.absentButton
-                      ]}
-                      onPress={() => handleAttendance(participant.id, 'absent')}
-                    >
-                      <Ionicons 
-                        name={participant.attendance === 'absent' ? "close-circle" : "close-circle-outline"} 
-                        size={18} 
-                        color={participant.attendance === 'absent' ? "#FFFFFF" : "#EF4444"} 
-                      />
-                      <Text style={[
-                        styles.attendanceButtonText,
-                        participant.attendance === 'absent' && styles.attendanceButtonTextActive
-                      ]}>Absent</Text>
-                    </Pressable>
-                  </View>
+              <View style={styles.participantHeader}>
+                <Text style={styles.participantName}>{participant.name}</Text>
+                <BlurView intensity={80} style={styles.attendanceBadge}>
+                  <Text style={styles.attendanceText}>
+                    {participant.attendance === 'present' ? 'Present' : 'Absent'}
+                  </Text>
+                </BlurView>
+              </View>
+
+              <View style={styles.performanceSection}>
+                <Text style={styles.performanceLabel}>Performance Score</Text>
+                <TextInput
+                  style={styles.performanceInput}
+                  value={participant.performance.toString()}
+                  onChangeText={(text) => {
+                    const score = parseInt(text) || 0;
+                    updateParticipant(participant.id, { performance: score });
+                  }}
+                  keyboardType="numeric"
+                  maxLength={3}
+                />
+              </View>
+
+              <View style={styles.feedbackSection}>
+                <Text style={styles.feedbackLabel}>Trainer Comments</Text>
+                <TextInput
+                  style={styles.feedbackInput}
+                  value={participant.comments}
+                  onChangeText={(text) => updateParticipant(participant.id, { comments: text })}
+                  multiline
+                  numberOfLines={3}
+                  placeholder="Add your feedback..."
+                  placeholderTextColor="#64748B"
+                />
+              </View>
+
+              <View style={styles.exerciseFeedback}>
+                <View style={styles.exerciseField}>
+                  <Text style={styles.exerciseFieldLabel}>Best Exercise</Text>
+                  <TextInput
+                    style={styles.exerciseInput}
+                    value={participant.bestExercise}
+                    onChangeText={(text) => updateParticipant(participant.id, { bestExercise: text })}
+                    placeholder="Best performed exercise"
+                    placeholderTextColor="#64748B"
+                  />
                 </View>
 
-                {selectedParticipant?.id === participant.id && (
-                  <View style={styles.participantDetails}>
-                    <View style={styles.ratingSection}>
-                      <Text style={styles.ratingLabel}>Performance Rating</Text>
-                      <View style={styles.ratingButtons}>
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <Pressable
-                            key={rating}
-                            style={[
-                              styles.ratingButton,
-                              participant.performance === rating && styles.selectedRating
-                            ]}
-                            onPress={() => handlePerformance(participant.id, rating)}
-                          >
-                            <Text style={[
-                              styles.ratingButtonText,
-                              participant.performance === rating && styles.selectedRatingText
-                            ]}>
-                              {rating}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    </View>
+                <View style={styles.exerciseField}>
+                  <Text style={styles.exerciseFieldLabel}>Needs Improvement</Text>
+                  <TextInput
+                    style={styles.exerciseInput}
+                    value={participant.needsImprovement}
+                    onChangeText={(text) => updateParticipant(participant.id, { needsImprovement: text })}
+                    placeholder="Exercise to improve"
+                    placeholderTextColor="#64748B"
+                  />
+                </View>
+              </View>
 
-                    <View style={styles.commentsSection}>
-                      <Text style={styles.commentsLabel}>Trainer Comments</Text>
-                      <TextInput
-                        style={styles.commentsInput}
-                        multiline
-                        numberOfLines={4}
-                        value={participant.comments}
-                        onChangeText={(text) => handleComments(participant.id, text)}
-                        placeholder="Add your comments here..."
-                        placeholderTextColor="#64748B"
-                      />
-                    </View>
+              <View style={styles.mediaSection}>
+                <View style={styles.mediaSectionHeader}>
+                  <Text style={styles.mediaLabel}>Media</Text>
+                  <Pressable 
+                    style={styles.addMediaButton}
+                    onPress={() => pickImage(participant.id)}
+                  >
+                    <Ionicons name="camera" size={20} color="#4F46E5" />
+                    <Text style={styles.addMediaText}>Add Photo</Text>
+                  </Pressable>
+                </View>
 
-                    <View style={styles.exerciseSection}>
-                      <Text style={styles.exerciseLabel}>Best Exercise</Text>
-                      <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.exerciseList}
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.mediaScroll}
+                >
+                  {participant.media.map((url, index) => (
+                    <View key={index} style={styles.mediaPreview}>
+                      <Image source={{ uri: url }} style={styles.mediaImage} />
+                      <Pressable 
+                        style={styles.removeMediaButton}
+                        onPress={() => {
+                          setSession(prev => ({
+                            ...prev,
+                            participants: prev.participants.map(p => 
+                              p.id === participant.id 
+                                ? { ...p, media: p.media.filter((_, i) => i !== index) }
+                                : p
+                            )
+                          }));
+                        }}
                       >
-                        {session.exercises.map((exercise) => (
-                          <Pressable
-                            key={exercise.id}
-                            style={[
-                              styles.exerciseButton,
-                              participant.bestExercise === exercise.id && styles.selectedExercise
-                            ]}
-                            onPress={() => handleExerciseSelection(participant.id, exercise.id, 'best')}
-                          >
-                            <Text style={[
-                              styles.exerciseButtonText,
-                              participant.bestExercise === exercise.id && styles.selectedExerciseText
-                            ]}>
-                              {exercise.name}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </ScrollView>
-
-                      <Text style={styles.exerciseLabel}>Needs Improvement</Text>
-                      <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.exerciseList}
-                      >
-                        {session.exercises.map((exercise) => (
-                          <Pressable
-                            key={exercise.id}
-                            style={[
-                              styles.exerciseButton,
-                              participant.needsImprovement === exercise.id && styles.selectedImprovement
-                            ]}
-                            onPress={() => handleExerciseSelection(participant.id, exercise.id, 'improvement')}
-                          >
-                            <Text style={[
-                              styles.exerciseButtonText,
-                              participant.needsImprovement === exercise.id && styles.selectedExerciseText
-                            ]}>
-                              {exercise.name}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </ScrollView>
+                        <Ionicons name="close-circle" size={24} color="#EF4444" />
+                      </Pressable>
                     </View>
-
-                    <View style={styles.mediaSection}>
-                      <View style={styles.mediaHeader}>
-                        <Text style={styles.mediaLabel}>Media</Text>
-                        <Pressable
-                          style={styles.captureButton}
-                          onPress={() => handleMediaCapture(participant.id)}
-                        >
-                          <Ionicons name="camera" size={20} color="#4F46E5" />
-                          <Text style={styles.captureButtonText}>Capture</Text>
-                        </Pressable>
-                      </View>
-                      <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.mediaList}
-                      >
-                        {participant.media.length > 0 ? (
-                          participant.media.map((uri, index) => (
-                            <Image
-                              key={index}
-                              source={{ uri }}
-                              style={styles.mediaPreview}
-                            />
-                          ))
-                        ) : (
-                          <View style={styles.emptyMedia}>
-                            <Ionicons name="images-outline" size={24} color="#64748B" />
-                            <Text style={styles.emptyMediaText}>No media added</Text>
-                          </View>
-                        )}
-                      </ScrollView>
-                    </View>
-                  </View>
-                )}
-              </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
             </Animated.View>
           ))}
         </View>
-
-        <Pressable 
-          style={styles.saveSessionButton}
-          onPress={handleSave}
-          disabled={loading}
-        >
-          <Ionicons name="save" size={20} color="#FFFFFF" />
-          <Text style={styles.saveSessionText}>
-            {loading ? 'Saving...' : 'Save Session Data'}
-          </Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
@@ -498,6 +336,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    padding: 12,
+    margin: 20,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+  },
   content: {
     padding: 20,
   },
@@ -508,40 +356,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#1E293B',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   sessionTime: {
     fontSize: 16,
     color: '#64748B',
-    marginBottom: 4,
-  },
-  sessionTrainer: {
-    fontSize: 16,
-    color: '#64748B',
-  },
-  instructionsCard: {
-    flexDirection: 'row',
-    backgroundColor: '#F0F0FF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4F46E5',
-  },
-  instructionsContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  instructionsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4F46E5',
-    marginBottom: 8,
-  },
-  instructionsText: {
-    fontSize: 14,
-    color: '#1E293B',
-    marginBottom: 4,
   },
   section: {
     marginBottom: 24,
@@ -552,166 +371,142 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     marginBottom: 16,
   },
+  exerciseCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 2,
+  },
+  exerciseName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1E293B',
+  },
+  exerciseDetails: {
+    fontSize: 14,
+    color: '#64748B',
+  },
   participantCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-  },
-  selectedCard: {
-    borderColor: '#4F46E5',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 2,
   },
   participantHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  participantInfo: {
-    flex: 1,
+    marginBottom: 16,
   },
   participantName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1E293B',
-    marginBottom: 4,
   },
-  tapToRateText: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    color: '#4F46E5',
-  },
-  attendanceButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  attendanceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  attendanceBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
   },
-  presentButton: {
-    backgroundColor: '#22C55E',
-  },
-  absentButton: {
-    backgroundColor: '#EF4444',
-  },
-  attendanceButtonText: {
+  attendanceText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#1E293B',
+    color: '#22C55E',
   },
-  attendanceButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  participantDetails: {
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingTop: 16,
-  },
-  ratingSection: {
+  performanceSection: {
     marginBottom: 16,
   },
-  ratingLabel: {
+  performanceLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#64748B',
     marginBottom: 8,
   },
-  ratingButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  ratingButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedRating: {
-    backgroundColor: '#4F46E5',
-  },
-  ratingButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  selectedRatingText: {
-    color: '#FFFFFF',
-  },
-  commentsSection: {
-    marginBottom: 16,
-  },
-  commentsLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
-    marginBottom: 8,
-  },
-  commentsInput: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
+  performanceInput: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
     padding: 12,
+    fontSize: 16,
+    color: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  feedbackSection: {
+    marginBottom: 16,
+  },
+  feedbackLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748B',
+    marginBottom: 8,
+  },
+  feedbackInput: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     height: 100,
     textAlignVertical: 'top',
-    fontSize: 14,
-    color: '#1E293B',
   },
-  exerciseSection: {
+  exerciseFeedback: {
     marginBottom: 16,
   },
-  exerciseLabel: {
+  exerciseField: {
+    marginBottom: 12,
+  },
+  exerciseFieldLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#64748B',
     marginBottom: 8,
   },
-  exerciseList: {
-    marginBottom: 16,
-  },
-  exerciseButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
-    marginRight: 8,
-  },
-  selectedExercise: {
-    backgroundColor: '#4F46E5',
-  },
-  selectedImprovement: {
-    backgroundColor: '#EF4444',
-  },
-  exerciseButtonText: {
-    fontSize: 14,
+  exerciseInput: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
     color: '#1E293B',
-  },
-  selectedExerciseText: {
-    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   mediaSection: {
-    marginBottom: 16,
+    marginTop: 16,
   },
-  mediaHeader: {
+  mediaSectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   mediaLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#64748B',
   },
-  captureButton: {
+  addMediaButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -720,47 +515,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0FF',
     borderRadius: 20,
   },
-  captureButtonText: {
+  addMediaText: {
     fontSize: 14,
     color: '#4F46E5',
     fontWeight: '500',
   },
-  mediaList: {
-    marginTop: 8,
+  mediaScroll: {
+    marginHorizontal: -8,
   },
   mediaPreview: {
-    width: 80,
-    height: 80,
+    position: 'relative',
+    marginHorizontal: 8,
+  },
+  mediaImage: {
+    width: 120,
+    height: 120,
     borderRadius: 8,
-    marginRight: 8,
   },
-  emptyMedia: {
-    width: 160,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyMediaText: {
-    fontSize: 14,
-    color: '#64748B',
-    marginTop: 8,
-  },
-  saveSessionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4F46E5',
-    padding: 16,
+  removeMediaButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginTop: 8,
-    marginBottom: 40,
-    gap: 8,
-  },
-  saveSessionText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

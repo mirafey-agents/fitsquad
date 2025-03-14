@@ -38,18 +38,23 @@ export default function TabLayout() {
           height: Platform.select({
             ios: 88,
             android: 68,
-            default: 58
+            default: 58,
           }),
           paddingBottom: Platform.select({
             ios: 34,
             android: 10,
-            default: 0
+            default: 0,
           }),
-          ...shadows.md
+          ...shadows.md,
         },
         tabBarBackground: () => (
           <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.primary.light, opacity: 0.95 }]} />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.primary.light, opacity: 0.95 },
+              ]}
+            />
           </BlurView>
         ),
         tabBarActiveTintColor: colors.primary.dark,
@@ -66,7 +71,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Daily Habits',
+          headerTitleAlign: 'center',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -95,26 +101,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="progress"
-        options={{
-          title: 'Progress',
-          headerShown: true,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trending-up" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="challenges"
-        options={{
-          title: 'Challenges',
-          headerShown: true,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trophy" size={size} color={color} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }
@@ -132,6 +118,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -20,
-    ...shadows.md
+    ...shadows.md,
   },
 });

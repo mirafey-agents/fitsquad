@@ -5,9 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import Logo from '../components/Logo';
 import { router } from 'expo-router';
-import { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabase';
 
+// Demo data
 const QUICK_ACTIONS = [
   {
     id: 'manage-squads',
@@ -39,21 +38,6 @@ const QUICK_ACTIONS = [
   },
 ];
 
-const CLIENT_STATS = {
-  personalTraining: {
-    total: 15,
-    active: 12,
-    avgAttendance: 95,
-    revenue: 180000,
-  },
-  groupTraining: {
-    total: 30,
-    active: 26,
-    avgAttendance: 88,
-    revenue: 105000,
-  },
-};
-
 const UPCOMING_SESSIONS = [
   {
     id: '1',
@@ -75,39 +59,7 @@ const UPCOMING_SESSIONS = [
   },
 ];
 
-// Helper function to format currency
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-// Helper function to get dates for the calendar
-const getCalendarDates = () => {
-  const today = new Date();
-  const dates = [];
-  for (let i = -3; i <= 3; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    dates.push(date);
-  }
-  return dates;
-};
-
 export default function TrainerDashboard() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const calendarDates = getCalendarDates();
-
-  const totalClients = CLIENT_STATS.personalTraining.total + CLIENT_STATS.groupTraining.total;
-  const activeClients = CLIENT_STATS.personalTraining.active + CLIENT_STATS.groupTraining.active;
-  const avgAttendance = Math.round(
-    (CLIENT_STATS.personalTraining.avgAttendance * CLIENT_STATS.personalTraining.active +
-     CLIENT_STATS.groupTraining.avgAttendance * CLIENT_STATS.groupTraining.active) / activeClients
-  );
-  const totalRevenue = CLIENT_STATS.personalTraining.revenue + CLIENT_STATS.groupTraining.revenue;
-
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
@@ -125,133 +77,19 @@ export default function TrainerDashboard() {
               <Text style={styles.editProfileText}>Edit Profile</Text>
             </Pressable>
           </View>
-          <Text style={styles.greeting}>Welcome back, Coach!</Text>
-          <Text style={styles.subtitle}>You have 2 sessions today</Text>
+          <Text style={styles.greeting}>Welcome back, Trainer!</Text>
+          <Text style={styles.subtitle}>You have {UPCOMING_SESSIONS.length} sessions today</Text>
         </View>
       </LinearGradient>
 
       <View style={styles.content}>
-        <View style={styles.statsGrid}>
-          <Animated.View 
-            entering={FadeInUp.delay(200)}
-            style={[styles.statCard, { backgroundColor: '#FFE1E1' }]}
-          >
-            <BlurView intensity={80} style={styles.statIcon}>
-              <Ionicons name="people" size={24} color="#FF3B30" />
-            </BlurView>
-            <Text style={styles.statValue}>{totalClients}</Text>
-            <Text style={styles.statLabel}>Total Clients</Text>
-            <View style={styles.statBreakdown}>
-              <Text style={styles.breakdownText}>PT: {CLIENT_STATS.personalTraining.total}</Text>
-              <Text style={styles.breakdownText}>GT: {CLIENT_STATS.groupTraining.total}</Text>
-            </View>
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInUp.delay(300)}
-            style={[styles.statCard, { backgroundColor: '#E1F5FF' }]}
-          >
-            <BlurView intensity={80} style={styles.statIcon}>
-              <Ionicons name="fitness" size={24} color="#32ADE6" />
-            </BlurView>
-            <Text style={styles.statValue}>{activeClients}</Text>
-            <Text style={styles.statLabel}>Active Clients</Text>
-            <View style={styles.statBreakdown}>
-              <Text style={styles.breakdownText}>PT: {CLIENT_STATS.personalTraining.active}</Text>
-              <Text style={styles.breakdownText}>GT: {CLIENT_STATS.groupTraining.active}</Text>
-            </View>
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInUp.delay(400)}
-            style={[styles.statCard, { backgroundColor: '#FFE8D9' }]}
-          >
-            <BlurView intensity={80} style={styles.statIcon}>
-              <Ionicons name="trending-up" size={24} color="#FF9500" />
-            </BlurView>
-            <Text style={styles.statValue}>{avgAttendance}%</Text>
-            <Text style={styles.statLabel}>Avg. Attendance</Text>
-            <View style={styles.statBreakdown}>
-              <Text style={styles.breakdownText}>PT: {CLIENT_STATS.personalTraining.avgAttendance}%</Text>
-              <Text style={styles.breakdownText}>GT: {CLIENT_STATS.groupTraining.avgAttendance}%</Text>
-            </View>
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInUp.delay(500)}
-            style={[styles.statCard, { backgroundColor: '#E8FFE1' }]}
-          >
-            <BlurView intensity={80} style={styles.statIcon}>
-              <Ionicons name="cash" size={24} color="#34C759" />
-            </BlurView>
-            <Text style={styles.statValue}>{formatCurrency(totalRevenue)}</Text>
-            <Text style={styles.statLabel}>Monthly Revenue</Text>
-            <View style={styles.statBreakdown}>
-              <Text style={styles.breakdownText}>PT: {formatCurrency(CLIENT_STATS.personalTraining.revenue)}</Text>
-              <Text style={styles.breakdownText}>GT: {formatCurrency(CLIENT_STATS.groupTraining.revenue)}</Text>
-            </View>
-          </Animated.View>
-        </View>
-
-        <View style={styles.calendarSection}>
-          <View style={styles.calendarHeader}>
-            <Text style={styles.sectionTitle}>Schedule</Text>
-            <Pressable 
-              style={styles.addSessionButton}
-              onPress={() => router.push('/trainer-dashboard/create-session')}
-            >
-              <Ionicons name="add" size={20} color="#4F46E5" />
-              <Text style={styles.addSessionText}>Add Session</Text>
-            </Pressable>
-          </View>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.calendar}
-          >
-            {calendarDates.map((date, index) => {
-              const isToday = date.toDateString() === new Date().toDateString();
-              const isSelected = date.toDateString() === selectedDate.toDateString();
-              
-              return (
-                <Pressable
-                  key={date.toISOString()}
-                  style={[
-                    styles.calendarDay,
-                    isSelected && styles.selectedDay,
-                    isToday && styles.today,
-                  ]}
-                  onPress={() => setSelectedDate(date)}
-                >
-                  <Text style={[
-                    styles.dayName,
-                    isSelected && styles.selectedDayText,
-                  ]}>
-                    {date.toLocaleDateString('en-US', { weekday: 'short' })}
-                  </Text>
-                  <Text style={[
-                    styles.dayNumber,
-                    isSelected && styles.selectedDayText,
-                  ]}>
-                    {date.getDate()}
-                  </Text>
-                  {isToday && (
-                    <View style={styles.todayDot} />
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-
         <View style={styles.quickActions}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionGrid}>
             {QUICK_ACTIONS.map((action, index) => (
               <Animated.View
                 key={action.id}
-                entering={FadeInUp.delay(600 + index * 100)}
+                entering={FadeInUp.delay(index * 100)}
                 style={styles.actionCardContainer}
               >
                 <Pressable 
@@ -273,7 +111,7 @@ export default function TrainerDashboard() {
           {UPCOMING_SESSIONS.map((session, index) => (
             <Animated.View
               key={session.id}
-              entering={FadeInUp.delay(1000 + index * 100)}
+              entering={FadeInUp.delay(index * 100)}
             >
               <Pressable 
                 style={styles.sessionCard}
@@ -367,112 +205,8 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: -40,
-  },
-  statCard: {
-    flex: 1,
-    minWidth: 150,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#64748B',
-  },
-  statBreakdown: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  breakdownText: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  calendarSection: {
-    marginTop: 32,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  addSessionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#F0F0FF',
-    borderRadius: 20,
-  },
-  addSessionText: {
-    fontSize: 14,
-    color: '#4F46E5',
-    fontWeight: '500',
-  },
-  calendar: {
-    flexDirection: 'row',
-  },
-  calendarDay: {
-    width: 64,
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-  },
-  selectedDay: {
-    backgroundColor: '#4F46E5',
-  },
-  today: {
-    borderWidth: 2,
-    borderColor: '#4F46E5',
-  },
-  dayName: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 4,
-  },
-  dayNumber: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  selectedDayText: {
-    color: '#FFFFFF',
-  },
-  todayDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#4F46E5',
-    marginTop: 4,
-  },
   quickActions: {
-    marginTop: 32,
+    marginTop: 20,
   },
   actionGrid: {
     flexDirection: 'row',

@@ -5,9 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../../utils/supabase';
-import { format, isAfter, isBefore, parseISO } from 'date-fns';
-import { BarChart, LineChart } from 'react-native-chart-kit';
+import { LineChart, BarChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
+import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 
 interface Payment {
   id: string;
@@ -353,7 +353,7 @@ export default function PaymentManagement() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
-    return format(parseISO(dateString), 'dd MMM yyyy');
+    return new Date(dateString).toLocaleDateString();
   };
 
   // Apply filters
@@ -373,19 +373,19 @@ export default function PaymentManagement() {
     const thisYear = new Date(now.getFullYear(), 0, 1);
 
     filteredPayments = filteredPayments.filter(p => {
-      const paymentDate = p.payment_date ? parseISO(p.payment_date) : null;
-      const dueDate = parseISO(p.due_date);
+      const paymentDate = p.payment_date ? new Date(p.payment_date) : null;
+      const dueDate = new Date(p.due_date);
       
       switch (dateFilter) {
         case 'thisMonth':
-          return (paymentDate && isAfter(paymentDate, thisMonth)) || 
-                 (isAfter(dueDate, thisMonth));
+          return (paymentDate && paymentDate >= thisMonth) || 
+                 (dueDate >= thisMonth);
         case 'lastMonth':
-          return (paymentDate && isAfter(paymentDate, lastMonth) && isBefore(paymentDate, thisMonth)) || 
-                 (isAfter(dueDate, lastMonth) && isBefore(dueDate, thisMonth));
+          return (paymentDate && paymentDate >= lastMonth && paymentDate < thisMonth) || 
+                 (dueDate >= lastMonth && dueDate < thisMonth);
         case 'thisYear':
-          return (paymentDate && isAfter(paymentDate, thisYear)) || 
-                 (isAfter(dueDate, thisYear));
+          return (paymentDate && paymentDate >= thisYear) || 
+                 (dueDate >= thisYear);
         default:
           return true;
       }
@@ -461,12 +461,20 @@ export default function PaymentManagement() {
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </Pressable>
         <Text style={styles.title}>Payment Management</Text>
-        <Pressable 
-          style={styles.createButton}
-          onPress={() => router.push('/trainer-dashboard/payments/create')}
-        >
-          <Text style={styles.createButtonText}>Create</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable 
+            style={styles.createButton}
+            onPress={() => router.push('/trainer-dashboard/payments/pricing')}
+          >
+            <Text style={styles.createButtonText}>Pricing</Text>
+          </Pressable>
+          <Pressable 
+            style={styles.createButton}
+            onPress={() => router.push('/trainer-dashboard/payments/create')}
+          >
+            <Text style={styles.createButtonText}>Create</Text>
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView style={styles.content}>
@@ -833,7 +841,7 @@ export default function PaymentManagement() {
                 onPress={() => handleBulkAction('markPaid')}
               >
                 <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-                <Text style={styles.bulkActionText}>Mark Paid</Text>
+                <Text style={styles.bulkActionText}>Mark Paid</Text>```typescript
               </Pressable>
               <Pressable 
                 style={[styles.bulkActionButton, styles.deleteButton]}
@@ -982,6 +990,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#1E293B',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
   createButton: {
     paddingHorizontal: 16,
@@ -1273,8 +1285,7 @@ const styles = StyleSheet.create({
   paymentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',

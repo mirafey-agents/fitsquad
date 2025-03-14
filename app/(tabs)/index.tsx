@@ -1,15 +1,30 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import Logo from '../components/Logo';
-import { colors, shadows, spacing, borderRadius, typography } from '../constants/theme';
+import { getLoggedInUser } from '../utils/supabase';
+import {
+  colors,
+  shadows,
+  spacing,
+  borderRadius,
+  typography,
+} from '../constants/theme';
 import HabitTracker from '../components/HabitTracker';
-import AccountabilityPartner from '../components/AccountabilityPartner';
-import { format, isSameDay, isAfter, isBefore, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import DailyChallenges from '../components/DailyChallenges';
+import {
+  format,
+  isSameDay,
+  isAfter,
+  isBefore,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+} from 'date-fns';
 
 const WORKOUT_DATA = {
   '2025-03-06': {
@@ -26,14 +41,41 @@ const WORKOUT_DATA = {
       { name: 'Jump Squats', sets: 4, reps: 20, energyPoints: 180 },
     ],
     participants: [
-      { id: '1', name: 'Mike Ross', mvpVotes: 3, slackerVotes: 0, hasVoted: false },
-      { id: '2', name: 'Alex Wong', mvpVotes: 5, slackerVotes: 1, hasVoted: true },
-      { id: '3', name: 'Emma Chen', mvpVotes: 4, slackerVotes: 0, hasVoted: false },
+      {
+        id: '1',
+        name: 'Mike Ross',
+        mvpVotes: 3,
+        hasVoted: false,
+      },
+      {
+        id: '2',
+        name: 'Alex Wong',
+        mvpVotes: 5,
+        hasVoted: true,
+      },
+      {
+        id: '3',
+        name: 'Emma Chen',
+        mvpVotes: 4,
+        hasVoted: false,
+      },
     ],
     toughestExercises: [
       { id: '1', name: 'Burpees', votes: 8, difficulty: 9.2, hasVoted: false },
-      { id: '2', name: 'Mountain Climbers', votes: 5, difficulty: 8.5, hasVoted: false },
-      { id: '3', name: 'Jump Squats', votes: 6, difficulty: 8.8, hasVoted: false },
+      {
+        id: '2',
+        name: 'Mountain Climbers',
+        votes: 5,
+        difficulty: 8.5,
+        hasVoted: false,
+      },
+      {
+        id: '3',
+        name: 'Jump Squats',
+        votes: 6,
+        difficulty: 8.8,
+        hasVoted: false,
+      },
     ],
   },
   '2025-03-07': {
@@ -56,22 +98,27 @@ const WORKOUT_DATA = {
 export default function Home() {
   const CURRENT_DATE = new Date();
   const [selectedDate, setSelectedDate] = useState(CURRENT_DATE);
+  const [userData, setUserData] = useState({ user: { name: 'Guest' } });
   const [userVotes, setUserVotes] = useState<{
     mvp: string | null;
-    slacker: string | null;
     toughest: string | null;
   }>({
     mvp: null,
-    slacker: null,
     toughest: null,
   });
 
   const selectedWorkout = WORKOUT_DATA[format(selectedDate, 'yyyy-MM-dd')];
-  const isPastDate = isBefore(selectedDate, new Date(new Date().setHours(0, 0, 0, 0)));
-  const isFutureDate = isAfter(selectedDate, new Date(new Date().setHours(23, 59, 59, 999)));
+  const isPastDate = isBefore(
+    selectedDate,
+    new Date(new Date().setHours(0, 0, 0, 0))
+  );
+  const isFutureDate = isAfter(
+    selectedDate,
+    new Date(new Date().setHours(23, 59, 59, 999))
+  );
 
-  const handleVote = (type: 'mvp' | 'slacker' | 'toughest', id: string) => {
-    setUserVotes(prev => {
+  const handleVote = (type: 'mvp' | 'toughest', id: string) => {
+    setUserVotes((prev) => {
       const newVotes = { ...prev };
       if (prev[type] === id) {
         newVotes[type] = null;
@@ -91,10 +138,14 @@ export default function Home() {
   const getWorkoutIndicator = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const workout = WORKOUT_DATA[dateStr];
-    
+
     if (!workout) return null;
-    
-    if (isBefore(date, new Date()) && workout.completed && workout.votingPending) {
+
+    if (
+      isBefore(date, new Date()) &&
+      workout.completed &&
+      workout.votingPending
+    ) {
       return 'votingPending';
     } else if (workout.completed) {
       return 'completed';
@@ -108,6 +159,12 @@ export default function Home() {
     return WORKOUT_DATA[dateStr]?.energyPoints || 0;
   };
 
+  useEffect(() => {
+    const userData = getLoggedInUser();
+    console.log('membser dashboard', userData);
+    setUserData(userData);
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
@@ -118,7 +175,9 @@ export default function Home() {
       >
         <View style={styles.headerContent}>
           <Logo size="large" />
-          <Text style={styles.greeting}>Welcome back, Alex!</Text>
+          <Text style={styles.greeting}>
+            Welcome back, {userData?.user.name || 'Guest'}!
+          </Text>
           <Text style={styles.subtitle}>Let's crush today's goals! 💪</Text>
         </View>
       </LinearGradient>
@@ -129,9 +188,9 @@ export default function Home() {
             {format(selectedDate, 'MMMM yyyy')}
           </Text>
         </View>
-        
-        <ScrollView 
-          horizontal 
+
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.calendar}
         >
@@ -140,7 +199,7 @@ export default function Home() {
             const isSelected = isSameDay(date, selectedDate);
             const workoutIndicator = getWorkoutIndicator(date);
             const energyPoints = getEnergyPoints(date);
-            
+
             return (
               <Pressable
                 key={date.toISOString()}
@@ -151,26 +210,33 @@ export default function Home() {
                 ]}
                 onPress={() => setSelectedDate(date)}
               >
-                <Text style={[
-                  styles.dayName,
-                  isSelected && styles.selectedDayText,
-                ]}>{format(date, 'EEE')}</Text>
-                <Text style={[
-                  styles.dayNumber,
-                  isSelected && styles.selectedDayText,
-                ]}>{format(date, 'd')}</Text>
-                
+                <Text
+                  style={[styles.dayName, isSelected && styles.selectedDayText]}
+                >
+                  {format(date, 'EEE')}
+                </Text>
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    isSelected && styles.selectedDayText,
+                  ]}
+                >
+                  {format(date, 'd')}
+                </Text>
+
                 {workoutIndicator && (
-                  <View style={[
-                    styles.workoutIndicator,
-                    workoutIndicator === 'completed' && styles.completedWorkout,
-                    workoutIndicator === 'planned' && styles.plannedWorkout,
-                    workoutIndicator === 'votingPending' && styles.votingPendingWorkout,
-                  ]}>
+                  <View
+                    style={[
+                      styles.workoutIndicator,
+                      workoutIndicator === 'completed' &&
+                        styles.completedWorkout,
+                      workoutIndicator === 'planned' && styles.plannedWorkout,
+                      workoutIndicator === 'votingPending' &&
+                        styles.votingPendingWorkout,
+                    ]}
+                  >
                     {energyPoints > 0 && (
-                      <Text style={styles.energyPoints}>
-                        {energyPoints}⚡
-                      </Text>
+                      <Text style={styles.energyPoints}>{energyPoints}⚡</Text>
                     )}
                   </View>
                 )}
@@ -181,9 +247,9 @@ export default function Home() {
       </View>
 
       <View style={styles.content}>
-        {/* Daily Habits & Accountability */}
+        {/* Daily Habits */}
         <Animated.View entering={FadeInUp.delay(200)}>
-          <Pressable 
+          <Pressable
             style={[styles.card, { backgroundColor: colors.transparent.coral }]}
             onPress={() => router.push('/habits')}
           >
@@ -196,30 +262,53 @@ export default function Home() {
                 <Text style={styles.cardBadgeText}>Important</Text>
               </BlurView>
             </View>
-            
+
             <HabitTracker preview={true} />
-            <AccountabilityPartner preview={true} />
+            <DailyChallenges preview={true} />
 
             <View style={styles.cardFooter}>
               <Text style={styles.cardFooterText}>View full details</Text>
-              <Ionicons name="arrow-forward" size={20} color={colors.primary.dark} />
+              <Ionicons
+                name="arrow-forward"
+                size={20}
+                color={colors.primary.dark}
+              />
             </View>
           </Pressable>
         </Animated.View>
 
         {/* Workout Review */}
         <Animated.View entering={FadeInUp.delay(300)}>
-          <View style={[styles.card, { backgroundColor: colors.transparent.mint }]}>
+          <View
+            style={[styles.card, { backgroundColor: colors.transparent.mint }]}
+          >
             <View style={styles.cardHeader}>
               <View style={styles.cardTitleContainer}>
-                <Ionicons name="fitness" size={24} color={colors.primary.dark} />
+                <Ionicons
+                  name="fitness"
+                  size={24}
+                  color={colors.primary.dark}
+                />
                 <Text style={styles.cardTitle}>
                   {isFutureDate ? 'Upcoming Workout' : 'Workout Review'}
                 </Text>
               </View>
               {selectedWorkout?.completed && (
-                <BlurView intensity={80} style={[styles.cardBadge, { backgroundColor: `${colors.semantic.success}20` }]}>
-                  <Text style={[styles.cardBadgeText, { color: colors.semantic.success }]}>Completed</Text>
+                <BlurView
+                  intensity={80}
+                  style={[
+                    styles.cardBadge,
+                    { backgroundColor: `${colors.semantic.success}20` },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.cardBadgeText,
+                      { color: colors.semantic.success },
+                    ]}
+                  >
+                    Completed
+                  </Text>
                 </BlurView>
               )}
             </View>
@@ -227,13 +316,19 @@ export default function Home() {
             {selectedWorkout ? (
               <>
                 <View style={styles.workoutSummary}>
-                  <Text style={styles.workoutTitle}>{selectedWorkout.title}</Text>
+                  <Text style={styles.workoutTitle}>
+                    {selectedWorkout.title}
+                  </Text>
                   <Text style={styles.workoutTime}>
                     {selectedWorkout.time} with {selectedWorkout.trainer}
                   </Text>
                   {selectedWorkout.completed && (
                     <View style={styles.energyPoints}>
-                      <Ionicons name="flash" size={20} color={colors.semantic.warning} />
+                      <Ionicons
+                        name="flash"
+                        size={20}
+                        color={colors.semantic.warning}
+                      />
                       <Text style={styles.energyPointsText}>
                         {selectedWorkout.energyPoints} Energy Points Earned
                       </Text>
@@ -248,14 +343,22 @@ export default function Home() {
                       {selectedWorkout.exercises.map((exercise, index) => (
                         <View key={index} style={styles.exerciseItem}>
                           <View style={styles.exerciseInfo}>
-                            <Text style={styles.exerciseName}>{exercise.name}</Text>
+                            <Text style={styles.exerciseName}>
+                              {exercise.name}
+                            </Text>
                             <Text style={styles.exerciseDetails}>
                               {exercise.sets} × {exercise.reps}
                             </Text>
                           </View>
                           <View style={styles.exercisePoints}>
-                            <Ionicons name="flash" size={16} color={colors.semantic.warning} />
-                            <Text style={styles.pointsText}>{exercise.energyPoints}</Text>
+                            <Ionicons
+                              name="flash"
+                              size={16}
+                              color={colors.semantic.warning}
+                            />
+                            <Text style={styles.pointsText}>
+                              {exercise.energyPoints}
+                            </Text>
                           </View>
                         </View>
                       ))}
@@ -263,39 +366,63 @@ export default function Home() {
 
                     <View style={styles.votingSection}>
                       <Text style={styles.votingTitle}>Cast Your Votes</Text>
-                      
+
                       {/* MVP Voting */}
                       <View style={styles.votingCategory}>
-                        <Text style={styles.votingCategoryTitle}>MVP of the Session</Text>
-                        <ScrollView 
-                          horizontal 
+                        <Text style={styles.votingCategoryTitle}>
+                          MVP of the Session
+                        </Text>
+                        <ScrollView
+                          horizontal
                           showsHorizontalScrollIndicator={false}
                           style={styles.votingOptions}
                         >
                           {selectedWorkout.participants.map((participant) => (
-                            <Pressable 
-                              key={participant.id} 
+                            <Pressable
+                              key={participant.id}
                               style={[
                                 styles.participantCard,
-                                userVotes.mvp === participant.id && styles.selectedVoteCard,
-                                participant.hasVoted && styles.votedCard
+                                userVotes.mvp === participant.id &&
+                                  styles.selectedVoteCard,
+                                participant.hasVoted && styles.votedCard,
                               ]}
-                              onPress={() => !participant.hasVoted && handleVote('mvp', participant.id)}
+                              onPress={() =>
+                                !participant.hasVoted &&
+                                handleVote('mvp', participant.id)
+                              }
                               disabled={participant.hasVoted}
                             >
                               <View style={styles.participantAvatar}>
                                 <Text style={styles.participantInitials}>
-                                  {participant.name.split(' ').map(n => n[0]).join('')}
+                                  {participant.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')}
                                 </Text>
                               </View>
-                              <Text style={styles.participantName}>{participant.name}</Text>
+                              <Text style={styles.participantName}>
+                                {participant.name}
+                              </Text>
                               <View style={styles.voteCount}>
-                                <Ionicons name="trophy" size={16} color={colors.accent.coral} />
-                                <Text style={styles.voteCountText}>{participant.mvpVotes}</Text>
+                                <Ionicons
+                                  name="trophy"
+                                  size={16}
+                                  color={colors.accent.coral}
+                                />
+                                <Text style={styles.voteCountText}>
+                                  {participant.mvpVotes}
+                                </Text>
                               </View>
                               {participant.hasVoted && (
-                                <BlurView intensity={80} style={styles.votedBadge}>
-                                  <Ionicons name="checkmark" size={16} color={colors.semantic.success} />
+                                <BlurView
+                                  intensity={80}
+                                  style={styles.votedBadge}
+                                >
+                                  <Ionicons
+                                    name="checkmark"
+                                    size={16}
+                                    color={colors.semantic.success}
+                                  />
                                   <Text style={styles.votedText}>Voted</Text>
                                 </BlurView>
                               )}
@@ -306,36 +433,59 @@ export default function Home() {
 
                       {/* Toughest Exercise Voting */}
                       <View style={styles.votingCategory}>
-                        <Text style={styles.votingCategoryTitle}>Toughest Exercise</Text>
-                        <ScrollView 
-                          horizontal 
+                        <Text style={styles.votingCategoryTitle}>
+                          Toughest Exercise
+                        </Text>
+                        <ScrollView
+                          horizontal
                           showsHorizontalScrollIndicator={false}
                           style={styles.votingOptions}
                         >
                           {selectedWorkout.toughestExercises.map((exercise) => (
-                            <Pressable 
-                              key={exercise.id} 
+                            <Pressable
+                              key={exercise.id}
                               style={[
                                 styles.exerciseCard,
-                                userVotes.toughest === exercise.id && styles.selectedVoteCard,
-                                exercise.hasVoted && styles.votedCard
+                                userVotes.toughest === exercise.id &&
+                                  styles.selectedVoteCard,
+                                exercise.hasVoted && styles.votedCard,
                               ]}
-                              onPress={() => !exercise.hasVoted && handleVote('toughest', exercise.id)}
+                              onPress={() =>
+                                !exercise.hasVoted &&
+                                handleVote('toughest', exercise.id)
+                              }
                               disabled={exercise.hasVoted}
                             >
-                              <Text style={styles.exerciseName}>{exercise.name}</Text>
+                              <Text style={styles.exerciseName}>
+                                {exercise.name}
+                              </Text>
                               <View style={styles.exerciseStats}>
                                 <View style={styles.statItem}>
-                                  <Ionicons name="flame" size={16} color={colors.semantic.error} />
-                                  <Text style={styles.statText}>{exercise.votes}</Text>
+                                  <Ionicons
+                                    name="flame"
+                                    size={16}
+                                    color={colors.semantic.error}
+                                  />
+                                  <Text style={styles.statText}>
+                                    {exercise.votes}
+                                  </Text>
                                 </View>
                                 <View style={styles.statItem}>
-                                  <Text style={styles.difficultyText}>{exercise.difficulty}</Text>
+                                  <Text style={styles.difficultyText}>
+                                    {exercise.difficulty}
+                                  </Text>
                                 </View>
                               </View>
                               {exercise.hasVoted && (
-                                <BlurView intensity={80} style={styles.votedBadge}>
-                                  <Ionicons name="checkmark" size={16} color={colors.semantic.success} />
+                                <BlurView
+                                  intensity={80}
+                                  style={styles.votedBadge}
+                                >
+                                  <Ionicons
+                                    name="checkmark"
+                                    size={16}
+                                    color={colors.semantic.success}
+                                  />
                                   <Text style={styles.votedText}>Voted</Text>
                                 </BlurView>
                               )}
@@ -344,45 +494,6 @@ export default function Home() {
                         </ScrollView>
                       </View>
 
-                      {/* Needs Improvement Voting */}
-                      <View style={styles.votingCategory}>
-                        <Text style={styles.votingCategoryTitle}>Needs More Effort</Text>
-                        <ScrollView 
-                          horizontal 
-                          showsHorizontalScrollIndicator={false}
-                          style={styles.votingOptions}
-                        >
-                          {selectedWorkout.participants.map((participant) => (
-                            <Pressable 
-                              key={participant.id} 
-                              style={[
-                                styles.participantCard,
-                                userVotes.slacker === participant.id && styles.selectedVoteCard,
-                                participant.hasVoted && styles.votedCard
-                              ]}
-                              onPress={() => !participant.hasVoted && handleVote('slacker', participant.id)}
-                              disabled={participant.hasVoted}
-                            >
-                              <View style={styles.participantAvatar}>
-                                <Text style={styles.participantInitials}>
-                                  {participant.name.split(' ').map(n => n[0]).join('')}
-                                </Text>
-                              </View>
-                              <Text style={styles.participantName}>{participant.name}</Text>
-                              <View style={styles.voteCount}>
-                                <Ionicons name="warning" size={16} color={colors.semantic.warning} />
-                                <Text style={styles.voteCountText}>{participant.slackerVotes}</Text>
-                              </View>
-                              {participant.hasVoted && (
-                                <BlurView intensity={80} style={styles.votedBadge}>
-                                  <Ionicons name="checkmark" size={16} color={colors.semantic.success} />
-                                  <Text style={styles.votedText}>Voted</Text>
-                                </BlurView>
-                              )}
-                            </Pressable>
-                          ))}
-                        </ScrollView>
-                      </View>
                     </View>
                   </>
                 )}
@@ -392,7 +503,9 @@ export default function Home() {
                     <Text style={styles.upcomingTitle}>Workout Plan</Text>
                     {selectedWorkout.exercises.map((exercise, index) => (
                       <View key={index} style={styles.upcomingExercise}>
-                        <Text style={styles.upcomingExerciseName}>{exercise.name}</Text>
+                        <Text style={styles.upcomingExerciseName}>
+                          {exercise.name}
+                        </Text>
                         <Text style={styles.upcomingExerciseDetails}>
                           {exercise.sets} × {exercise.reps}
                         </Text>

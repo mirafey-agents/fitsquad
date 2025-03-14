@@ -26,9 +26,6 @@ declare global {
 
 export default function RootLayout() {
   useFrameworkReady();
-  useEffect(() => {
-    window.frameworkReady?.();
-  }, []);
 
   const drawerProgress = useSharedValue(0);
 
@@ -54,7 +51,7 @@ export default function RootLayout() {
   useEffect(() => {
     window.frameworkReady?.();
     if (getLoggedInUser() == null) {
-      console.log("logged in user is null");
+      console.log('logged in user is null');
       router.push('/login');
     }
   }, []);
@@ -97,9 +94,27 @@ export default function RootLayout() {
         <Drawer.Screen
           name="(tabs)"
           options={{
-            drawerLabel: 'Member Dashboard',
+            drawerLabel: 'Home',
             drawerIcon: ({ color }) => (
               <Ionicons name="home" size={22} color={color} />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="progress"
+          options={{
+            drawerLabel: 'Progress',
+            drawerIcon: ({ color }) => (
+              <Ionicons name="trending-up" size={22} color={color} />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="challenges"
+          options={{
+            drawerLabel: 'Challenges',
+            drawerIcon: ({ color }) => (
+              <Ionicons name="trophy" size={22} color={color} />
             ),
           }}
         />

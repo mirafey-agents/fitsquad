@@ -17,6 +17,7 @@ export default function PaymentsLayout() {
       <Stack.Screen name="templates/[id]" />
       <Stack.Screen name="export" />
       <Stack.Screen name="reminders" />
+      <Stack.Screen name="pricing" />
     </Stack>
   );
 }

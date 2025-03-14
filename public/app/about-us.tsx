@@ -1,10 +1,21 @@
 import React from 'react';
+import { View, Text } from 'react-native';
 
 const AboutUs = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold text-gray-800">Coming Soon</h1>
-    </div>
+    <View style={{ 
+      flex: 1, 
+      justifyContent: 'center', 
+      alignItems: 'center' 
+    }}>
+      <Text style={{ 
+        fontSize: 32, 
+        fontWeight: 'bold',
+        color: '#1f2937' 
+      }}>
+        Coming Soon
+      </Text>
+    </View>
   );
 };
 

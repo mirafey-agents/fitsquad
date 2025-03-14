@@ -13,35 +13,35 @@ const QUICK_ACTIONS = [
     title: 'Manage Squads',
     icon: 'people',
     color: '#FF3B30',
-    route: '/trainer-dashboard/manage-squads',
+    route: './manage-squads',
   },
   {
     id: 'schedule',
     title: 'Schedule',
     icon: 'calendar',
     color: '#32ADE6',
-    route: '/trainer-dashboard/schedule',
+    route: './schedule',
   },
   {
     id: 'manage-members',
     title: 'Manage Members',
     icon: 'person-add',
     color: '#32ADE6',
-    route: '/trainer-dashboard/members',
+    route: './members',
   },
   {
     id: 'workout-plans',
     title: 'Workout Plans',
     icon: 'calendar',
     color: '#FF9500',
-    route: '/trainer-dashboard/workout-plans',
+    route: './workout-plans',
   },
   {
     id: 'payments',
     title: 'Payments',
     icon: 'card',
     color: '#34C759',
-    route: '/trainer-dashboard/payments',
+    route: './payments',
   },
 ];
 
@@ -78,7 +78,7 @@ export default function TrainerDashboard() {
           <View style={styles.profileSection}>
             <Pressable 
               style={styles.editProfile}
-              onPress={() => router.push('/trainer-dashboard/edit-profile')}
+              onPress={() => router.push('./edit-profile', {relativeToDirectory: true})}
             >
               <Ionicons name="create-outline" size={20} color="#FFFFFF" />
               <Text style={styles.editProfileText}>Edit Profile</Text>
@@ -101,7 +101,7 @@ export default function TrainerDashboard() {
               >
                 <Pressable 
                   style={styles.actionCard}
-                  onPress={() => router.push(action.route)}
+                  onPress={() => router.push(action.route, {relativeToDirectory: true})}
                 >
                   <BlurView intensity={80} style={[styles.actionIcon, { backgroundColor: `${action.color}20` }]}>
                     <Ionicons name={action.icon as any} size={24} color={action.color} />
@@ -122,7 +122,7 @@ export default function TrainerDashboard() {
             >
               <Pressable 
                 style={styles.sessionCard}
-                onPress={() => router.push(`/trainer-dashboard/session/${session.id}`)}
+                onPress={() => router.push(`./session/${session.id}`, {relativeToDirectory: true})}
               >
                 <View style={styles.sessionHeader}>
                   <View>
@@ -144,7 +144,7 @@ export default function TrainerDashboard() {
                 </View>
                 <Pressable 
                   style={styles.startSessionButton}
-                  onPress={() => router.push(`/trainer-dashboard/session/${session.id}`)}
+                  onPress={() => router.push(`./session/${session.id}`, {relativeToDirectory: true})}
                 >
                   <Ionicons name="play-circle" size={20} color="#FFFFFF" />
                   <Text style={styles.startSessionText}>Start Session</Text>
@@ -156,7 +156,7 @@ export default function TrainerDashboard() {
 
         <Pressable 
           style={styles.createSessionButton}
-          onPress={() => router.push('/trainer-dashboard/create-session')}
+          onPress={() => router.push('./create-session', {relativeToDirectory: true})}
         >
           <Ionicons name="add-circle" size={24} color="#FFFFFF" />
           <Text style={styles.createSessionText}>Create New Session</Text>

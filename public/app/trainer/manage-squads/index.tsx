@@ -103,7 +103,7 @@ export default function ManageSquads() {
         <Text style={styles.title}>Manage Squads</Text>
         <Pressable 
           style={styles.createButton}
-          onPress={() => router.push('/trainer-dashboard/manage-squads/create')}
+          onPress={() => router.push('./create', {relativeToDirectory: true})}
         >
           <Text style={styles.createButtonText}>Create Squad</Text>
         </Pressable>
@@ -137,7 +137,7 @@ export default function ManageSquads() {
             >
               <Pressable 
                 style={styles.squadCard}
-                onPress={() => router.push(`/trainer-dashboard/manage-squads/${squad.id}`)}
+                onPress={() => router.push(`./${squad.id}`, {relativeToDirectory: true})}
               >
                 <View style={styles.squadHeader}>
                   <View>
@@ -153,21 +153,21 @@ export default function ManageSquads() {
                 <View style={styles.squadActions}>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/manage-squads/${squad.id}/edit`)}
+                    onPress={() => router.push(`./${squad.id}/edit`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="create" size={20} color="#4F46E5" />
                     <Text style={styles.actionButtonText}>Edit</Text>
                   </Pressable>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/manage-squads/${squad.id}/calendar`)}
+                    onPress={() => router.push(`./${squad.id}/calendar`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="calendar" size={20} color="#4F46E5" />
                     <Text style={styles.actionButtonText}>Schedule</Text>
                   </Pressable>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/manage-squads/${squad.id}/members`)}
+                    onPress={() => router.push(`./${squad.id}/members`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="people" size={20} color="#4F46E5" />
                     <Text style={styles.actionButtonText}>Members</Text>

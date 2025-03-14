@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,7 +73,7 @@ export default function InvoiceTemplates() {
         <Text style={styles.title}>Invoice Templates</Text>
         <Pressable 
           style={styles.createButton}
-          onPress={() => router.push('/trainer-dashboard/payments/templates/create')}
+          onPress={() => router.push('./create', {relativeToDirectory: true})}
         >
           <Text style={styles.createButtonText}>Create</Text>
         </Pressable>
@@ -106,7 +106,7 @@ export default function InvoiceTemplates() {
             </Text>
             <Pressable 
               style={styles.createFirstButton}
-              onPress={() => router.push('/trainer-dashboard/payments/templates/create')}
+              onPress={() => router.push('./create', {relativeToDirectory: true})}
             >
               <Ionicons name="add" size={20} color={colors.primary.light} />
               <Text style={styles.createFirstButtonText}>Create First Template</Text>
@@ -193,7 +193,7 @@ export default function InvoiceTemplates() {
                 <View style={styles.templateActions}>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/payments/templates/${template.id}/edit`)}
+                    onPress={() => router.push(`./${template.id}/edit`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="create" size={20} color={colors.primary.dark} />
                     <Text style={styles.actionButtonText}>Edit</Text>
@@ -207,7 +207,7 @@ export default function InvoiceTemplates() {
                   </Pressable>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/payments/templates/${template.id}/duplicate`)}
+                    onPress={() => router.push(`./${template.id}/duplicate`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="copy" size={20} color={colors.primary.dark} />
                     <Text style={styles.actionButtonText}>Duplicate</Text>

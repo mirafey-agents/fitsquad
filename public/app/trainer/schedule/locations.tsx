@@ -149,7 +149,7 @@ export default function Locations() {
         <Text style={styles.title}>Training Locations</Text>
         <Pressable 
           style={styles.addButton}
-          onPress={() => router.push('/trainer-dashboard/schedule/locations/add')}
+          onPress={() => router.push('./add', {relativeToDirectory: true})}
         >
           <Text style={styles.addButtonText}>Add</Text>
         </Pressable>
@@ -281,7 +281,7 @@ export default function Locations() {
               >
                 <Pressable 
                   style={styles.locationCard}
-                  onPress={() => router.push(`/trainer-dashboard/schedule/locations/${location.id}`)}
+                  onPress={() => router.push(`./${location.id}`, {relativeToDirectory: true})}
                 >
                   <View style={styles.locationHeader}>
                     <View style={styles.locationInfo}>

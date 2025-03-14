@@ -72,7 +72,7 @@ export default function WorkoutPlanDetails() {
 
   const handleAssign = () => {
     if (typeof id === 'string' && isValidUUID(id)) {
-      router.push(`/trainer-dashboard/workout-plans/${id}/assign`);
+      router.push(`./assign`, {relativeToDirectory: true});
     }
   };
 

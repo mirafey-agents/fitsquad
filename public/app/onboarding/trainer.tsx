@@ -79,7 +79,7 @@ export default function TrainerOnboarding() {
 
   const handleComplete = () => {
     // Here you would typically save the profile data
-    router.replace('/trainer-dashboard');
+    router.replace('/trainer');
   };
 
   return (

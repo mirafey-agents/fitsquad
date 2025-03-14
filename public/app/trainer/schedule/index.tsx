@@ -295,7 +295,7 @@ export default function Schedule() {
                       styles.sessionCard,
                       { backgroundColor: SESSION_TYPES[session.type].color + '20' }
                     ]}
-                    onPress={() => router.push(`/trainer-dashboard/schedule/${session.id}`)}
+                    onPress={() => router.push(`./${session.id}`, {relativeToDirectory: true})}
                   >
                     <View style={styles.sessionHeader}>
                       <View style={styles.sessionType}>
@@ -408,7 +408,7 @@ export default function Schedule() {
                         styles.weekSessionCard,
                         { backgroundColor: SESSION_TYPES[session.type].color + '20' }
                       ]}
-                      onPress={() => router.push(`/trainer-dashboard/schedule/${session.id}`)}
+                      onPress={() => router.push(`./${session.id}`, {relativeToDirectory: true})}
                     >
                       <View style={styles.weekSessionHeader}>
                         <View style={styles.sessionType}>
@@ -514,19 +514,19 @@ export default function Schedule() {
         <View style={styles.headerActions}>
           <Pressable 
             style={styles.actionButton}
-            onPress={() => router.push('/trainer-dashboard/schedule/locations')}
+            onPress={() => router.push('./locations', {relativeToDirectory: true})}
           >
             <Ionicons name="location" size={24} color={colors.primary.dark} />
           </Pressable>
           <Pressable 
             style={styles.actionButton}
-            onPress={() => router.push('/trainer-dashboard/schedule/analytics')}
+            onPress={() => router.push('./analytics', {relativeToDirectory: true})}
           >
             <Ionicons name="stats-chart" size={24} color={colors.primary.dark} />
           </Pressable>
           <Pressable 
             style={styles.createButton}
-            onPress={() => router.push('/trainer-dashboard/schedule/create')}
+            onPress={() => router.push('./create', {relativeToDirectory: true})}
           >
             <Text style={styles.createButtonText}>New Session</Text>
           </Pressable>

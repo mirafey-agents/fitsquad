@@ -464,13 +464,13 @@ export default function PaymentManagement() {
         <View style={styles.headerActions}>
           <Pressable 
             style={styles.createButton}
-            onPress={() => router.push('/trainer-dashboard/payments/pricing')}
+            onPress={() => router.push('./pricing', {relativeToDirectory: true})}
           >
             <Text style={styles.createButtonText}>Pricing</Text>
           </Pressable>
           <Pressable 
             style={styles.createButton}
-            onPress={() => router.push('/trainer-dashboard/payments/create')}
+            onPress={() => router.push('./create', {relativeToDirectory: true})}
           >
             <Text style={styles.createButtonText}>Create</Text>
           </Pressable>
@@ -483,7 +483,7 @@ export default function PaymentManagement() {
             <Text style={styles.dashboardTitle}>Financial Dashboard</Text>
             <Pressable 
               style={styles.analyticsButton}
-              onPress={() => router.push('/trainer-dashboard/payments/analytics')}
+              onPress={() => router.push('./analytics', {relativeToDirectory: true})}
             >
               <Ionicons name="stats-chart" size={16} color="#4F46E5" />
               <Text style={styles.analyticsButtonText}>Full Analytics</Text>
@@ -596,7 +596,7 @@ export default function PaymentManagement() {
         <View style={styles.actionsRow}>
           <Pressable 
             style={styles.actionButton}
-            onPress={() => router.push('/trainer-dashboard/payments/reminders')}
+            onPress={() => router.push('./reminders', {relativeToDirectory: true})}
           >
             <Ionicons name="notifications" size={16} color="#4F46E5" />
             <Text style={styles.actionButtonText}>Reminders</Text>
@@ -604,7 +604,7 @@ export default function PaymentManagement() {
           
           <Pressable 
             style={styles.actionButton}
-            onPress={() => router.push('/trainer-dashboard/payments/templates')}
+            onPress={() => router.push('./templates', {relativeToDirectory: true})}
           >
             <Ionicons name="document-text" size={16} color="#4F46E5" />
             <Text style={styles.actionButtonText}>Templates</Text>
@@ -612,7 +612,7 @@ export default function PaymentManagement() {
           
           <Pressable 
             style={styles.actionButton}
-            onPress={() => router.push('/trainer-dashboard/payments/export')}
+            onPress={() => router.push('./export', {relativeToDirectory: true})}
           >
             <Ionicons name="download" size={16} color="#4F46E5" />
             <Text style={styles.actionButtonText}>Export</Text>
@@ -620,7 +620,7 @@ export default function PaymentManagement() {
           
           <Pressable 
             style={styles.actionButton}
-            onPress={() => router.push('/trainer-dashboard/payments/settings')}
+            onPress={() => router.push('./settings', {relativeToDirectory: true})}
           >
             <Ionicons name="settings" size={16} color="#4F46E5" />
             <Text style={styles.actionButtonText}>Settings</Text>
@@ -867,7 +867,7 @@ export default function PaymentManagement() {
             </Text>
             <Pressable 
               style={styles.createFirstButton}
-              onPress={() => router.push('/trainer-dashboard/payments/create')}
+              onPress={() => router.push('./create', {relativeToDirectory: true})}
             >
               <Ionicons name="add" size={20} color="#FFFFFF" />
               <Text style={styles.createFirstButtonText}>Create First Payment</Text>
@@ -903,7 +903,7 @@ export default function PaymentManagement() {
                     styles.paymentRow,
                     selectedPayments.includes(payment.id) && styles.selectedRow
                   ]}
-                  onPress={() => router.push(`/trainer-dashboard/payments/${payment.id}`)}
+                  onPress={() => router.push(`./${payment.id}`, {relativeToDirectory: true})}
                 >
                   <Pressable 
                     style={styles.checkbox}
@@ -947,7 +947,7 @@ export default function PaymentManagement() {
                         if (payment.status === 'pending' || payment.status === 'overdue') {
                           handleMarkAsPaid(payment.id);
                         } else if (payment.status === 'completed') {
-                          router.push(`/trainer-dashboard/payments/${payment.id}`);
+                          router.push(`./${payment.id}`, {relativeToDirectory: true});
                         }
                       }}
                     >

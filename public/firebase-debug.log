@@ -1,0 +1,78 @@
+[debug] [2025-03-14T16:11:56.431Z] ----------------------------------------------------------------------
+[debug] [2025-03-14T16:11:56.433Z] Command:       /snap/node/9796/bin/node /usr/local/bin/firebase deploy --only hosting
+[debug] [2025-03-14T16:11:56.433Z] CLI Version:   12.5.4
+[debug] [2025-03-14T16:11:56.434Z] Platform:      linux
+[debug] [2025-03-14T16:11:56.434Z] Node Version:  v18.20.7
+[debug] [2025-03-14T16:11:56.434Z] Time:          Fri Mar 14 2025 21:41:56 GMT+0530 (India Standard Time)
+[debug] [2025-03-14T16:11:56.434Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-03-14T16:11:56.498Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-03-14T16:11:56.498Z] > authorizing via signed-in user (rahul.sekar@gmail.com)
+[debug] [2025-03-14T16:11:56.498Z] [iam] checking project fit-squad-club for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-03-14T16:11:56.500Z] > refreshing access token with scopes: []
+[debug] [2025-03-14T16:11:56.501Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-03-14T16:11:56.501Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-03-14T16:11:56.773Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-03-14T16:11:56.774Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-03-14T16:11:56.788Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/fit-squad-club:testIamPermissions [none]
+[debug] [2025-03-14T16:11:56.788Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/fit-squad-club:testIamPermissions x-goog-quota-user=projects/fit-squad-club
+[debug] [2025-03-14T16:11:56.789Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/fit-squad-club:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-03-14T16:11:58.110Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/fit-squad-club:testIamPermissions 200
+[debug] [2025-03-14T16:11:58.110Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/fit-squad-club:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-03-14T16:11:58.111Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/fit-squad-club [none]
+[debug] [2025-03-14T16:11:58.828Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/fit-squad-club 200
+[debug] [2025-03-14T16:11:58.828Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/fit-squad-club {"projectId":"fit-squad-club","projectNumber":"391976019038","displayName":"fit-squad-club","name":"projects/fit-squad-club","resources":{"hostingSite":"fit-squad-club"},"state":"ACTIVE","etag":"1_e6a785bf-59ee-4b6b-a9af-fb8e962e3e96"}
+[info] 
+[info] === Deploying to 'fit-squad-club'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2025-03-14T16:11:58.833Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions [none]
+[debug] [2025-03-14T16:11:58.833Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2025-03-14T16:11:59.956Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions 200
+[debug] [2025-03-14T16:11:59.956Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions {"name":"projects/391976019038/sites/fit-squad-club/versions/e5883ab3ddc4b8a2","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[fit-squad-club]: beginning deploy... 
+[info] i  hosting[fit-squad-club]: found 8 files in public/dist 
+[debug] [2025-03-14T16:11:59.970Z] [hosting] uploading with 200 concurrency
+[debug] [2025-03-14T16:12:00.068Z] [hosting] hash cache [cHVibGljL2Rpc3Q] stored for 8 files
+[debug] [2025-03-14T16:12:00.068Z] [hosting][hash queue][FINAL] {"max":93,"min":3,"avg":14.75,"active":0,"complete":8,"success":8,"errored":0,"retried":0,"total":8,"elapsed":96}
+[debug] [2025-03-14T16:12:00.068Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/391976019038/sites/fit-squad-club/versions/e5883ab3ddc4b8a2:populateFiles [none]
+[debug] [2025-03-14T16:12:00.068Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/391976019038/sites/fit-squad-club/versions/e5883ab3ddc4b8a2:populateFiles {"files":{"/_expo/static/js/web/browser-d41d8cd98f00b204e9800998ecf8427e.js":"f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec","/metadata.json":"5c0702d086304f2b42d9e8fd5840ae7c3035215e98537aae92e87018b22d7f88","/index.html":"93ab8779029d7dbf6890e52a82e9960f0ee921ce9a61e77b4ec138621776314a","/_expo/static/js/web/browser-d5fa40bb61b2bf70144d1031596722e1.js":"d3d67c14a74a6924ad55c931bd2dbea2696eebf84f0197f14e62085b1c010f4b","/dist/404.html":"6537619fa0edb6a05c3fa83265461172fea2307ecff34424f323310c8c8eb4be","/dist/index.html":"4b78d8b869cde43df02b51a76ad41fb4662618b47fbcb1737dcd555597b8fe95","/favicon.ico":"26be925de9fc8d03f0b83d36e9a83588ff1afe96d828ed6fdd54e2fa2a3999cf","/_expo/static/js/web/entry-81bc383eb7ac7241695088c778259042.js":"b5ec9adf20eda3272fcfecbc622284fecc82994a1781ed16c5933f834ea3fb9e"}}
+[debug] [2025-03-14T16:12:00.907Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/391976019038/sites/fit-squad-club/versions/e5883ab3ddc4b8a2:populateFiles 200
+[debug] [2025-03-14T16:12:00.907Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/391976019038/sites/fit-squad-club/versions/e5883ab3ddc4b8a2:populateFiles {"uploadRequiredHashes":["93ab8779029d7dbf6890e52a82e9960f0ee921ce9a61e77b4ec138621776314a","b5ec9adf20eda3272fcfecbc622284fecc82994a1781ed16c5933f834ea3fb9e"],"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files"}
+[debug] [2025-03-14T16:12:00.908Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/93ab8779029d7dbf6890e52a82e9960f0ee921ce9a61e77b4ec138621776314a [none]
+[debug] [2025-03-14T16:12:00.908Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/93ab8779029d7dbf6890e52a82e9960f0ee921ce9a61e77b4ec138621776314a [stream]
+[debug] [2025-03-14T16:12:00.908Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/b5ec9adf20eda3272fcfecbc622284fecc82994a1781ed16c5933f834ea3fb9e [none]
+[debug] [2025-03-14T16:12:00.908Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/b5ec9adf20eda3272fcfecbc622284fecc82994a1781ed16c5933f834ea3fb9e [stream]
+[debug] [2025-03-14T16:12:00.909Z] [hosting][populate queue][FINAL] {"max":841,"min":841,"avg":841,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":842}
+[debug] [2025-03-14T16:12:00.909Z] [hosting] uploads queued: 2
+[debug] [2025-03-14T16:12:03.024Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/93ab8779029d7dbf6890e52a82e9960f0ee921ce9a61e77b4ec138621776314a 200
+[debug] [2025-03-14T16:12:03.025Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/93ab8779029d7dbf6890e52a82e9960f0ee921ce9a61e77b4ec138621776314a [stream]
+[debug] [2025-03-14T16:12:03.334Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/b5ec9adf20eda3272fcfecbc622284fecc82994a1781ed16c5933f834ea3fb9e 200
+[debug] [2025-03-14T16:12:03.334Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/fit-squad-club/versions/e5883ab3ddc4b8a2/files/b5ec9adf20eda3272fcfecbc622284fecc82994a1781ed16c5933f834ea3fb9e [stream]
+[debug] [2025-03-14T16:12:03.335Z] [hosting][upload queue][FINAL] {"max":2428,"min":2118,"avg":2273,"active":0,"complete":2,"success":2,"errored":0,"retried":0,"total":2,"elapsed":2428}
+[info] ✔  hosting[fit-squad-club]: file upload complete 
+[debug] [2025-03-14T16:12:03.336Z] [hosting] deploy completed after 3377ms
+[debug] [2025-03-14T16:12:03.336Z] [
+  {
+    "config": {
+      "public": "public/dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "site": "fit-squad-club"
+    },
+    "version": "projects/391976019038/sites/fit-squad-club/versions/e5883ab3ddc4b8a2"
+  }
+]
+[info] i  hosting[fit-squad-club]: finalizing version... 
+[debug] [2025-03-14T16:12:03.339Z] >>> [apiv2][query] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions/e5883ab3ddc4b8a2 updateMask=status%2Cconfig
+[debug] [2025-03-14T16:12:03.340Z] >>> [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions/e5883ab3ddc4b8a2 {"status":"FINALIZED","config":{}}
+[debug] [2025-03-14T16:12:04.256Z] <<< [apiv2][status] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions/e5883ab3ddc4b8a2 200
+[debug] [2025-03-14T16:12:04.256Z] <<< [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/versions/e5883ab3ddc4b8a2 {"name":"projects/391976019038/sites/fit-squad-club/versions/e5883ab3ddc4b8a2","status":"FINALIZED","config":{},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2025-03-14T16:11:59.500807Z","createUser":{"email":"rahul.sekar@gmail.com"},"finalizeTime":"2025-03-14T16:12:04.066452Z","finalizeUser":{"email":"rahul.sekar@gmail.com"}}
+[debug] [2025-03-14T16:12:04.256Z] [hosting] finalized version for fit-squad-club:[object Object]
+[info] ✔  hosting[fit-squad-club]: version finalized 
+[info] i  hosting[fit-squad-club]: releasing new version... 
+[debug] [2025-03-14T16:12:04.257Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/channels/live/releases versionName=projects%2F391976019038%2Fsites%2Ffit-squad-club%2Fversions%2Fe5883ab3ddc4b8a2
+[debug] [2025-03-14T16:12:04.257Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/fit-squad-club/channels/live/releases {}

@@ -218,7 +218,7 @@ export default function MemberDetails() {
         <Text style={styles.title}>Member Details</Text>
         <Pressable 
           style={styles.editButton}
-          onPress={() => router.push(`/trainer-dashboard/members/${member.id}/edit`)}
+          onPress={() => router.push(`./edit`, {relativeToDirectory: true})}
         >
           <Text style={styles.editButtonText}>Edit</Text>
         </Pressable>
@@ -500,7 +500,7 @@ export default function MemberDetails() {
           {member.onboarding_status === 'completed' && (
             <Pressable 
               style={styles.assessmentButton}
-              onPress={() => router.push(`/trainer-dashboard/members/${member.id}/assessment`)}
+              onPress={() => router.push(`./assessment`, {relativeToDirectory: true})}
             >
               <Ionicons name="analytics" size={20} color="#FFFFFF" />
               <Text style={styles.assessmentButtonText}>Schedule Assessment</Text>

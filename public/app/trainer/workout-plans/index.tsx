@@ -168,7 +168,7 @@ export default function WorkoutPlans() {
         <Text style={styles.title}>Workout Plans</Text>
         <Pressable 
           style={styles.createButton}
-          onPress={() => router.push('/trainer-dashboard/workout-plans/create')}
+          onPress={() => router.push('./create', {relativeToDirectory: true})}
         >
           <Text style={styles.createButtonText}>Create</Text>
         </Pressable>
@@ -251,7 +251,7 @@ export default function WorkoutPlans() {
               >
                 <Pressable 
                   style={styles.planCard}
-                  onPress={() => router.push(`/trainer-dashboard/workout-plans/${plan.id}`)}
+                  onPress={() => router.push(`./${plan.id}`, {relativeToDirectory: true})}
                 >
                   <View style={styles.planHeader}>
                     <View>
@@ -292,14 +292,14 @@ export default function WorkoutPlans() {
                   <View style={styles.cardActions}>
                     <Pressable 
                       style={styles.actionButton}
-                      onPress={() => router.push(`/trainer-dashboard/workout-plans/${plan.id}/edit`)}
+                      onPress={() => router.push(`./${plan.id}/edit`, {relativeToDirectory: true})}
                     >
                       <Ionicons name="create" size={20} color="#4F46E5" />
                       <Text style={styles.actionButtonText}>Edit</Text>
                     </Pressable>
                     <Pressable 
                       style={styles.actionButton}
-                      onPress={() => router.push(`/trainer-dashboard/workout-plans/${plan.id}/assign`)}
+                      onPress={() => router.push(`./${plan.id}/assign`, {relativeToDirectory: true})}
                     >
                       <Ionicons name="people" size={20} color="#4F46E5" />
                       <Text style={styles.actionButtonText}>Assign</Text>

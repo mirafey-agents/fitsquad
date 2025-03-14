@@ -157,7 +157,7 @@ export default function SquadMembers() {
         <Text style={styles.title}>Squad Members</Text>
         <Pressable 
           style={styles.addButton}
-          onPress={() => router.push(`/trainer-dashboard/manage-squads/${id}/members/add`)}
+          onPress={() => router.push(`/trainer/manage-squads/${id}/members/add`)}
         >
           <Text style={styles.addButtonText}>Add</Text>
         </Pressable>
@@ -255,14 +255,14 @@ export default function SquadMembers() {
                 <View style={styles.memberActions}>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/members/${member.user_id}`)}
+                    onPress={() => router.push(`/trainer/members/${member.user_id}`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="person" size={20} color={colors.primary.dark} />
                     <Text style={styles.actionButtonText}>Profile</Text>
                   </Pressable>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/members/${member.user_id}/assessment`)}
+                    onPress={() => router.push(`/trainer/members/${member.user_id}/assessment`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="analytics" size={20} color={colors.primary.dark} />
                     <Text style={styles.actionButtonText}>Assessment</Text>

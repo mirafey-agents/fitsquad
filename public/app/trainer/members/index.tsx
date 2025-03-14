@@ -194,7 +194,7 @@ export default function MemberManagement() {
         <Text style={styles.title}>Member Management</Text>
         <Pressable 
           style={styles.addButton}
-          onPress={() => router.push('/trainer-dashboard/members/add')}
+          onPress={() => router.push('./add', {relativeToDirectory: true})}
         >
           <Text style={styles.addButtonText}>Add Member</Text>
         </Pressable>
@@ -285,7 +285,7 @@ export default function MemberManagement() {
       <View style={styles.actionsRow}>
         <Pressable 
           style={styles.invitationsButton}
-          onPress={() => router.push('/trainer-dashboard/members/invitations')}
+          onPress={() => router.push('./invitations', {relativeToDirectory: true})}
         >
           <Ionicons name="mail" size={16} color="#4F46E5" />
           <Text style={styles.invitationsText}>Manage Invitations</Text>
@@ -306,7 +306,7 @@ export default function MemberManagement() {
             </Text>
             <Pressable 
               style={styles.addFirstMemberButton}
-              onPress={() => router.push('/trainer-dashboard/members/add')}
+              onPress={() => router.push('./add', {relativeToDirectory: true})}
             >
               <Ionicons name="person-add" size={20} color="#FFFFFF" />
               <Text style={styles.addFirstMemberText}>Add First Member</Text>
@@ -320,7 +320,7 @@ export default function MemberManagement() {
             >
               <Pressable 
                 style={styles.memberCard}
-                onPress={() => router.push(`/trainer-dashboard/members/${member.id}`)}
+                onPress={() => router.push(`./${member.id}`, {relativeToDirectory: true})}
               >
                 <View style={styles.memberHeader}>
                   <View>
@@ -357,7 +357,7 @@ export default function MemberManagement() {
                 <View style={styles.memberActions}>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer-dashboard/members/${member.id}/edit`)}
+                    onPress={() => router.push(`./${member.id}/edit`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="create" size={20} color="#4F46E5" />
                     <Text style={styles.actionButtonText}>Edit</Text>
@@ -365,7 +365,7 @@ export default function MemberManagement() {
                   {member.onboarding_status === 'completed' && (
                     <Pressable 
                       style={styles.actionButton}
-                      onPress={() => router.push(`/trainer-dashboard/members/${member.id}/assessment`)}
+                      onPress={() => router.push(`./${member.id}/assessment`, {relativeToDirectory: true})}
                     >
                       <Ionicons name="fitness" size={20} color="#4F46E5" />
                       <Text style={styles.actionButtonText}>Assessment</Text>

@@ -88,19 +88,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="workout"
+        name="profile"
         options={{
-          title: 'Workout',
-          tabBarLabelStyle: {
-            marginTop: -4,
-          },
-          tabBarIcon: ({ color }) => (
-            <View style={styles.addButton}>
-              <Ionicons name="add" size={28} color={colors.primary.light} />
-            </View>
+          title: 'profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
           ),
         }}
       />
+      <Tabs.Screen name="challenges" options={{href: null}}/>
+      <Tabs.Screen name="progress" options={{href: null}}/>
     </Tabs>
   );
 }

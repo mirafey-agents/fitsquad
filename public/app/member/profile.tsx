@@ -20,6 +20,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingFlow from '../../components/OnboardingFlow';
 import { checkOnboardingStatus } from '../../utils/supabase';
+import { router } from 'expo-router';
 
 const PROFILE_DATA = {
   name: 'Guest',
@@ -328,7 +329,10 @@ export default function Profile() {
         <Text style={styles.editProfileText}>Edit Profile</Text>
       </Pressable>
 
-      <Pressable style={styles.logoutButton}>
+      <Pressable
+        style={styles.logoutButton}
+        onPress={() => {router.replace('/logout')}}
+      >
         <Ionicons name="log-out" size={20} color={colors.semantic.error} />
         <Text style={styles.logoutText}>Log Out</Text>
       </Pressable>

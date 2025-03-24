@@ -37,6 +37,8 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+.temp/*
+
 # VS Code files
 .vscode/*
 !.vscode/extensions.json

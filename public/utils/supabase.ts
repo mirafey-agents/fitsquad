@@ -9,30 +9,31 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 // Configure Supabase client with proper options for web environment
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: false, // Don't persist auth state
+    persistSession: true,
     detectSessionInUrl: false, // Don't detect OAuth redirects
-    autoRefreshToken: false, // Don't auto refresh token
-    storage: {
-      // Implement in-memory storage for web
-      getItem: (key: string) => {
-        try {
-          const value = sessionStorage.getItem(key);
-          return value ? JSON.parse(value) : null;
-        } catch {
-          return null;
-        }
-      },
-      setItem: (key: string, value: any) => {
-        try {
-          sessionStorage.setItem(key, JSON.stringify(value));
-        } catch {}
-      },
-      removeItem: (key: string) => {
-        try {
-          sessionStorage.removeItem(key);
-        } catch {}
-      },
-    },
+    autoRefreshToken: true, // Don't auto refresh token
+    // storage: {
+    //   // Implement in-memory storage for web
+    //   getItem: (key: string) => {
+    //     try {
+    //       const value = sessionStorage.getItem(key);
+    //       return value ? JSON.parse(value) : null;
+    //     } catch {
+    //       return null;
+    //     }
+    //   },
+    //   setItem: (key: string, value: any) => {
+    //     console.log('setItem: ', key, value);
+    //     try {
+    //       sessionStorage.setItem(key, JSON.stringify(value));
+    //     } catch {}
+    //   },
+    //   removeItem: (key: string) => {
+    //     try {
+    //       sessionStorage.removeItem(key);
+    //     } catch {}
+    //   },
+    // },
   },
   global: {
     headers: {

@@ -7,6 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import Logo from '../../components/Logo';
 import { getLoggedInUser } from '../../utils/supabase';
+import {getUserWorkouts} from '../../utils/firebase';
+
 import {
   colors,
   shadows,
@@ -138,7 +140,7 @@ export default function Home() {
   const getWorkoutIndicator = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const workout = WORKOUT_DATA[dateStr];
-
+  
     if (!workout) return null;
 
     if (
@@ -161,8 +163,14 @@ export default function Home() {
 
   useEffect(() => {
     const userData = getLoggedInUser();
-    console.log('membser dashboard', userData);
+    console.log('member dashboard', userData);
     setUserData(userData);
+    getUserWorkouts(new Date(2024,1,1), new Date(2025,12,1)).then(
+      (workouts) => {
+        console.log('workouts: ', workouts);
+      }
+    );
+
   }, []);
 
   return (

@@ -1,5 +1,5 @@
 import * as jwt from 'jsonwebtoken';
-// import {config} from 'firebase-functions';
+import {config} from 'firebase-functions';
 
 interface SupabaseAuthJWT {
     aud: string;
@@ -17,8 +17,7 @@ export const verifySupabaseToken = (token: string): any => {
       // Verify the JWT using Supabase JWT secret
       const decoded = jwt.verify(
         cleanToken, 
-        // config().supabase.jwt_secret
-        't9+YWZbfD4dj3kLA7+sUKp6a5kSFxPWBAN6tr9y54vLSjam2CeZdzaXNeREFK4a4mhUWGlkEc4qyNos52f9ivw=='
+         config().supabase.jwt_secret
       ) as SupabaseAuthJWT;
   
       // Check if token is expired

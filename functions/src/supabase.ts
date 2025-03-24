@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { config } from 'firebase-functions';
+
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
-//   functions.config().supabase.url,
-//   functions.config().supabase.service_key,
+//   config().supabase.url,
   "https://nlysmwhxasokzkrhfcfy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5seXNtd2h4YXNva3prcmhmY2Z5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTk1NDIxNSwiZXhwIjoyMDU1NTMwMjE1fQ.gl_eHUL1lWOi_V9X8QEUEPbgj1yJ2QAN8eyr1tqel5k",
+  config().supabase.service_key,
   {
     auth: {
       autoRefreshToken: false,

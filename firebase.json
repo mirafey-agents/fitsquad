@@ -21,6 +21,7 @@
     {
       "source": "functions",
       "codebase": "default",
+      "region": "asia-south1",
       "ignore": [
         "node_modules",
         ".git",

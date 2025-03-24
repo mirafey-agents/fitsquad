@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'firebase-functions';
+import {createClient} from "@supabase/supabase-js";
+import {config} from "firebase-functions";
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
@@ -9,19 +9,21 @@ const supabaseAdmin = createClient(
   {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   }
 );
 
-export const getWorkoutData = async (startDate: Date, endDate: Date, userId: string) => {
-    const { data } = await supabaseAdmin
-      .from('user_workouts')
-      .select(`*`)
-      .eq('user_id', userId)
-      .gte('start_time', startDate.toISOString())
-      .lte('start_time', endDate.toISOString())
-      .order('start_time', { ascending: true });
+export const getWorkoutData = async (
+  startDate: Date, endDate: Date, userId: string
+) => {
+  const {data} = await supabaseAdmin
+    .from("user_workouts")
+    .select("*")
+    .eq("user_id", userId)
+    .gte("start_time", startDate.toISOString())
+    .lte("start_time", endDate.toISOString())
+    .order("start_time", {ascending: true});
 
-    return { 'workouts': data };
+  return {"workouts": data};
 };

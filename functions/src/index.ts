@@ -8,10 +8,10 @@
  */
 
 
-import { onRequest, onCall, HttpsError } from "firebase-functions/v2/https";
+import {onRequest, onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
-import { verifySupabaseToken } from "./auth";
-import { getWorkoutData } from "./supabase";
+import {verifySupabaseToken} from "./auth";
+import {getWorkoutData} from "./supabase";
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
@@ -24,43 +24,38 @@ export const helloWorld = onRequest((request, response) => {
 export const getWorkouts = onCall(async (request: any) => {
   try {
     // Validate input
-    const { start_date, end_date, auth_token } = request.data;
-    if (!start_date || !end_date || !auth_token) {
+    const {start_date: stDt, end_date: enDt, auth_token: auTkn} = request.data;
+    if (!stDt || !enDt || !auTkn) {
       throw new HttpsError(
-        'invalid-argument',
-        'Missing required parameters: start_date, end_date, or auth_token'
+        "invalid-argument",
+        "Missing required parameters: start_date, end_date, or auth_token"
       );
     }
 
     // Verify dates are valid
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
-    
+    const startDate = new Date(stDt);
+    const endDate = new Date(enDt);
+
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new HttpsError('invalid-argument','Invalid date format');
+      throw new HttpsError("invalid-argument", "Invalid date format");
     }
 
     if (endDate < startDate) {
-      throw new HttpsError('invalid-argument','End date must be after start date');
+      throw new HttpsError("invalid-argument",
+        "End date must be after start date");
     }
-    
+
     // Verify Supabase JWT and get user ID
-    const {userId} = verifySupabaseToken(auth_token);
+    const {userId} = verifySupabaseToken(auTkn);
     // console.log(userId);
-    
-    // // Query workouts for the user within dat
-    // if (error) {
-    //   console.error('Supabase query error:', error);
-    //   throw new functions.https.HttpsError('internal', 'Database query failed');
-    // }
+
     const workouts = await getWorkoutData(startDate, endDate, userId);
     return workouts;
-
   } catch (error: any) {
-    console.error('Function error:', error);
+    console.error("Function error:", error);
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError('internal', error.message);
+    throw new HttpsError("internal", error.message);
   }
-}); 
+});

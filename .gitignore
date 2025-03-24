@@ -10,7 +10,7 @@ web-build/
 
 # Firebase
 .firebase/*
-firebase-debug.log*
+*.log*
 # Native
 *.orig.*
 *.jks
@@ -55,3 +55,9 @@ yarn-error.*
 
 expo-env.d.ts
 # @end expo-cli
+
+# Compiled JavaScript files
+functions/lib/*
+
+# TypeScript v1 declaration files
+typings/

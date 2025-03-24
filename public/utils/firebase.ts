@@ -12,7 +12,8 @@ const firebaseConfig = {
 };
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app);
+const functions = getFunctions(app, 'asia-south1');
+// console.log(functions);
 
 // connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 

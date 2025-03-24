@@ -1,23 +1,28 @@
 import {createClient} from "@supabase/supabase-js";
-import {config} from "firebase-functions";
 
 // Initialize Supabase admin client
-const supabaseAdmin = createClient(
-//   config().supabase.url,
-  "https://nlysmwhxasokzkrhfcfy.supabase.co",
-  config().supabase.service_key,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+let supabaseAdmin: any = null;
+
+const getAdmin = () => {
+  if (!supabaseAdmin) {
+    supabaseAdmin = createClient(
+      "https://nlysmwhxasokzkrhfcfy.supabase.co",
+      process.env.SUPABASE_SERVICE_KEY ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
   }
-);
+  return supabaseAdmin;
+};
 
 export const getWorkoutData = async (
   startDate: Date, endDate: Date, userId: string
 ) => {
-  const {data} = await supabaseAdmin
+  const {data} = await getAdmin()
     .from("user_workouts")
     .select("*")
     .eq("user_id", userId)

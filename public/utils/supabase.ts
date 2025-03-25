@@ -49,14 +49,22 @@ export async function login(email, password) {
   });
   console.log('login: ', data);
 
-  const profile = await supabase.from('users').select('*').eq('id', data.user.id).single();
-  console.log('profile: ', profile);
-
-  const res = {user: data.user, profile: profile.data};
-
+  const res = {user: data.user};
   localStorage.setItem('loggedinUser', JSON.stringify(res));
 
+  await updateProfile(data.user.id);
+
   return res;
+}
+
+async function updateProfile(userId: string) {
+  const profile = await supabase.from('users').select('*').eq('id', userId);
+  console.log('profile: ', profile.data[0]);
+
+  const data = getLoggedInUser();
+  data.profile = profile.data[0];
+
+  localStorage.setItem('loggedinUser', JSON.stringify(data));
 }
 
 export function getLoggedInUser() {
@@ -110,11 +118,12 @@ export async function updateUserProfile(profileData: any) {
 // Helper function to complete onboarding with error handling
 export async function completeOnboarding(profileData: any) {
   const loginUser = await getLoggedInUser();
-
+  console.log('onboardingUser: ', profileData);
   try {
-    const { error } = await supabase
-      .from('users')
-      .update({
+    const { error } = await supabase.from('users')
+      .upsert({
+        id: loginUser.user.id,
+        email: loginUser.user.email,
         display_name: profileData.name,
         gender: profileData.gender,
         age: parseInt(profileData.age),
@@ -127,8 +136,9 @@ export async function completeOnboarding(profileData: any) {
         preferred_workout_times: profileData.preferredWorkoutTimes,
         available_equipment: profileData.availableEquipment,
         onboarding_status: 'completed',
-      })
-      .eq('id', loginUser.user.id);
+      }).select();
+
+    await updateProfile(loginUser.user.id);
 
     if (error) {
       console.error('Supabase error:', error);

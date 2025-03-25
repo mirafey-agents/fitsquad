@@ -5,18 +5,15 @@ import { getLoggedInUser } from '../utils/supabase';
 const Index = () => {
   useFrameworkReady();
   const user = getLoggedInUser();
-    
-  if (!user || !user.profile) {
+  if (!user?.user) {
     return <Redirect href="/login"/>
   }
 
-  if (user.profile.role === 'trainer') {
+  if (user.profile && user.profile.role === 'trainer') {
     return <Redirect href="/trainer"/>
-  } else if(user.profile.role === 'member') {
+  } else {
     return <Redirect href="/member"/>
   }
-  alert('Unknown user role: ' + user.profile.role);
-  return <Redirect href="/logout"/>;
 };
 
 export default Index; 

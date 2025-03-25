@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useRootNavigationState } from 'expo-router';
 import Logo from '../../components/Logo';
 import { getLoggedInUser } from '../../utils/supabase';
 import {getUserWorkouts} from '../../utils/firebase';
@@ -98,9 +98,32 @@ const WORKOUT_DATA = {
 };
 
 export default function Home() {
+
+  const rootNavigationState = useRootNavigationState()
+  const navigatorReady = rootNavigationState?.key != null
+
+  useEffect(() => {
+    if (!navigatorReady) return;
+    const userData = getLoggedInUser();
+    console.log('member dashboard', userData);
+
+    if (!userData.user) {
+      router.push('/login');
+    } else if (userData.profile?.onboarding_status != "completed") {
+      router.push('./onboarding', {relativeToDirectory: true});
+    }
+    
+    setUserData(userData);
+    getUserWorkouts(new Date(2024,1,1), new Date(2025,12,1)).then(
+      (workouts) => {
+        console.log('workouts: ', workouts);
+      }
+    );
+  }, [navigatorReady])
+
   const CURRENT_DATE = new Date();
   const [selectedDate, setSelectedDate] = useState(CURRENT_DATE);
-  const [userData, setUserData] = useState({ user: { name: 'Guest' } });
+  const [userData, setUserData] = useState({profile: {display_name: 'Guest'}});
   const [userVotes, setUserVotes] = useState<{
     mvp: string | null;
     toughest: string | null;
@@ -161,18 +184,6 @@ export default function Home() {
     return WORKOUT_DATA[dateStr]?.energyPoints || 0;
   };
 
-  useEffect(() => {
-    const userData = getLoggedInUser();
-    console.log('member dashboard', userData);
-    setUserData(userData);
-    getUserWorkouts(new Date(2024,1,1), new Date(2025,12,1)).then(
-      (workouts) => {
-        console.log('workouts: ', workouts);
-      }
-    );
-
-  }, []);
-
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
@@ -184,7 +195,7 @@ export default function Home() {
         <View style={styles.headerContent}>
           <Logo size="large" />
           <Text style={styles.greeting}>
-            Welcome back, {userData?.user.name || 'Guest'}!
+            Hello {userData?.profile?.display_name || 'Guest'}
           </Text>
           <Text style={styles.subtitle}>Let's crush today's goals! 💪</Text>
         </View>

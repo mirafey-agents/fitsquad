@@ -3,7 +3,7 @@ import {createClient} from "@supabase/supabase-js";
 // Initialize Supabase admin client
 let supabaseAdmin: any = null;
 
-const getAdmin = () => {
+export const getAdmin = () => {
   if (!supabaseAdmin) {
     supabaseAdmin = createClient(
       "https://nlysmwhxasokzkrhfcfy.supabase.co",
@@ -17,6 +17,13 @@ const getAdmin = () => {
     );
   }
   return supabaseAdmin;
+};
+
+export const getRole = async (userId: string): Promise<string> => {
+  const {data} = await getAdmin()
+    .from("users")
+    .select("role").eq("id", userId);
+  return data?.[0]?.role ?? "";
 };
 
 export const getWorkoutData = async (

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../../../utils/supabase';
-
+import { getMembers } from '../../../utils/firebase';
 interface Member {
   id: string;
   display_name: string;
@@ -34,17 +34,9 @@ export default function MemberManagement() {
     try {
       setLoading(true);
       setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('role', 'member')
-        .order('created_at', { ascending: false });
-
-      if (fetchError) throw fetchError;
-      
-      console.log("Fetched members:", data?.length || 0);
-      setMembers(data || []);
+      const members = await getMembers("");
+      console.log("Fetched members:", members);
+      setMembers(members.data as Member[] || []);
     } catch (error) {
       console.error('Error fetching members:', error);
       setError('Failed to load members');
@@ -141,49 +133,6 @@ export default function MemberManagement() {
     }
   };
 
-  // Add a demo member if none exist
-  const addDemoMember = async () => {
-    try {
-      const { data: existingMembers, error: checkError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('role', 'member')
-        .limit(1);
-      
-      if (checkError) throw checkError;
-      
-      if (!existingMembers || existingMembers.length === 0) {
-        const { data: member, error: memberError } = await supabase
-          .from('users')
-          .insert({
-            display_name: 'Alex Wong',
-            email: 'alex@example.com',
-            phone_number: '+91 98765 43210',
-            role: 'member',
-            service_type: 'Personal Training',
-            primary_goal: 'Weight Loss',
-            onboarding_status: 'completed',
-            notes: 'Demo member for testing',
-          })
-          .select()
-          .single();
-
-        if (memberError) throw memberError;
-        
-        // Refresh the member list
-        fetchMembers();
-      }
-    } catch (error) {
-      console.error('Error adding demo member:', error);
-    }
-  };
-
-  // Check for members and add a demo one if none exist
-  useEffect(() => {
-    if (!loading && members.length === 0) {
-      addDemoMember();
-    }
-  }, [loading, members]);
 
   return (
     <View style={styles.container}>

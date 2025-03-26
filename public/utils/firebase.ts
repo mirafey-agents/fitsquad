@@ -30,9 +30,9 @@ export async function getUserWorkouts(startDate: Date, endDate: Date) {
       }
       
       const result = await httpsCallable(functions, 'getWorkouts')({
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        auth_token: session.access_token
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        authToken: session.access_token
       });
   
       return result.data.workouts;
@@ -40,4 +40,38 @@ export async function getUserWorkouts(startDate: Date, endDate: Date) {
       console.error('Error fetching workouts:', error);
       throw error;
     }
+}
+
+export async function createMember(member: any) {
+
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+      
+  if (!session?.access_token) {
+    throw new Error('No active session');
+  }
+
+  const {email, password, name, phone_number} = member;
+  try {
+    const result = await httpsCallable(functions, 'createMember')({
+      email,
+      password,
+      name,
+      phoneNumber:phone_number,
+      authToken: session.access_token
+    });
+    return {data: result.data, error: null};
+  } catch (error) {
+    console.error('Error creating member:', error);
+    return {data: null, error: error};
+  }
+}
+
+export async function getMembers(memberId: string | null) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'getMembers')({
+    memberId, auth_token: session.access_token
+  });
 }

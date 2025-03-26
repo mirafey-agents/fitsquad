@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { createMember } from '../../../utils/firebase';
 import { supabase } from '../../../utils/supabase';
 import * as Yup from 'yup';
 
@@ -106,61 +107,61 @@ export default function AddMember() {
       const invitationCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
       // Create the member in the database
-      const { data: member, error: memberError } = await supabase
-        .from('users')
-        .insert({
-          display_name: formData.fullName,
-          email: formData.email,
-          phone_number: formData.phoneNumber,
-          role: 'member',
-          service_type: formData.serviceType,
-          primary_goal: formData.primaryGoal,
-          notes: formData.notes,
-          onboarding_status: sendInvitation ? 'invited' : 'pending',
-        })
-        .select()
-        .single();
+      const {data, error} = await createMember({
+        email: formData.email,
+        password: formData.phoneNumber,
+        name: formData.fullName,
+        phone_number: formData.phoneNumber,
+      });
 
-      if (memberError) throw memberError;
+      console.log('Create Member Response:', data, error);
 
+      if(!error) {
+        console.log('no Error')
+        router.push('../', {relativeToDirectory: true});
+        alert('Member added successfully');
+      } else {
+        console.log('Error:', error);
+        alert('Failed to add member: ' + error.message);
+      }
       // If it's group training, add to selected squads
-      if (formData.serviceType === 'Group Training' && selectedSquads.length > 0) {
-        const squadMembersData = selectedSquads.map(squadId => ({
-          squad_id: squadId,
-          user_id: member.id,
-          role: 'member',
-        }));
+      // if (formData.serviceType === 'Group Training' && selectedSquads.length > 0) {
+      //   const squadMembersData = selectedSquads.map(squadId => ({
+      //     squad_id: squadId,
+      //     user_id: member.id,
+      //     role: 'member',
+      //   }));
 
-        const { error: squadError } = await supabase
-          .from('squad_members')
-          .insert(squadMembersData);
+      //   const { error: squadError } = await supabase
+      //     .from('squad_members')
+      //     .insert(squadMembersData);
 
-        if (squadError) throw squadError;
-      }
+      //   if (squadError) throw squadError;
+      // }
 
-      // If sending invitation, create an invitation record
-      if (sendInvitation) {
-        const expiryDate = new Date();
-        expiryDate.setHours(expiryDate.getHours() + 48); // 48 hours from now
+      // // If sending invitation, create an invitation record
+      // if (sendInvitation) {
+      //   const expiryDate = new Date();
+      //   expiryDate.setHours(expiryDate.getHours() + 48); // 48 hours from now
         
-        const reminderDate = new Date();
-        reminderDate.setHours(reminderDate.getHours() + 24); // 24 hours from now
+      //   const reminderDate = new Date();
+      //   reminderDate.setHours(reminderDate.getHours() + 24); // 24 hours from now
 
-        const { error: invitationError } = await supabase
-          .from('member_invitations')
-          .insert({
-            user_id: member.id,
-            invitation_code: invitationCode,
-            status: 'sent',
-            expiry_date: expiryDate.toISOString(),
-            reminder_date: reminderDate.toISOString(),
-          });
+      //   const { error: invitationError } = await supabase
+      //     .from('member_invitations')
+      //     .insert({
+      //       user_id: member.id,
+      //       invitation_code: invitationCode,
+      //       status: 'sent',
+      //       expiry_date: expiryDate.toISOString(),
+      //       reminder_date: reminderDate.toISOString(),
+      //     });
 
-        if (invitationError) throw invitationError;
+      //   if (invitationError) throw invitationError;
 
-        // In a real app, you would send the invitation via WhatsApp and email here
-        console.log(`Invitation sent to ${formData.email} and ${formData.phoneNumber}`);
-      }
+      //   // In a real app, you would send the invitation via WhatsApp and email here
+      //   console.log(`Invitation sent to ${formData.email} and ${formData.phoneNumber}`);
+      // }
 
       Alert.alert(
         'Success',

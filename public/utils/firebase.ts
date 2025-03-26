@@ -72,6 +72,6 @@ export async function getMembers(memberId: string | null) {
   if (sessionError) throw sessionError;
   
   return httpsCallable(functions, 'getMembers')({
-    memberId, auth_token: session.access_token
+    memberId, authToken: session.access_token
   });
 }

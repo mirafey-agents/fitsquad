@@ -67,13 +67,12 @@ export const createMember = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {email, password, name,
-        phone_number: phoneNumber, authToken} = request.data;
+      const {email, password, name, phoneNumber, authToken} = request.data;
 
       if (!email || !password || !name || !phoneNumber || !authToken) {
         throw new HttpsError(
           "invalid-argument",
-          "Missing params: email, password, name, phone_number, or auth_token"
+          "Missing params: email, password, name, phoneNumber, or authToken"
         );
       }
 
@@ -134,7 +133,7 @@ export const getMembers = onCall(
       if (!authToken) {
         throw new HttpsError(
           "invalid-argument",
-          "Missing required parameter: auth_token"
+          "Missing required parameter: authToken"
         );
       }
 

@@ -13,6 +13,7 @@ interface Squad {
   description: string;
   is_private: boolean;
   schedule: any;
+  squad_members: any[];
   member_count: {
     count: number;
   };

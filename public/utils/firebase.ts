@@ -85,11 +85,12 @@ export async function getSquads(squadId: string | null) {
   });
 }
 
-export async function createSquad(name, description, isPrivate, schedule, members) {
+export async function createOrEditSquad(name, description, isPrivate, schedule, members, id=null) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   
-  return httpsCallable(functions, 'createSquad')({
+  return httpsCallable(functions, 'createOrEditSquad')({
+    id,
     name,
     description,
     isPrivate,

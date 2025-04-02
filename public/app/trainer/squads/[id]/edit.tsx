@@ -1,104 +1,61 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { colors, typography, spacing, borderRadius, shadows } from '../../../../constants/theme';
-import { supabase } from '../../../../utils/supabase';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { getMembers, getSquads, createOrEditSquad } from '@/utils/firebase';
+import { colors } from '@/constants/theme';
 
-interface Squad {
-  id: string;
-  name: string;
-  description: string;
-  is_private: boolean;
-  schedule: any;
-}
+
+const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function EditSquad() {
   const { id } = useLocalSearchParams();
-  const [squad, setSquad] = useState<Squad | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    isPrivate: false
-  });
-  const [selectedDays, setSelectedDays] = useState<string[]>(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [members, setMembers] = useState([]);
+  const [squadName, setSquadName] = useState('');
+  const [squadDescription, setSquadDescription] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
+    fetchMembers();
     if (typeof id === 'string') {
       fetchSquadDetails(id);
     }
   }, [id]);
 
-  const fetchSquadDetails = async (squadId: string) => {
+  const fetchSquadDetails = async (id: string) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from('squads')
-        .select('*')
-        .eq('id', squadId)
-        .single();
-
-      if (fetchError) throw fetchError;
-      
-      setSquad(data);
-      setFormData({
-        name: data.name,
-        description: data.description || '',
-        isPrivate: data.is_private || false,
-      });
-      setSelectedDays(data.schedule || []);
+      const squad: any = (await getSquads(id)).data[0];
+      console.log("Squad:", squad);
+      setSquadName(squad.name);
+      setSquadDescription(squad.description);
+      setIsPrivate(squad.isPrivate);
+      setSelectedDays(squad.schedule);
+      setSelectedMembers(squad.squad_members.map((member: any) => member?.users?.id));
+    //   console.log("Selected Members:", selectedMembers);
+    //   setSquad(squad);
     } catch (error) {
       console.error('Error fetching squad:', error);
-      setError('Failed to load squad details');
+    //   setError('Failed to load squad details');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleSave = async () => {
-    if (!formData.name.trim()) {
-      Alert.alert('Error', 'Squad name is required');
-      return;
-    }
-
+  const fetchMembers = async () => {
     try {
-      setSaving(true);
-      setError(null);
-
-      const { error: updateError } = await supabase
-        .from('squads')
-        .update({
-          name: formData.name,
-          description: formData.description,
-          is_private: formData.isPrivate,
-          schedule: selectedDays,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id);
-
-      if (updateError) throw updateError;
-
-      Alert.alert(
-        'Success',
-        'Squad updated successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      const members = await getMembers("");
+      console.log("Fetched members:", members);
+      setMembers(members.data as [] || []);
     } catch (error) {
-      console.error('Error updating squad:', error);
-      setError('Failed to update squad');
-    } finally {
-      setSaving(false);
+      console.error('Error fetching members:', error);
     }
   };
 
@@ -110,134 +67,220 @@ export default function EditSquad() {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={colors.primary.dark} />
-          </Pressable>
-          <Text style={styles.title}>Edit Squad</Text>
-          <View style={{ width: 40 }} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading squad details...</Text>
-        </View>
-      </View>
+  const toggleMember = (memberId: string) => {
+    setSelectedMembers(prev => 
+      prev.includes(memberId)
+        ? prev.filter(id => id !== memberId)
+        : [...prev, memberId]
     );
-  }
+  };
 
-  if (error || !squad) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={colors.primary.dark} />
-          </Pressable>
-          <Text style={styles.title}>Error</Text>
-          <View style={{ width: 40 }} />
-        </View>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error || 'Squad not found'}</Text>
-          <Pressable style={styles.backToSquads} onPress={() => router.back()}>
-            <Text style={styles.backToSquadsText}>Back to Squads</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  }
+  const filteredMembers = members.filter(member => {
+    const matchesSearch = member.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         member.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = !selectedServiceType || member.serviceType === selectedServiceType;
+    return matchesSearch && matchesType;
+  });
+
+  const handleEdit = async () => {
+    try {
+        // console.log("Selected Members:", selectedMembers);
+      const ack = await createOrEditSquad(
+        squadName, squadDescription, isPrivate, selectedDays, selectedMembers, id);
+      // const { data: squad, error: squadError } = await supabase
+      //   .from('squads')
+      //   .insert({
+      //     name: squadName,
+      //     description: squadDescription,
+      //     is_private: isPrivate,
+      //     schedule: selectedDays,
+      //     created_by: '00000000-0000-0000-0000-000000000000' // Demo user ID
+      //   })
+      //   .select()
+      //   .single();
+
+      // if (squadError) throw squadError;
+
+      // const membersData = selectedMembers.map(memberId => ({
+      //   squad_id: squad.id,
+      //   user_id: memberId,
+      //   role: 'member'
+      // }));
+
+      // const { error: membersError } = await supabase
+      //   .from('squad_members')
+      //   .insert(membersData);
+
+      // if (membersError) throw membersError;
+      console.log("Squad Edited:", ack);
+      alert("Squad Saved successfully");
+      router.back();
+    } catch (error) {
+      console.error('Error creating squad:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={colors.primary.dark} />
+          <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </Pressable>
         <Text style={styles.title}>Edit Squad</Text>
+        
         <Pressable 
-          style={[styles.saveButton, saving && styles.disabledButton]}
-          onPress={handleSave}
-          disabled={saving}
+        style={[
+            styles.createButton,
+            (!squadName || selectedMembers.length === 0) && styles.disabledButton
+        ]}
+        onPress={handleEdit}
+        disabled={!squadName || selectedMembers.length === 0}
         >
-          <Text style={styles.saveButtonText}>
-            {saving ? 'Saving...' : 'Save'}
-          </Text>
+        <Text style={styles.createButtonText}>Save</Text>
         </Pressable>
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Squad Details</Text>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Squad Name</Text>
+        <ScrollView style={styles.content}>
+            <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Squad Details</Text>
             <TextInput
-              style={styles.input}
-              value={formData.name}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-              placeholder="Enter squad name"
-              placeholderTextColor={colors.gray[400]}
+                style={styles.input}
+                placeholder="Squad Name"
+                value={squadName}
+                onChangeText={setSquadName}
+                placeholderTextColor="#64748B"
             />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
-              value={formData.description}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-              placeholder="Enter squad description"
-              placeholderTextColor={colors.gray[400]}
-              multiline
-              numberOfLines={4}
+                style={[styles.input, styles.textArea]}
+                placeholder="Description"
+                value={squadDescription}
+                onChangeText={setSquadDescription}
+                multiline
+                numberOfLines={4}
+                placeholderTextColor="#64748B"
             />
-          </View>
-
-          <View style={styles.toggleContainer}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>Private Squad</Text>
-              <Text style={styles.toggleDescription}>
-                Only invited members can join this squad
-              </Text>
+            <View style={styles.privacyToggle}>
+                <Text style={styles.privacyLabel}>Private Squad</Text>
+                <Switch
+                value={isPrivate}
+                onValueChange={setIsPrivate}
+                trackColor={{ false: '#E2E8F0', true: '#818CF8' }}
+                thumbColor={isPrivate ? '#4F46E5' : '#FFFFFF'}
+                />
             </View>
-            <Switch
-              value={formData.isPrivate}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, isPrivate: value }))}
-              trackColor={{ false: colors.gray[200], true: colors.semantic.success + '50' }}
-              thumbColor={formData.isPrivate ? colors.semantic.success : colors.gray[400]}
-            />
-          </View>
+            </View>
+
+            <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Schedule</Text>
+            <View style={styles.daysGrid}>
+                {WEEK_DAYS.map((day) => (
+                <Pressable
+                    key={day}
+                    style={[
+                    styles.dayButton,
+                    selectedDays.includes(day) && styles.selectedDay
+                    ]}
+                    onPress={() => toggleDay(day)}
+                >
+                    <Text style={[
+                    styles.dayText,
+                    selectedDays.includes(day) && styles.selectedDayText
+                    ]}>{day}</Text>
+                </Pressable>
+                ))}
+        </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Schedule</Text>
-          <Text style={styles.sectionDescription}>Select workout days for this squad</Text>
-          
-          <View style={styles.scheduleInfo}>
-            <Text style={styles.scheduleNote}>Training Schedule:</Text>
-            <Text style={styles.scheduleTime}>Monday-Friday: 18:00-20:00</Text>
-            <Text style={styles.scheduleTime}>Saturday: 09:00-11:00</Text>
-            <Text style={styles.scheduleTime}>Sunday: No training</Text>
-          </View>
-
-          <View style={styles.daysGrid}>
-            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-              <Pressable
-                key={day}
-                style={[
-                  styles.dayButton,
-                  selectedDays.includes(day) && styles.selectedDay
-                ]}
-                onPress={() => toggleDay(day)}
-              >
-                <Text style={[
-                  styles.dayText,
-                  selectedDays.includes(day) && styles.selectedDayText
-                ]}>{day}</Text>
-              </Pressable>
-            ))}
-          </View>
+        <Text style={styles.sectionTitle}>Add Members</Text>
+        <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#64748B" />
+            <TextInput
+            style={styles.searchInput}
+            placeholder="Search members"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#64748B"
+            />
         </View>
+
+        <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContainer}
+        >
+            <Pressable
+            style={[
+                styles.filterChip,
+                !selectedServiceType && styles.selectedFilter
+            ]}
+            onPress={() => setSelectedServiceType(null)}
+            >
+            <Text style={[
+                styles.filterText,
+                !selectedServiceType && styles.selectedFilterText
+            ]}>All</Text>
+            </Pressable>
+            <Pressable
+            style={[
+                styles.filterChip,
+                selectedServiceType === 'Personal Training' && styles.selectedFilter
+            ]}
+            onPress={() => setSelectedServiceType('Personal Training')}
+            >
+            <Text style={[
+                styles.filterText,
+                selectedServiceType === 'Personal Training' && styles.selectedFilterText
+            ]}>Personal Training</Text>
+            </Pressable>
+            <Pressable
+            style={[
+                styles.filterChip,
+                selectedServiceType === 'Group Training' && styles.selectedFilter
+            ]}
+            onPress={() => setSelectedServiceType('Group Training')}
+            >
+            <Text style={[
+                styles.filterText,
+                selectedServiceType === 'Group Training' && styles.selectedFilterText
+            ]}>Group Training</Text>
+            </Pressable>
+        </ScrollView>
+
+        {filteredMembers.map((member, index) => (
+            <Animated.View
+            key={member.id}
+            entering={FadeInUp.delay(index * 100)}
+            >
+            <Pressable
+                style={[
+                styles.memberCard,
+                selectedMembers.includes(member.id) && styles.selectedMember
+                ]}
+                onPress={() => toggleMember(member.id)}
+            >
+                <View style={styles.memberInfo}>
+                <View>
+                    <Text style={styles.memberName}>{member.display_name}</Text>
+                    <Text style={styles.memberEmail}>{member.email}</Text>
+                </View>
+                <BlurView intensity={80} style={styles.serviceTypeBadge}>
+                    <Text style={styles.serviceTypeText}>{member.serviceType}</Text>
+                </BlurView>
+                </View>
+                <View style={styles.memberPerformance}>
+                <Text style={styles.performanceLabel}>Performance</Text>
+                <Text style={styles.performanceValue}>{member.performance}%</Text>
+                </View>
+                {selectedMembers.includes(member.id) && (
+                <View style={styles.selectedIndicator}>
+                    <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
+                </View>
+                )}
+            </Pressable>
+            </Animated.View>
+        ))}
+    </View>
       </ScrollView>
     </View>
   );
@@ -252,165 +295,193 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? spacing.xl * 2 : spacing.xl,
-    backgroundColor: colors.primary.light,
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: '#E2E8F0',
   },
   backButton: {
-    padding: spacing.sm,
+    padding: 8,
   },
   title: {
-    fontSize: typography.size.xl,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
   },
-  saveButton: {
-    backgroundColor: colors.primary.dark,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
+  createButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#4F46E5',
+    borderRadius: 20,
+  },
+  createButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   disabledButton: {
     opacity: 0.5,
   },
-  saveButtonText: {
-    color: colors.primary.light,
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.medium as any,
-  },
   content: {
-    padding: spacing.md,
+    padding: 20,
   },
   section: {
-    marginBottom: spacing.xl,
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-    marginBottom: spacing.sm,
-  },
-  sectionDescription: {
-    fontSize: typography.size.md,
-    color: colors.gray[500],
-    marginBottom: spacing.md,
-  },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
-    marginBottom: spacing.sm,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 12,
   },
   input: {
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    fontSize: typography.size.md,
-    color: colors.primary.dark,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 12,
   },
   textArea: {
     height: 120,
     textAlignVertical: 'top',
   },
-  scheduleInfo: {
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  scheduleNote: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-    marginBottom: spacing.sm,
-  },
-  scheduleTime: {
-    fontSize: typography.size.sm,
-    color: colors.gray[600],
-    marginBottom: spacing.xs,
-  },
-  toggleContainer: {
+  privacyToggle: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  toggleInfo: {
-    flex: 1,
-    marginRight: spacing.md,
-  },
-  toggleLabel: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
-    marginBottom: spacing.xs,
-  },
-  toggleDescription: {
-    fontSize: typography.size.sm,
-    color: colors.gray[500],
+  privacyLabel: {
+    fontSize: 16,
+    color: '#1E293B',
   },
   daysGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: 8,
   },
   dayButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.gray[100],
-    borderWidth: 2,
-    borderColor: colors.gray[200],
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   selectedDay: {
-    backgroundColor: colors.primary.dark,
-    borderColor: colors.primary.dark,
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
   },
   dayText: {
-    fontSize: typography.size.sm,
-    color: colors.primary.dark,
-    fontWeight: typography.weight.medium as any,
+    fontSize: 14,
+    color: '#1E293B',
+    fontWeight: '500',
   },
   selectedDayText: {
-    color: colors.primary.light,
+    color: '#FFFFFF',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  searchBar: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
   },
-  loadingText: {
-    fontSize: typography.size.md,
-    color: colors.gray[500],
-  },
-  errorContainer: {
+  searchInput: {
     flex: 1,
-    justifyContent: 'center',
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#1E293B',
+  },
+  filterContainer: {
+    paddingBottom: 16,
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+  },
+  selectedFilter: {
+    backgroundColor: '#4F46E5',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  selectedFilterText: {
+    color: '#FFFFFF',
+  },
+  memberCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+  },
+  selectedMember: {
+    borderColor: '#4F46E5',
+  },
+  memberInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  memberName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  memberEmail: {
+    fontSize: 14,
+    color: '#64748B',
+  },
+  serviceTypeBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+  },
+  serviceTypeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#4F46E5',
+  },
+  memberPerformance: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.xl,
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 12,
   },
-  errorText: {
-    fontSize: typography.size.md,
-    color: colors.semantic.error,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
+  performanceLabel: {
+    fontSize: 14,
+    color: '#64748B',
   },
-  backToSquads: {
-    backgroundColor: colors.primary.dark,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
+  performanceValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
   },
-  backToSquadsText: {
-    color: colors.primary.light,
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium as any,
+  selectedIndicator: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
   },
 });

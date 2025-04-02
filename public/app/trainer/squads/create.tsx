@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '../../../utils/supabase';
-import { getMembers } from '@/utils/firebase';
+import { getMembers, createOrEditSquad } from '@/utils/firebase';
 
 
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -59,32 +58,13 @@ export default function CreateSquad() {
 
   const handleCreate = async () => {
     try {
-      const { data: squad, error: squadError } = await supabase
-        .from('squads')
-        .insert({
-          name: squadName,
-          description: squadDescription,
-          is_private: isPrivate,
-          schedule: selectedDays,
-          created_by: '00000000-0000-0000-0000-000000000000' // Demo user ID
-        })
-        .select()
-        .single();
-
-      if (squadError) throw squadError;
-
-      const membersData = selectedMembers.map(memberId => ({
-        squad_id: squad.id,
-        user_id: memberId,
-        role: 'member'
-      }));
-
-      const { error: membersError } = await supabase
-        .from('squad_members')
-        .insert(membersData);
-
-      if (membersError) throw membersError;
-
+      const id = crypto.randomUUID();
+      const ack = await createOrEditSquad(
+        squadName, squadDescription, isPrivate, selectedDays, selectedMembers, id);
+      console.log("Squad created:", ack);
+      // if (membersError) throw membersError;
+      console.log("Squad created:", ack);
+      alert("Squad created successfully");
       router.back();
     } catch (error) {
       console.error('Error creating squad:', error);

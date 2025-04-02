@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../../../utils/supabase';
+import { getSquads } from '@/utils/firebase';
 
 interface Squad {
   id: string;
@@ -71,16 +72,9 @@ export default function ManageSquads() {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('squads')
-        .select(`
-          *,
-          member_count:squad_members(count)
-        `)
-        .eq('created_by', '00000000-0000-0000-0000-000000000000');
-
-      if (fetchError) throw fetchError;
-      setSquads(data || []);
+      const {data} = await getSquads(null);
+      console.log('getSquads', data);
+      setSquads(data as Squad[] || []);
     } catch (error) {
       console.error('Error fetching squads:', error);
       setError('Failed to load squads');
@@ -137,7 +131,7 @@ export default function ManageSquads() {
             >
               <Pressable 
                 style={styles.squadCard}
-                onPress={() => router.push(`./${squad.id}`, {relativeToDirectory: true})}
+                onPress={() => router.push(`./${squad.id}/edit`, {relativeToDirectory: true})}
               >
                 <View style={styles.squadHeader}>
                   <View>
@@ -146,7 +140,7 @@ export default function ManageSquads() {
                   </View>
                   <BlurView intensity={80} style={styles.memberCount}>
                     <Ionicons name="people" size={16} color="#000000" />
-                    <Text style={styles.memberCountText}>{squad.member_count.count}</Text>
+                    <Text style={styles.memberCountText}>{squad.squad_members.length}</Text>
                   </BlurView>
                 </View>
 

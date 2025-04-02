@@ -9,11 +9,11 @@ import { router } from 'expo-router';
 // Demo data
 const QUICK_ACTIONS = [
   {
-    id: 'manage-squads',
+    id: 'squads',
     title: 'Manage Squads',
     icon: 'people',
     color: '#FF3B30',
-    route: './manage-squads',
+    route: './squads',
   },
   {
     id: 'schedule',

@@ -5,16 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '../../../../constants/theme';
-import { supabase } from '../../../../utils/supabase';
+import { supabase } from '@/utils/supabase';
+import { getSquads } from '@/utils/firebase';
 
 interface Member {
-  id: string;
-  user_id: string;
-  role: 'member' | 'trainer';
   joined_at: string;
-  user: {
+  users: {
+    id: string;
     display_name: string;
     email: string;
+    role: string;
     service_type: string;
   };
   attendance_rate?: number;
@@ -25,6 +25,7 @@ interface Squad {
   id: string;
   name: string;
   description: string;
+  squad_members: Member[];
 }
 
 export default function SquadMembers() {
@@ -46,58 +47,39 @@ export default function SquadMembers() {
       setLoading(true);
       setError(null);
 
-      // Fetch squad details
-      const { data: squadData, error: squadError } = await supabase
-        .from('squads')
-        .select('*')
-        .eq('id', squadId)
-        .single();
+      const {data} = await getSquads(squadId);
+      console.log('getSquad', data);
+      setSquad(data[0] as Squad);
 
-      if (squadError) throw squadError;
-      setSquad(squadData);
+      // // Calculate attendance and performance
+      // const membersWithStats = await Promise.all((membersData || []).map(async (member) => {
+      //   const { data: stats } = await supabase
+      //     .from('workout_participants')
+      //     .select(`
+      //       attendance_status,
+      //       performance_score
+      //     `)
+      //     .eq('user_id', member.user_id)
+      //     .in('attendance_status', ['present', 'absent']);
 
-      // Fetch squad members with user details
-      const { data: membersData, error: membersError } = await supabase
-        .from('squad_members')
-        .select(`
-          *,
-          user:users(
-            display_name,
-            email,
-            service_type
-          )
-        `)
-        .eq('squad_id', squadId);
+      //   const attendance = stats?.length ? 
+      //     stats.filter(s => s.attendance_status === 'present').length / stats.length * 100 : 
+      //     0;
 
-      if (membersError) throw membersError;
+      //   const performance = stats?.length ?
+      //     stats.reduce((acc, curr) => acc + (curr.performance_score || 0), 0) / stats.length :
+      //     0;
 
-      // Calculate attendance and performance
-      const membersWithStats = await Promise.all((membersData || []).map(async (member) => {
-        const { data: stats } = await supabase
-          .from('workout_participants')
-          .select(`
-            attendance_status,
-            performance_score
-          `)
-          .eq('user_id', member.user_id)
-          .in('attendance_status', ['present', 'absent']);
+      //   return {
+      //     ...member,
+      //     attendance_rate: attendance,
+      //     performance_score: performance,
+      //   };
+      // }));
 
-        const attendance = stats?.length ? 
-          stats.filter(s => s.attendance_status === 'present').length / stats.length * 100 : 
-          0;
-
-        const performance = stats?.length ?
-          stats.reduce((acc, curr) => acc + (curr.performance_score || 0), 0) / stats.length :
-          0;
-
-        return {
-          ...member,
-          attendance_rate: attendance,
-          performance_score: performance,
-        };
+      setMembers(data[0].squad_members.map(x=>{
+        return {...x, attendance_rate: 75, performance_score: 75}
       }));
-
-      setMembers(membersWithStats);
     } catch (error) {
       console.error('Error fetching squad details:', error);
       setError('Failed to load squad details');
@@ -144,8 +126,8 @@ export default function SquadMembers() {
   };
 
   const filteredMembers = members.filter(member =>
-    member?.user?.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member?.user?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    member?.users?.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member?.users?.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -157,7 +139,7 @@ export default function SquadMembers() {
         <Text style={styles.title}>Squad Members</Text>
         <Pressable 
           style={styles.addButton}
-          onPress={() => router.push(`/trainer/manage-squads/${id}/members/add`)}
+          onPress={() => router.push(`/trainer/squads/${id}/members/add`)}
         >
           <Text style={styles.addButtonText}>Add</Text>
         </Pressable>
@@ -215,18 +197,18 @@ export default function SquadMembers() {
         <ScrollView style={styles.membersList}>
           {filteredMembers.map((member, index) => (
             <Animated.View
-              key={member?.id || index}
+              key={member?.users?.id || index}
               entering={FadeInUp.delay(index * 100)}
             >
               <View style={styles.memberCard}>
                 <View style={styles.memberHeader}>
                   <View>
-                    <Text style={styles.memberName}>{member?.user?.display_name || 'Unknown Member'}</Text>
-                    <Text style={styles.memberEmail}>{member?.user?.email || ''}</Text>
+                    <Text style={styles.memberName}>{member?.users?.display_name || 'Unknown Member'}</Text>
+                    <Text style={styles.memberEmail}>{member?.users?.email || ''}</Text>
                   </View>
                   <BlurView intensity={80} style={styles.roleBadge}>
                     <Text style={styles.roleText}>
-                      {member?.role || 'member'}
+                      {member?.users?.role || 'member'}
                     </Text>
                   </BlurView>
                 </View>
@@ -255,21 +237,21 @@ export default function SquadMembers() {
                 <View style={styles.memberActions}>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer/members/${member.user_id}`, {relativeToDirectory: true})}
+                    onPress={() => router.push(`/trainer/members/${member?.users.id}`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="person" size={20} color={colors.primary.dark} />
                     <Text style={styles.actionButtonText}>Profile</Text>
                   </Pressable>
                   <Pressable 
                     style={styles.actionButton}
-                    onPress={() => router.push(`/trainer/members/${member.user_id}/assessment`, {relativeToDirectory: true})}
+                    onPress={() => router.push(`/trainer/members/${member?.users?.id}/assessment`, {relativeToDirectory: true})}
                   >
                     <Ionicons name="analytics" size={20} color={colors.primary.dark} />
                     <Text style={styles.actionButtonText}>Assessment</Text>
                   </Pressable>
                   <Pressable 
                     style={[styles.actionButton, styles.removeButton]}
-                    onPress={() => handleRemoveMember(member.id, member?.user?.display_name || 'Unknown Member')}
+                    onPress={() => handleRemoveMember(member?.users?.id, member?.users?.display_name || 'Unknown Member')}
                   >
                     <Ionicons name="person-remove" size={20} color={colors.semantic.error} />
                     <Text style={styles.removeButtonText}>Remove</Text>

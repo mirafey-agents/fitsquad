@@ -1,39 +1,17 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../../../utils/supabase';
+import { getMembers } from '@/utils/firebase';
 
-// Demo data - replace with actual data from Supabase
-const AVAILABLE_MEMBERS = [
-  {
-    id: '1',
-    name: 'Sarah Chen',
-    email: 'sarah@example.com',
-    serviceType: 'Personal Training',
-    performance: 95,
-  },
-  {
-    id: '2',
-    name: 'Mike Ross',
-    email: 'mike@example.com',
-    serviceType: 'Group Training',
-    performance: 88,
-  },
-  {
-    id: '3',
-    name: 'Alex Wong',
-    email: 'alex@example.com',
-    serviceType: 'Personal Training',
-    performance: 92,
-  },
-];
 
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function CreateSquad() {
+  const [members, setMembers] = useState([]);
   const [squadName, setSquadName] = useState('');
   const [squadDescription, setSquadDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -41,6 +19,20 @@ export default function CreateSquad() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  const fetchMembers = async () => {
+    try {
+      const members = await getMembers("");
+      console.log("Fetched members:", members);
+      setMembers(members.data as [] || []);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
+  };
 
   const toggleDay = (day: string) => {
     setSelectedDays(prev => 
@@ -58,8 +50,8 @@ export default function CreateSquad() {
     );
   };
 
-  const filteredMembers = AVAILABLE_MEMBERS.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredMembers = members.filter(member => {
+    const matchesSearch = member.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = !selectedServiceType || member.serviceType === selectedServiceType;
     return matchesSearch && matchesType;
@@ -239,7 +231,7 @@ export default function CreateSquad() {
               >
                 <View style={styles.memberInfo}>
                   <View>
-                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberName}>{member.display_name}</Text>
                     <Text style={styles.memberEmail}>{member.email}</Text>
                   </View>
                   <BlurView intensity={80} style={styles.serviceTypeBadge}>

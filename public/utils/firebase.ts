@@ -75,3 +75,26 @@ export async function getMembers(memberId: string | null) {
     memberId, authToken: session.access_token
   });
 }
+
+export async function getSquads(squadId: string | null) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'getSquads')({
+    squadId, authToken: session.access_token
+  });
+}
+
+export async function createSquad(name, description, isPrivate, schedule, members) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'createSquad')({
+    name,
+    description,
+    isPrivate,
+    schedule,
+    members,
+    authToken: session.access_token
+  });
+}

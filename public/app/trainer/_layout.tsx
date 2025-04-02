@@ -60,15 +60,9 @@ export default function TrainerDashboardLayout() {
         }}
       />
       <Stack.Screen 
-        name="create-squad" 
+        name="squads/create" 
         options={{
           title: 'Create Squad',
-        }}
-      />
-      <Stack.Screen 
-        name="manage-members" 
-        options={{
-          title: 'Manage Members',
         }}
       />
       <Stack.Screen 

@@ -56,11 +56,12 @@ export const getSquads = onCall(
   }
 );
 
-export const createSquad = onCall(
+export const createOrEditSquad = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
       const {
+        id,
         name,
         description,
         isPrivate,
@@ -69,10 +70,11 @@ export const createSquad = onCall(
         authToken,
       } = request.data;
 
-      if (!name || !description || !schedule || !members || !authToken) {
+      if (!id || !name || !description || !schedule || !members || !authToken) {
         throw new HttpsError(
           "invalid-argument",
-          "Missing one of: name, description, schedule, members, or auth_token"
+          "Missing one of: id, name, description, schedule, " +
+          "members, or auth_token"
         );
       }
 
@@ -85,7 +87,8 @@ export const createSquad = onCall(
       // Create squad
       const {data: squad, error: squadError} = await getAdmin()
         .from("squads")
-        .insert({
+        .upsert({
+          id,
           name,
           description,
           is_private: isPrivate ?? false,
@@ -96,6 +99,14 @@ export const createSquad = onCall(
         .single();
 
       if (squadError) throw squadError;
+
+      // Delete existing squad members if any
+      const {error: deleteError} = await getAdmin()
+        .from("squad_members")
+        .delete()
+        .eq("squad_id", squad.id);
+
+      if (deleteError) throw deleteError;
 
       // Add members to squad
       const membersData = members.map((memberId: string) => ({

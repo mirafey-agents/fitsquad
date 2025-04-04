@@ -10,7 +10,7 @@ setGlobalOptions({region: "asia-south1"});
 
 // Import functions from their respective files
 export {getMembers, createMember} from "./members";
-export {getWorkouts} from "./workouts";
+export {getWorkouts, getExercises} from "./workouts";
 export {getSquads, createOrEditSquad} from "./squads";
 
 export const helloWorld = onRequest(

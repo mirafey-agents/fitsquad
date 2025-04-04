@@ -1,5 +1,5 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {getWorkoutData} from "./supabase";
+import {getAdmin, getWorkoutData} from "./supabase";
 import {verifySupabaseToken} from "./auth";
 
 export const getWorkouts = onCall(
@@ -46,3 +46,32 @@ export const getWorkouts = onCall(
       throw new HttpsError("internal", error.message);
     }
   });
+
+export const getExercises = onCall(
+  {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
+  async (request: any) => {
+    try {
+    // Validate input
+      const {authToken} = request.data;
+
+      // Verify Supabase JWT and get user ID
+      const {userId} = verifySupabaseToken(authToken);
+      if (!userId) {
+        throw new HttpsError("invalid-argument", "Invalid auth token");
+      }
+      // Fetch squads
+      const {data, error: fetchError} = await getAdmin()
+        .from("exercises").select("*");
+
+      if (fetchError) throw fetchError;
+
+      return data;
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  });
+

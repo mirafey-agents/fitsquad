@@ -65,12 +65,12 @@ export default function TrainerDashboardLayout() {
           title: 'Create Squad',
         }}
       />
-      <Stack.Screen 
+      {/* <Stack.Screen 
         name="workout-plans" 
         options={{
           title: 'Workout Plans',
         }}
-      />
+      /> */}
       <Stack.Screen 
         name="payments" 
         options={{
@@ -78,13 +78,13 @@ export default function TrainerDashboardLayout() {
         }}
       />
       <Stack.Screen 
-        name="session/[id]" 
+        name="sessions/[id]" 
         options={{
           title: 'Session Details',
         }}
       />
       <Stack.Screen 
-        name="create-session" 
+        name="sessions/create" 
         options={{
           title: 'Create Session',
         }}

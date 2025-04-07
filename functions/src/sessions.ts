@@ -53,7 +53,7 @@ export const getUserSessions = onCall(
     }
   });
 
-  export const getTrainerSessions = onCall(
+export const getTrainerSessions = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
   async (request: any) => {
     try {
@@ -103,7 +103,7 @@ export const getUserSessions = onCall(
       throw new HttpsError("internal", error.message);
     }
   });
-  
+
 export const getExercises = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
   async (request: any) => {

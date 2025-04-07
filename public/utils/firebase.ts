@@ -17,10 +17,8 @@ const functions = getFunctions(app, 'asia-south1');
 
 // connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 
-export async function getUserWorkouts(startDate: Date, endDate: Date) {
+export async function getUserSessions(startDate: Date, endDate: Date) {
     try {
-      // console.log('getSession', await supabase.auth.getSession());
-      // console.log('refreshSession', await supabase.auth.refreshSession());
       // Get current session from Supabase
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
@@ -29,19 +27,41 @@ export async function getUserWorkouts(startDate: Date, endDate: Date) {
         throw new Error('No active session');
       }
       
-      const result = await httpsCallable(functions, 'getWorkouts')({
+      const result = await httpsCallable(functions, 'getUserSessions')({
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         authToken: session.access_token
       });
   
-      return result.data.workouts;
+      return result.data.sessions;
     } catch (error) {
       console.error('Error fetching workouts:', error);
       throw error;
     }
 }
 
+export async function getTrainerSessions(startDate: Date, endDate: Date) {
+  try {
+    // Get current session from Supabase
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    
+    if (!session?.access_token) {
+      throw new Error('No active session');
+    }
+    
+    const result = await httpsCallable(functions, 'getTrainerSessions')({
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      authToken: session.access_token
+    });
+
+    return result.data.sessions;
+  } catch (error) {
+    console.error('Error fetching workouts:', error);
+    throw error;
+  }
+}
 export async function createMember(member: any) {
 
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -97,5 +117,44 @@ export async function createOrEditSquad(name, description, isPrivate, schedule, 
     schedule,
     members,
     authToken: session.access_token
+  });
+}
+
+export async function getExercises() {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'getExercises')({authToken: session.access_token});
+}
+
+export async function createOrEditSession(
+  title: string="", startTime: string= "", squadId: string="",
+  userIds: Array<string>=null, exercises: Array<any>=null, sessionId: string="") {
+  
+  console.log("title", title, "start", startTime, "squad", squadId, "users", userIds, "exercises", exercises, "sessionId", "sesison", sessionId);
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'createOrEditSession')({
+    title, startTime, squadId, userIds, exercises, sessionId,
+    authToken: session.access_token
+  });
+}
+
+export async function voteSession(sessionId: string, mvpUserId: string) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'voteSession')({
+    sessionId, mvpUserId, authToken: session.access_token
+  });
+}
+
+export async function sessionStatus(sessionId: string, status: string) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'sessionStatus')({
+    sessionId, status, authToken: session.access_token
   });
 }

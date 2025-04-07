@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '../../../constants/theme';
-import { supabase } from '../../../utils/supabase';
+import { supabase } from '@/utils/supabase';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 
 type ViewMode = 'day' | 'week' | 'month';
@@ -526,7 +526,7 @@ export default function Schedule() {
           </Pressable>
           <Pressable 
             style={styles.createButton}
-            onPress={() => router.push('./create', {relativeToDirectory: true})}
+            onPress={() => router.push('../sessions/create', {relativeToDirectory: true})}
           >
             <Text style={styles.createButtonText}>New Session</Text>
           </Pressable>

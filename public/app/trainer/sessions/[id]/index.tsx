@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '../../../../utils/supabase';
 
 interface Session {
   id: string;

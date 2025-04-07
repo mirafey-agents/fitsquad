@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '../../../utils/supabase';
-import { getMembers } from '../../../utils/firebase';
+import { supabase } from '@/utils/supabase';
+import { getMembers } from '@/utils/firebase';
 interface Member {
   id: string;
   display_name: string;
@@ -34,9 +34,9 @@ export default function MemberManagement() {
     try {
       setLoading(true);
       setError(null);
-      const members = await getMembers("");
-      console.log("Fetched members:", members);
-      setMembers(members.data as Member[] || []);
+      const {data} = await getMembers("");
+      console.log("Fetched members:", data);
+      setMembers(data as Member[] || []);
     } catch (error) {
       console.error('Error fetching members:', error);
       setError('Failed to load members');

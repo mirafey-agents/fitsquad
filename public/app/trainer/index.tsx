@@ -5,6 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import Logo from '../../components/Logo';
 import { router } from 'expo-router';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import { getTrainerSessions } from '@/utils/firebase';
 
 // Demo data
 const QUICK_ACTIONS = [
@@ -67,6 +70,21 @@ const UPCOMING_SESSIONS = [
 ];
 
 export default function TrainerDashboard() {
+  const [sessions, setSessions] = useState([]);
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  async function fetchSessions() {
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    const endDate = new Date()
+    endDate.setUTCHours(23, 59, 59, 999);
+    const sessions = await getTrainerSessions(startDate, endDate);
+    console.log("sessions", sessions);
+    setSessions(sessions);
+  }
+
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
@@ -85,7 +103,7 @@ export default function TrainerDashboard() {
             </Pressable>
           </View>
           <Text style={styles.greeting}>Welcome back, Trainer!</Text>
-          <Text style={styles.subtitle}>You have {UPCOMING_SESSIONS.length} sessions today</Text>
+          <Text style={styles.subtitle}>You have {sessions.length} sessions today</Text>
         </View>
       </LinearGradient>
 
@@ -115,14 +133,14 @@ export default function TrainerDashboard() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Today's Sessions</Text>
-          {UPCOMING_SESSIONS.map((session, index) => (
+          {sessions.map((session, index) => (
             <Animated.View
               key={session.id}
               entering={FadeInUp.delay(index * 100)}
             >
               <Pressable 
                 style={styles.sessionCard}
-                onPress={() => router.push(`./session/${session.id}`, {relativeToDirectory: true})}
+                onPress={() => router.push(`./sessions/${session.id}`, {relativeToDirectory: true})}
               >
                 <View style={styles.sessionHeader}>
                   <View>
@@ -144,7 +162,7 @@ export default function TrainerDashboard() {
                 </View>
                 <Pressable 
                   style={styles.startSessionButton}
-                  onPress={() => router.push(`./session/${session.id}`, {relativeToDirectory: true})}
+                  onPress={() => router.push(`./sessions/${session.id}`, {relativeToDirectory: true})}
                 >
                   <Ionicons name="play-circle" size={20} color="#FFFFFF" />
                   <Text style={styles.startSessionText}>Start Session</Text>
@@ -156,7 +174,7 @@ export default function TrainerDashboard() {
 
         <Pressable 
           style={styles.createSessionButton}
-          onPress={() => router.push('./create-session', {relativeToDirectory: true})}
+          onPress={() => router.push('./sessions/create', {relativeToDirectory: true})}
         >
           <Ionicons name="add-circle" size={24} color="#FFFFFF" />
           <Text style={styles.createSessionText}>Create New Session</Text>

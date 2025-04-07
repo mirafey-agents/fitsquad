@@ -2,7 +2,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getAdmin} from "./supabase";
 import {verifySupabaseToken} from "./auth";
 
-export const getSessions = onCall(
+export const getUserSessions = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
   async (request: any) => {
     try {
@@ -37,7 +37,7 @@ export const getSessions = onCall(
       const {userId} = verifySupabaseToken(auTkn);
       console.log(userId);
       const {data} = await getAdmin().from("session_users")
-        .select("*")
+        .select("*, sessions(session_id, title, start_time, status)")
         .eq("user_id", userId)
         .gte("start_time", startDate.toISOString())
         .lte("start_time", endDate.toISOString())
@@ -53,6 +53,57 @@ export const getSessions = onCall(
     }
   });
 
+  export const getTrainerSessions = onCall(
+  {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
+  async (request: any) => {
+    try {
+      // Validate input
+      const {
+        startDate: stDt,
+        endDate: enDt,
+        authToken: auTkn,
+      } = request.data;
+
+      if (!stDt || !enDt || !auTkn) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters: start_date, end_date, or auth_token"
+        );
+      }
+
+      // Verify dates are valid
+      const startDate = new Date(stDt);
+      const endDate = new Date(enDt);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new HttpsError("invalid-argument", "Invalid date format");
+      }
+
+      if (endDate < startDate) {
+        throw new HttpsError("invalid-argument",
+          "End date must be after start date");
+      }
+
+      // Verify Supabase JWT and get user ID
+      const {userId} = verifySupabaseToken(auTkn);
+      console.log(userId);
+      const {data} = await getAdmin().from("sessions")
+        .select("*")
+        .eq("trainer_id", userId)
+        .gte("start_time", startDate.toISOString())
+        .lte("start_time", endDate.toISOString())
+        .order("start_time", {ascending: true});
+
+      return {"sessions": data};
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  });
+  
 export const getExercises = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
   async (request: any) => {

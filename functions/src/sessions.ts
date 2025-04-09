@@ -61,40 +61,50 @@ export const getTrainerSessions = onCall(
       const {
         startDate: stDt,
         endDate: enDt,
+        sessionId: sId,
         authToken: auTkn,
+        fetchUsers,
       } = request.data;
 
-      if (!stDt || !enDt || !auTkn) {
-        throw new HttpsError(
-          "invalid-argument",
-          "Missing required parameters: start_date, end_date, or auth_token"
-        );
+      if (!((stDt && enDt) || sId) || !auTkn) {
+        throw new HttpsError("invalid-argument", "Missing required parameters");
       }
 
-      // Verify dates are valid
-      const startDate = new Date(stDt);
-      const endDate = new Date(enDt);
-
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        throw new HttpsError("invalid-argument", "Invalid date format");
-      }
-
-      if (endDate < startDate) {
-        throw new HttpsError("invalid-argument",
-          "End date must be after start date");
-      }
-
-      // Verify Supabase JWT and get user ID
       const {userId} = verifySupabaseToken(auTkn);
-      console.log(userId);
-      const {data} = await getAdmin().from("sessions")
-        .select("*")
-        .eq("trainer_id", userId)
-        .gte("start_time", startDate.toISOString())
-        .lte("start_time", endDate.toISOString())
-        .order("start_time", {ascending: true});
 
-      return {"sessions": data};
+      const queryStr = fetchUsers ?
+        ("*, session_users!session_id(*, " +
+        "users!user_id(id, display_name, email))") :
+        "*";
+      let query = getAdmin().from("sessions")
+        .select(queryStr).eq("trainer_id", userId);
+
+      if (sId) {
+        query = query.eq("id", sId);
+      } else {
+        // Verify dates are valid
+        const startDate = new Date(stDt);
+        const endDate = new Date(enDt);
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          throw new HttpsError("invalid-argument", "Invalid date format");
+        }
+
+        if (endDate < startDate) {
+          throw new HttpsError("invalid-argument",
+            "End date must be after start date");
+        }
+
+        // Verify Supabase JWT and get user ID
+        query = query
+          .gte("start_time", startDate.toISOString())
+          .lte("start_time", endDate.toISOString())
+          .order("start_time", {ascending: true});
+      }
+      const {data: sessions, fetchError: sessionsError} = await query;
+      if (sessionsError) throw sessionsError;
+
+      return sessions;
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {

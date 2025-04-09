@@ -5,14 +5,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
+import { getTrainerSessions } from '@/utils/firebase';
 
 interface Session {
   id: string;
   title: string;
-  time: string;
-  participants: Array<{
+  start_time: string;
+  session_users: Array<{
     id: string;
-    name: string;
+    user_id: string;
+    users:{
+      id: string;
+      display_name: string;
+      email: string;
+    }
     attendance: string;
     performance: number;
     comments: string;
@@ -30,61 +36,22 @@ interface Session {
 
 export default function SessionDetails() {
   const { id } = useLocalSearchParams();
-  const [session, setSession] = useState<Session>({
-    id: id as string,
-    title: 'Morning HIIT',
-    time: '06:30 AM',
-    participants: [
-      {
-        id: '1',
-        name: 'Sarah Chen',
-        attendance: 'present',
-        performance: 95,
-        comments: 'Excellent form and energy throughout the session.',
-        bestExercise: 'Burpees',
-        needsImprovement: 'Mountain Climbers',
-        media: [
-          'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?q=80&w=800&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=800&auto=format&fit=crop'
-        ]
-      },
-      {
-        id: '2',
-        name: 'Mike Ross',
-        attendance: 'present',
-        performance: 88,
-        comments: 'Good effort, needs to work on pacing.',
-        bestExercise: 'Jump Squats',
-        needsImprovement: 'Burpees',
-        media: [
-          'https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?q=80&w=800&auto=format&fit=crop'
-        ]
-      }
-    ],
-    exercises: [
-      {
-        id: '1',
-        name: 'Burpees',
-        sets: 3,
-        reps: '15'
-      },
-      {
-        id: '2',
-        name: 'Mountain Climbers',
-        sets: 3,
-        reps: '30'
-      },
-      {
-        id: '3',
-        name: 'Jump Squats',
-        sets: 4,
-        reps: '20'
-      }
-    ]
-  });
+  const [session, setSession] = useState<Session>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof id === 'string') {
+      fetchSession();
+    }
+  }, [id]);
+  const fetchSession = async () => {
+    const sessions = await getTrainerSessions(null, null, id as string, true);
+    console.log(sessions);
+    const session = sessions[0];
+    session.exercises = session.session_users[0].exercises;
+    setSession(sessions[0]);
+  }
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -167,13 +134,13 @@ export default function SessionDetails() {
 
       <ScrollView style={styles.content}>
         <View style={styles.sessionInfo}>
-          <Text style={styles.sessionTitle}>{session.title}</Text>
-          <Text style={styles.sessionTime}>{session.time}</Text>
+          <Text style={styles.sessionTitle}>{session?.title}</Text>
+          <Text style={styles.sessionTime}>{session?.start_time}</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Exercises</Text>
-          {session.exercises.map((exercise, index) => (
+          {session?.exercises.map((exercise, index) => (
             <View key={exercise.id} style={styles.exerciseCard}>
               <Text style={styles.exerciseName}>{exercise.name}</Text>
               <Text style={styles.exerciseDetails}>
@@ -185,14 +152,14 @@ export default function SessionDetails() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Participants</Text>
-          {session.participants.map((participant, index) => (
+          {session?.session_users?.map((participant, index) => (
             <Animated.View
-              key={participant.id}
+              key={participant.users.id}
               entering={FadeInUp.delay(index * 100)}
               style={styles.participantCard}
             >
               <View style={styles.participantHeader}>
-                <Text style={styles.participantName}>{participant.name}</Text>
+                <Text style={styles.participantName}>{participant.users.display_name}</Text>
                 <BlurView intensity={80} style={styles.attendanceBadge}>
                   <Text style={styles.attendanceText}>
                     {participant.attendance === 'present' ? 'Present' : 'Absent'}
@@ -204,7 +171,7 @@ export default function SessionDetails() {
                 <Text style={styles.performanceLabel}>Performance Score</Text>
                 <TextInput
                   style={styles.performanceInput}
-                  value={participant.performance.toString()}
+                  value={participant.performance?.toString()}
                   onChangeText={(text) => {
                     const score = parseInt(text) || 0;
                     updateParticipant(participant.id, { performance: score });
@@ -218,7 +185,7 @@ export default function SessionDetails() {
                 <Text style={styles.feedbackLabel}>Trainer Comments</Text>
                 <TextInput
                   style={styles.feedbackInput}
-                  value={participant.comments}
+                  value={participant?.comments}
                   onChangeText={(text) => updateParticipant(participant.id, { comments: text })}
                   multiline
                   numberOfLines={3}
@@ -232,7 +199,7 @@ export default function SessionDetails() {
                   <Text style={styles.exerciseFieldLabel}>Best Exercise</Text>
                   <TextInput
                     style={styles.exerciseInput}
-                    value={participant.bestExercise}
+                    value={participant?.bestExercise}
                     onChangeText={(text) => updateParticipant(participant.id, { bestExercise: text })}
                     placeholder="Best performed exercise"
                     placeholderTextColor="#64748B"
@@ -243,7 +210,7 @@ export default function SessionDetails() {
                   <Text style={styles.exerciseFieldLabel}>Needs Improvement</Text>
                   <TextInput
                     style={styles.exerciseInput}
-                    value={participant.needsImprovement}
+                    value={participant?.needsImprovement}
                     onChangeText={(text) => updateParticipant(participant.id, { needsImprovement: text })}
                     placeholder="Exercise to improve"
                     placeholderTextColor="#64748B"
@@ -268,7 +235,7 @@ export default function SessionDetails() {
                   showsHorizontalScrollIndicator={false}
                   style={styles.mediaScroll}
                 >
-                  {participant.media.map((url, index) => (
+                  {participant.media?.map((url, index) => (
                     <View key={index} style={styles.mediaPreview}>
                       <Image source={{ uri: url }} style={styles.mediaImage} />
                       <Pressable 
@@ -276,8 +243,8 @@ export default function SessionDetails() {
                         onPress={() => {
                           setSession(prev => ({
                             ...prev,
-                            participants: prev.participants.map(p => 
-                              p.id === participant.id 
+                            participants: prev.session_users.map(p => 
+                              p.id === participant.user_id 
                                 ? { ...p, media: p.media.filter((_, i) => i !== index) }
                                 : p
                             )

@@ -4,10 +4,9 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { colors, typography, spacing, borderRadius, shadows } from '../../../constants/theme';
-import { supabase } from '@/utils/supabase';
+import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-
+import { getTrainerSessions } from '@/utils/firebase';
 type ViewMode = 'day' | 'week' | 'month';
 type Session = {
   id: string;
@@ -89,30 +88,7 @@ export default function Schedule() {
           break;
       }
 
-      // Fetch sessions from Supabase
-      const { data, error: fetchError } = await supabase
-        .from('workouts')
-        .select(`
-          *,
-          squad:squads!squad_id(
-            name,
-            member_count:squad_members(count)
-          ),
-          client:users!client_id(
-            display_name
-          ),
-          location:training_locations!location_id(
-            name,
-            address,
-            coordinates,
-            premium
-          )
-        `)
-        .gte('scheduled_time', startDate.toISOString())
-        .lte('scheduled_time', endDate.toISOString())
-        .order('scheduled_time', { ascending: true });
-
-      if (fetchError) throw fetchError;
+      const data = await getTrainerSessions(startDate, endDate);
       console.log('Fetched sessions:', data);
 
       // Transform data
@@ -120,8 +96,8 @@ export default function Schedule() {
         id: session.id,
         title: session.title,
         type: session.squad ? 'group' : session.client ? 'personal' : 'online',
-        startTime: session.scheduled_time,
-        endTime: new Date(new Date(session.scheduled_time).getTime() + parseDuration(session.duration)).toISOString(),
+        startTime: session.start_time,
+        // endTime: new Date(new Date(session.scheduled_time).getTime() + parseDuration(session.duration)).toISOString(),
         location: session.location ? {
           name: session.location.name,
           address: session.location.address,
@@ -145,26 +121,6 @@ export default function Schedule() {
       setError('Failed to load schedule');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Helper function to parse duration string to milliseconds
-  const parseDuration = (duration: string): number => {
-    const match = duration.match(/(\d+)\s*(\w+)/);
-    if (!match) return 0;
-    
-    const [_, value, unit] = match;
-    const minutes = parseInt(value);
-    
-    switch (unit.toLowerCase()) {
-      case 'hour':
-      case 'hours':
-        return minutes * 60 * 60 * 1000;
-      case 'minute':
-      case 'minutes':
-        return minutes * 60 * 1000;
-      default:
-        return 0;
     }
   };
 
@@ -295,7 +251,7 @@ export default function Schedule() {
                       styles.sessionCard,
                       { backgroundColor: SESSION_TYPES[session.type].color + '20' }
                     ]}
-                    onPress={() => router.push(`./${session.id}`, {relativeToDirectory: true})}
+                    onPress={() => router.push(`/trainer/sessions/${session.id}`)}
                   >
                     <View style={styles.sessionHeader}>
                       <View style={styles.sessionType}>
@@ -408,7 +364,7 @@ export default function Schedule() {
                         styles.weekSessionCard,
                         { backgroundColor: SESSION_TYPES[session.type].color + '20' }
                       ]}
-                      onPress={() => router.push(`./${session.id}`, {relativeToDirectory: true})}
+                      onPress={() => router.push(`/trainer/sessions/${session.id}`)}
                     >
                       <View style={styles.weekSessionHeader}>
                         <View style={styles.sessionType}>
@@ -526,7 +482,7 @@ export default function Schedule() {
           </Pressable>
           <Pressable 
             style={styles.createButton}
-            onPress={() => router.push('../sessions/create', {relativeToDirectory: true})}
+            onPress={() => router.push('/trainer/sessions/create')}
           >
             <Text style={styles.createButtonText}>New Session</Text>
           </Pressable>

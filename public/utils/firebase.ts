@@ -40,7 +40,9 @@ export async function getUserSessions(startDate: Date, endDate: Date) {
     }
 }
 
-export async function getTrainerSessions(startDate: Date, endDate: Date) {
+export async function getTrainerSessions(
+  startDate: Date=null, endDate: Date=null,
+  sessionId: string=null, fetchUsers=false) {
   try {
     // Get current session from Supabase
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -51,12 +53,14 @@ export async function getTrainerSessions(startDate: Date, endDate: Date) {
     }
     
     const result = await httpsCallable(functions, 'getTrainerSessions')({
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
+      startDate: startDate,
+      endDate,
+      sessionId,
+      fetchUsers,
       authToken: session.access_token
     });
 
-    return result.data.sessions;
+    return result.data;
   } catch (error) {
     console.error('Error fetching workouts:', error);
     throw error;

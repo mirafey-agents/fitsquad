@@ -35,15 +35,33 @@ export const getUserSessions = onCall(
 
       // Verify Supabase JWT and get user ID
       const {userId} = verifySupabaseToken(auTkn);
-      console.log(userId);
-      const {data} = await getAdmin().from("session_users")
-        .select("*, sessions(session_id, title, start_time, status)")
+      const {data, error: fetchError} = await getAdmin().from("session_users")
+        .select("*,session:sessions(id, title, start_time, status,"+
+          "trainer:users!trainer_id(id, display_name))")
         .eq("user_id", userId)
         .gte("start_time", startDate.toISOString())
         .lte("start_time", endDate.toISOString())
         .order("start_time", {ascending: true});
+      if (fetchError) throw fetchError;
 
-      return {"sessions": data};
+      const sessionIds = data.map((item: any) => item.session_id);
+      const {data: sessionParticipants, error: sessionError} = await getAdmin()
+        .from("session_users")
+        .select("session_id, users!user_id(id, display_name)")
+        .in("session_id", sessionIds);
+      if (sessionError) throw sessionError;
+
+      const participantsDict: any = {};
+      sessionParticipants.forEach((item: any) => {
+        participantsDict[item.session_id] =
+        (participantsDict[item.session_id] || []).concat(item.users);
+      });
+
+      for (const userSession of data) {
+        userSession.participants = participantsDict[userSession.session_id];
+      }
+
+      return data;
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {
@@ -52,6 +70,31 @@ export const getUserSessions = onCall(
       throw new HttpsError("internal", error.message);
     }
   });
+
+export const getSessionParticipants = onCall(
+  {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
+  async (request: any) => {
+    try {
+      const {sessionId, authToken} = request.data;
+      const {userId} = verifySupabaseToken(authToken);
+      if (!userId) {
+        throw new HttpsError("unauthenticated", "Invalid authentication token");
+      }
+      const {data, error: fetchError} = await getAdmin()
+        .from("session_users")
+        .select("partcipants:users!user_id(id, display_name)")
+        .eq("session_id", sessionId);
+      if (fetchError) throw fetchError;
+      return data;
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);
 
 export const getTrainerSessions = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
@@ -330,3 +373,65 @@ export const sessionStatus = onCall(
       throw new HttpsError("internal", error.message);
     }
   });
+
+export const deleteSession = onCall(
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+  async (request: any) => {
+    try {
+      const {sessionId, authToken} = request.data;
+
+      if (!sessionId || !authToken) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters: session_id or auth_token"
+        );
+      }
+
+      // Verify Supabase JWT
+      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      if (tokenError) {
+        throw new HttpsError("unauthenticated", "Invalid authentication token");
+      }
+
+      // First verify the session belongs to the trainer
+      const {data: session, error: fetchError} = await getAdmin()
+        .from("sessions")
+        .select("trainer_id")
+        .eq("id", sessionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!session || session.trainer_id !== userId) {
+        throw new HttpsError(
+          "permission-denied",
+          "You don't have permission to delete this session"
+        );
+      }
+
+      // Delete from session_users first (due to foreign key constraint)
+      const {error: deleteUsersError} = await getAdmin()
+        .from("session_users")
+        .delete()
+        .eq("session_id", sessionId);
+
+      if (deleteUsersError) throw deleteUsersError;
+
+      // Delete from sessions
+      const {error: deleteSessionError} = await getAdmin()
+        .from("sessions")
+        .delete()
+        .eq("id", sessionId)
+        .eq("trainer_id", userId);
+
+      if (deleteSessionError) throw deleteSessionError;
+
+      return {success: true};
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);

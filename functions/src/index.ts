@@ -16,6 +16,8 @@ export {getUserSessions,
   createOrEditSession,
   sessionFeedback,
   sessionStatus,
+  deleteSession,
+  getSessionParticipants,
 } from "./sessions";
 export {getSquads, createOrEditSquad} from "./squads";
 

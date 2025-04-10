@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRootNavigationState } from 'expo-router';
 import Logo from '../../components/Logo';
 import { getLoggedInUser } from '../../utils/supabase';
-import {getUserWorkouts} from '../../utils/firebase';
+import {getUserSessions} from '../../utils/firebase';
 
 import {
   colors,
@@ -28,79 +28,306 @@ import {
   eachDayOfInterval,
 } from 'date-fns';
 
-const WORKOUT_DATA = {
-  '2025-03-06': {
-    id: '1',
-    title: 'Morning HIIT',
-    time: '06:30 AM',
-    trainer: 'Sarah Chen',
-    completed: true,
-    energyPoints: 450,
-    votingPending: true,
-    exercises: [
-      { name: 'Burpees', sets: 3, reps: 15, energyPoints: 150 },
-      { name: 'Mountain Climbers', sets: 3, reps: 30, energyPoints: 120 },
-      { name: 'Jump Squats', sets: 4, reps: 20, energyPoints: 180 },
-    ],
-    participants: [
-      {
-        id: '1',
-        name: 'Mike Ross',
-        mvpVotes: 3,
-        hasVoted: false,
-      },
-      {
-        id: '2',
-        name: 'Alex Wong',
-        mvpVotes: 5,
-        hasVoted: true,
-      },
-      {
-        id: '3',
-        name: 'Emma Chen',
-        mvpVotes: 4,
-        hasVoted: false,
-      },
-    ],
-    toughestExercises: [
-      { id: '1', name: 'Burpees', votes: 8, difficulty: 9.2, hasVoted: false },
-      {
-        id: '2',
-        name: 'Mountain Climbers',
-        votes: 5,
-        difficulty: 8.5,
-        hasVoted: false,
-      },
-      {
-        id: '3',
-        name: 'Jump Squats',
-        votes: 6,
-        difficulty: 8.8,
-        hasVoted: false,
-      },
-    ],
-  },
-  '2025-03-07': {
-    id: '2',
-    title: 'Strength Training',
-    time: '07:00 AM',
-    trainer: 'Mike Ross',
-    completed: false,
-    energyPoints: 500,
-    exercises: [
-      { name: 'Deadlifts', sets: 4, reps: 10, energyPoints: 200 },
-      { name: 'Bench Press', sets: 4, reps: 12, energyPoints: 180 },
-      { name: 'Squats', sets: 4, reps: 15, energyPoints: 220 },
-    ],
-    participants: [],
-    toughestExercises: [],
-  },
+const dateFormatOption = {
+  weekday: 'short', month: 'short', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hour12: true
 };
+
+const renderDailyHabits = () => (
+  <Animated.View entering={FadeInUp.delay(200)}>
+    <Pressable
+      style={[styles.card, { backgroundColor: colors.transparent.coral }]}
+      onPress={() => router.push('/habits')}
+    >
+      <View style={styles.cardHeader}>
+        <View style={styles.cardTitleContainer}>
+          <Ionicons name="list" size={24} color={colors.primary.dark} />
+          <Text style={styles.cardTitle}>Daily Check-in</Text>
+        </View>
+        <BlurView intensity={80} style={styles.cardBadge}>
+          <Text style={styles.cardBadgeText}>Important</Text>
+        </BlurView>
+      </View>
+
+      <HabitTracker preview={true} />
+      <DailyChallenges preview={true} />
+
+      <View style={styles.cardFooter}>
+        <Text style={styles.cardFooterText}>View full details</Text>
+        <Ionicons
+          name="arrow-forward"
+          size={20}
+          color={colors.primary.dark}
+        />
+      </View>
+    </Pressable>
+  </Animated.View>
+);
+
+const renderWorkoutReview = ({
+  selectedWorkout,
+  isFutureDate,
+  userVotes,
+  handleVote
+}: {
+  selectedWorkout: any;
+  isFutureDate: boolean;
+  userVotes: { mvp: string | null; toughest: string | null };
+  handleVote: (type: 'mvp' | 'toughest', id: string) => void;
+}) => (
+  <Animated.View entering={FadeInUp.delay(300)}>
+    <View
+      style={[styles.card, { backgroundColor: colors.transparent.mint }]}
+    >
+      <View style={styles.cardHeader}>
+        <View style={styles.cardTitleContainer}>
+          <Ionicons
+            name="fitness"
+            size={24}
+            color={colors.primary.dark}
+          />
+          <Text style={styles.cardTitle}>
+            {isFutureDate ? 'Upcoming Workout' : 'Workout Review'}
+          </Text>
+        </View>
+        {selectedWorkout?.status === 'completed' && (
+          <BlurView
+            intensity={80}
+            style={[
+              styles.cardBadge,
+              { backgroundColor: `${colors.semantic.success}20` },
+            ]}
+          >
+            <Text
+              style={[
+                styles.cardBadgeText,
+                { color: colors.semantic.success },
+              ]}
+            >
+              Completed
+            </Text>
+          </BlurView>
+        )}
+      </View>
+
+      {selectedWorkout ? (
+        <>
+          <View style={styles.workoutSummary}>
+            <Text style={styles.workoutTitle}>
+              {selectedWorkout?.session.title}
+            </Text>
+            <Text style={styles.workoutTime}>
+              {new Date(selectedWorkout.start_time).toLocaleString('en-US', dateFormatOption)} with {selectedWorkout?.session.trainer.display_name}
+            </Text>
+            {selectedWorkout.status === 'completed' && (
+              <View style={styles.energyPointsContainer}>
+                <Ionicons
+                  name="flash"
+                  size={20}
+                  color={colors.semantic.warning}
+                />
+                <Text style={styles.energyPointsText}>
+                  {selectedWorkout?.energyPoints} Energy Points Earned
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {selectedWorkout.session.status === 'completed' && (
+            <>
+              <View style={styles.exercisesList}>
+                <Text style={styles.exercisesTitle}>Workout Summary</Text>
+                {selectedWorkout?.exercises.map((exercise, index) => (
+                  <View key={index} style={styles.exerciseItem}>
+                    <View style={styles.exerciseInfo}>
+                      <Text style={styles.exerciseName}>
+                        {exercise.name}
+                      </Text>
+                      <Text style={styles.exerciseDetails}>
+                        {exercise.sets} × {exercise.reps}
+                      </Text>
+                    </View>
+                    <View style={styles.exercisePoints}>
+                      <Ionicons
+                        name="flash"
+                        size={16}
+                        color={colors.semantic.warning}
+                      />
+                      <Text style={styles.pointsText}>
+                        {exercise.energyPoints}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.votingSection}>
+                <Text style={styles.votingTitle}>Cast Your Votes</Text>
+
+                {/* MVP Voting */}
+                <View style={styles.votingCategory}>
+                  <Text style={styles.votingCategoryTitle}>
+                    MVP of the Session
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.votingOptions}
+                  >
+                    {selectedWorkout.participants.map((participant) => (
+                      <Pressable
+                        key={participant.id}
+                        style={[
+                          styles.participantCard,
+                          userVotes.mvp === participant.id &&
+                            styles.selectedVoteCard,
+                          participant.hasVoted && styles.votedCard,
+                        ]}
+                        onPress={() =>
+                          !participant.hasVoted &&
+                          handleVote('mvp', participant.id)
+                        }
+                        disabled={participant.hasVoted}
+                      >
+                        <View style={styles.participantAvatar}>
+                          <Text style={styles.participantInitials}>
+                            {participant.display_name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                          </Text>
+                        </View>
+                        <Text style={styles.participantName}>
+                          {participant.display_name}
+                        </Text>
+                        <View style={styles.voteCount}>
+                          <Ionicons
+                            name="trophy"
+                            size={16}
+                            color={colors.accent.coral}
+                          />
+                          <Text style={styles.voteCountText}>
+                            {participant.mvpVotes}
+                          </Text>
+                        </View>
+                        {participant.hasVoted && (
+                          <BlurView
+                            intensity={80}
+                            style={styles.votedBadge}
+                          >
+                            <Ionicons
+                              name="checkmark"
+                              size={16}
+                              color={colors.semantic.success}
+                            />
+                            <Text style={styles.votedText}>Voted</Text>
+                          </BlurView>
+                        )}
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {/* Toughest Exercise Voting */}
+                <View style={styles.votingCategory}>
+                  <Text style={styles.votingCategoryTitle}>
+                    Toughest Exercise
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.votingOptions}
+                  >
+                    {selectedWorkout.toughestExercises?.map((exercise) => (
+                      <Pressable
+                        key={exercise.id}
+                        style={[
+                          styles.exerciseCard,
+                          userVotes.toughest === exercise.id &&
+                            styles.selectedVoteCard,
+                          exercise.hasVoted && styles.votedCard,
+                        ]}
+                        onPress={() =>
+                          !exercise.hasVoted &&
+                          handleVote('toughest', exercise.id)
+                        }
+                        disabled={exercise.hasVoted}
+                      >
+                        <Text style={styles.exerciseName}>
+                          {exercise.name}
+                        </Text>
+                        <View style={styles.exerciseStats}>
+                          <View style={styles.statItem}>
+                            <Ionicons
+                              name="flame"
+                              size={16}
+                              color={colors.semantic.error}
+                            />
+                            <Text style={styles.statText}>
+                              {exercise.votes}
+                            </Text>
+                          </View>
+                          <View style={styles.statItem}>
+                            <Text style={styles.difficultyText}>
+                              {exercise.difficulty}
+                            </Text>
+                          </View>
+                        </View>
+                        {exercise.hasVoted && (
+                          <BlurView
+                            intensity={80}
+                            style={styles.votedBadge}
+                          >
+                            <Ionicons
+                              name="checkmark"
+                              size={16}
+                              color={colors.semantic.success}
+                            />
+                            <Text style={styles.votedText}>Voted</Text>
+                          </BlurView>
+                        )}
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+            </>
+          )}
+
+          {selectedWorkout.status === "scheduled" && (
+            <View style={styles.upcomingWorkout}>
+              <Text style={styles.upcomingTitle}>Workout Plan</Text>
+              {selectedWorkout?.exercises.map((exercise, index) => (
+                <View key={index} style={styles.upcomingExercise}>
+                  <Text style={styles.upcomingExerciseName}>
+                    {exercise.name}
+                  </Text>
+                  <Text style={styles.upcomingExerciseDetails}>
+                    {exercise.sets} × {exercise.reps}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </>
+      ) : (
+        <View style={styles.noWorkout}>
+          <Ionicons name="calendar" size={48} color={colors.gray[300]} />
+          <Text style={styles.noWorkoutText}>No workout scheduled</Text>
+          <Text style={styles.noWorkoutSubtext}>
+            Take a rest day or join an available session
+          </Text>
+        </View>
+      )}
+    </View>
+  </Animated.View>
+);
 
 export default function Home() {
 
   const rootNavigationState = useRootNavigationState()
   const navigatorReady = rootNavigationState?.key != null
+  const [sessions, setSessions] = useState<any[]>([]);
 
   useEffect(() => {
     if (!navigatorReady) return;
@@ -114,9 +341,10 @@ export default function Home() {
     }
     
     setUserData(userData);
-    getUserWorkouts(new Date(2024,1,1), new Date(2025,12,1)).then(
-      (workouts) => {
-        console.log('workouts: ', workouts);
+    getUserSessions(new Date(2024,1,1), new Date(2025,12,1)).then(
+      (sessions) => {
+        console.log('workouts: ', sessions);
+        setSessions(sessions as any[]);
       }
     );
   }, [navigatorReady])
@@ -132,11 +360,9 @@ export default function Home() {
     toughest: null,
   });
 
-  const selectedWorkout = WORKOUT_DATA[format(selectedDate, 'yyyy-MM-dd')];
-  const isPastDate = isBefore(
-    selectedDate,
-    new Date(new Date().setHours(0, 0, 0, 0))
-  );
+  const selectedWorkout = sessions.find((session: any) => 
+    new Date(session.start_time).toDateString() === selectedDate.toDateString());
+  
   const isFutureDate = isAfter(
     selectedDate,
     new Date(new Date().setHours(23, 59, 59, 999))
@@ -162,26 +388,23 @@ export default function Home() {
 
   const getWorkoutIndicator = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const workout = WORKOUT_DATA[dateStr];
-  
-    if (!workout) return null;
+    return null;
 
-    if (
-      isBefore(date, new Date()) &&
-      workout.completed &&
-      workout.votingPending
-    ) {
-      return 'votingPending';
-    } else if (workout.completed) {
-      return 'completed';
-    } else {
-      return 'planned';
-    }
+    // if (
+    //   isBefore(date, new Date()) &&
+    //   workout.completed &&
+    //   workout.votingPending
+    // ) {
+    //   return 'votingPending';
+    // } else if (workout.completed) {
+    //   return 'completed';
+    // } else {
+    //   return 'planned';
+    // }
   };
 
   const getEnergyPoints = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return WORKOUT_DATA[dateStr]?.energyPoints || 0;
+    return 0;
   };
 
   return (
@@ -266,284 +489,13 @@ export default function Home() {
       </View>
 
       <View style={styles.content}>
-        {/* Daily Habits */}
-        <Animated.View entering={FadeInUp.delay(200)}>
-          <Pressable
-            style={[styles.card, { backgroundColor: colors.transparent.coral }]}
-            onPress={() => router.push('/habits')}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleContainer}>
-                <Ionicons name="list" size={24} color={colors.primary.dark} />
-                <Text style={styles.cardTitle}>Daily Check-in</Text>
-              </View>
-              <BlurView intensity={80} style={styles.cardBadge}>
-                <Text style={styles.cardBadgeText}>Important</Text>
-              </BlurView>
-            </View>
-
-            <HabitTracker preview={true} />
-            <DailyChallenges preview={true} />
-
-            <View style={styles.cardFooter}>
-              <Text style={styles.cardFooterText}>View full details</Text>
-              <Ionicons
-                name="arrow-forward"
-                size={20}
-                color={colors.primary.dark}
-              />
-            </View>
-          </Pressable>
-        </Animated.View>
-
-        {/* Workout Review */}
-        <Animated.View entering={FadeInUp.delay(300)}>
-          <View
-            style={[styles.card, { backgroundColor: colors.transparent.mint }]}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleContainer}>
-                <Ionicons
-                  name="fitness"
-                  size={24}
-                  color={colors.primary.dark}
-                />
-                <Text style={styles.cardTitle}>
-                  {isFutureDate ? 'Upcoming Workout' : 'Workout Review'}
-                </Text>
-              </View>
-              {selectedWorkout?.completed && (
-                <BlurView
-                  intensity={80}
-                  style={[
-                    styles.cardBadge,
-                    { backgroundColor: `${colors.semantic.success}20` },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.cardBadgeText,
-                      { color: colors.semantic.success },
-                    ]}
-                  >
-                    Completed
-                  </Text>
-                </BlurView>
-              )}
-            </View>
-
-            {selectedWorkout ? (
-              <>
-                <View style={styles.workoutSummary}>
-                  <Text style={styles.workoutTitle}>
-                    {selectedWorkout.title}
-                  </Text>
-                  <Text style={styles.workoutTime}>
-                    {selectedWorkout.time} with {selectedWorkout.trainer}
-                  </Text>
-                  {selectedWorkout.completed && (
-                    <View style={styles.energyPoints}>
-                      <Ionicons
-                        name="flash"
-                        size={20}
-                        color={colors.semantic.warning}
-                      />
-                      <Text style={styles.energyPointsText}>
-                        {selectedWorkout.energyPoints} Energy Points Earned
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {selectedWorkout.completed && (
-                  <>
-                    <View style={styles.exercisesList}>
-                      <Text style={styles.exercisesTitle}>Workout Summary</Text>
-                      {selectedWorkout.exercises.map((exercise, index) => (
-                        <View key={index} style={styles.exerciseItem}>
-                          <View style={styles.exerciseInfo}>
-                            <Text style={styles.exerciseName}>
-                              {exercise.name}
-                            </Text>
-                            <Text style={styles.exerciseDetails}>
-                              {exercise.sets} × {exercise.reps}
-                            </Text>
-                          </View>
-                          <View style={styles.exercisePoints}>
-                            <Ionicons
-                              name="flash"
-                              size={16}
-                              color={colors.semantic.warning}
-                            />
-                            <Text style={styles.pointsText}>
-                              {exercise.energyPoints}
-                            </Text>
-                          </View>
-                        </View>
-                      ))}
-                    </View>
-
-                    <View style={styles.votingSection}>
-                      <Text style={styles.votingTitle}>Cast Your Votes</Text>
-
-                      {/* MVP Voting */}
-                      <View style={styles.votingCategory}>
-                        <Text style={styles.votingCategoryTitle}>
-                          MVP of the Session
-                        </Text>
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          style={styles.votingOptions}
-                        >
-                          {selectedWorkout.participants.map((participant) => (
-                            <Pressable
-                              key={participant.id}
-                              style={[
-                                styles.participantCard,
-                                userVotes.mvp === participant.id &&
-                                  styles.selectedVoteCard,
-                                participant.hasVoted && styles.votedCard,
-                              ]}
-                              onPress={() =>
-                                !participant.hasVoted &&
-                                handleVote('mvp', participant.id)
-                              }
-                              disabled={participant.hasVoted}
-                            >
-                              <View style={styles.participantAvatar}>
-                                <Text style={styles.participantInitials}>
-                                  {participant.name
-                                    .split(' ')
-                                    .map((n) => n[0])
-                                    .join('')}
-                                </Text>
-                              </View>
-                              <Text style={styles.participantName}>
-                                {participant.name}
-                              </Text>
-                              <View style={styles.voteCount}>
-                                <Ionicons
-                                  name="trophy"
-                                  size={16}
-                                  color={colors.accent.coral}
-                                />
-                                <Text style={styles.voteCountText}>
-                                  {participant.mvpVotes}
-                                </Text>
-                              </View>
-                              {participant.hasVoted && (
-                                <BlurView
-                                  intensity={80}
-                                  style={styles.votedBadge}
-                                >
-                                  <Ionicons
-                                    name="checkmark"
-                                    size={16}
-                                    color={colors.semantic.success}
-                                  />
-                                  <Text style={styles.votedText}>Voted</Text>
-                                </BlurView>
-                              )}
-                            </Pressable>
-                          ))}
-                        </ScrollView>
-                      </View>
-
-                      {/* Toughest Exercise Voting */}
-                      <View style={styles.votingCategory}>
-                        <Text style={styles.votingCategoryTitle}>
-                          Toughest Exercise
-                        </Text>
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          style={styles.votingOptions}
-                        >
-                          {selectedWorkout.toughestExercises.map((exercise) => (
-                            <Pressable
-                              key={exercise.id}
-                              style={[
-                                styles.exerciseCard,
-                                userVotes.toughest === exercise.id &&
-                                  styles.selectedVoteCard,
-                                exercise.hasVoted && styles.votedCard,
-                              ]}
-                              onPress={() =>
-                                !exercise.hasVoted &&
-                                handleVote('toughest', exercise.id)
-                              }
-                              disabled={exercise.hasVoted}
-                            >
-                              <Text style={styles.exerciseName}>
-                                {exercise.name}
-                              </Text>
-                              <View style={styles.exerciseStats}>
-                                <View style={styles.statItem}>
-                                  <Ionicons
-                                    name="flame"
-                                    size={16}
-                                    color={colors.semantic.error}
-                                  />
-                                  <Text style={styles.statText}>
-                                    {exercise.votes}
-                                  </Text>
-                                </View>
-                                <View style={styles.statItem}>
-                                  <Text style={styles.difficultyText}>
-                                    {exercise.difficulty}
-                                  </Text>
-                                </View>
-                              </View>
-                              {exercise.hasVoted && (
-                                <BlurView
-                                  intensity={80}
-                                  style={styles.votedBadge}
-                                >
-                                  <Ionicons
-                                    name="checkmark"
-                                    size={16}
-                                    color={colors.semantic.success}
-                                  />
-                                  <Text style={styles.votedText}>Voted</Text>
-                                </BlurView>
-                              )}
-                            </Pressable>
-                          ))}
-                        </ScrollView>
-                      </View>
-
-                    </View>
-                  </>
-                )}
-
-                {isFutureDate && (
-                  <View style={styles.upcomingWorkout}>
-                    <Text style={styles.upcomingTitle}>Workout Plan</Text>
-                    {selectedWorkout.exercises.map((exercise, index) => (
-                      <View key={index} style={styles.upcomingExercise}>
-                        <Text style={styles.upcomingExerciseName}>
-                          {exercise.name}
-                        </Text>
-                        <Text style={styles.upcomingExerciseDetails}>
-                          {exercise.sets} × {exercise.reps}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </>
-            ) : (
-              <View style={styles.noWorkout}>
-                <Ionicons name="calendar" size={48} color={colors.gray[300]} />
-                <Text style={styles.noWorkoutText}>No workout scheduled</Text>
-                <Text style={styles.noWorkoutSubtext}>
-                  Take a rest day or join an available session
-                </Text>
-              </View>
-            )}
-          </View>
-        </Animated.View>
+        {renderWorkoutReview({
+          selectedWorkout,
+          isFutureDate,
+          userVotes,
+          handleVote
+        })}
+        {renderDailyHabits()}
       </View>
     </ScrollView>
   );
@@ -704,7 +656,7 @@ const styles = StyleSheet.create({
     color: colors.gray[500],
     marginBottom: spacing.sm,
   },
-  energyPoints: {
+  energyPointsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,

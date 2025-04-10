@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Platform, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -27,12 +27,7 @@ interface Exercise {
   module_type: string;
   level: string;
   sets?: number;
-  reps?: number;
-}
-
-interface CreateSessionResponse {
-  data: void;
-  error?: string;
+  reps?: string;
 }
 
 export default function CreateSession() {
@@ -61,13 +56,16 @@ export default function CreateSession() {
     fetchSquads();
     fetchUsers();
     fetchExercises();
+    setLoading(false);
   }, []);
 
   const fetchSquads = async () => {
     try {
+      setLoading(true);
       const { data } = await getSquads(null);
       console.log("Fetched squads:", data);
       setSquads(data as Squad[]);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching squads:', error);
     }
@@ -75,10 +73,12 @@ export default function CreateSession() {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       const {data} = await getMembers(null);
       console.log("Fetched members:", data);
       await setUsers(data as User[] || []);
       console.log("Users:", users);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -86,10 +86,12 @@ export default function CreateSession() {
 
   const fetchExercises = async () => {
     try {
+      setLoading(true);
       const {data} = await getExercises();
       console.log("Fetched exercises:", data);
       await setExercises(data as Exercise[] || []);
       console.log("Exercises:", exercises);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching exercises:', error);
     }
@@ -129,24 +131,17 @@ export default function CreateSession() {
         formData.selectedExercises,
         crypto.randomUUID()
       );
-
-      if (result.data.error) {
-        throw new Error(result.data.error);
+      if (!result.data?.success) {
+        throw new Error('Failed to create session');
       }
-
-      Alert.alert(
-        'Success',
-        'Session created successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      
+      alert('Session created successfully');
+      router.back();
     } catch (error) {
-      console.error('Error creating session:', error);
+
       setError('Failed to create session');
+      alert('Some error occurred while creating the session');
+    
     } finally {
       setLoading(false);
     }
@@ -184,7 +179,7 @@ export default function CreateSession() {
       ...prev,
       selectedExercises: prev.selectedExercises.map(ex => 
         ex.id === exerciseId 
-          ? { ...ex, [field]: parseInt(value) || 0 }
+          ? { ...ex, [field]: value || "" }
           : ex
       )
     }));
@@ -347,7 +342,12 @@ export default function CreateSession() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4F46E5" />
+        </View>
+      )}
+      <View style={[styles.header, loading && styles.disabled]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </Pressable>
@@ -364,7 +364,7 @@ export default function CreateSession() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={[styles.content, loading && styles.disabled]}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Session Details</Text>
           <TextInput
@@ -433,7 +433,6 @@ export default function CreateSession() {
                     style={[styles.tableCell, styles.numberInput]}
                     value={exercise.reps?.toString() || ''}
                     onChangeText={(value) => handleExerciseUpdate(exercise.id, 'reps', value)}
-                    keyboardType="numeric"
                     placeholder="0"
                   />
                   <TextInput
@@ -674,5 +673,20 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
     color: '#1E293B',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  disabled: {
+    opacity: 0.5,
+    pointerEvents: 'none',
   },
 }); 

@@ -28,12 +28,12 @@ export async function getUserSessions(startDate: Date, endDate: Date) {
       }
       
       const result = await httpsCallable(functions, 'getUserSessions')({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate,
+        endDate,
         authToken: session.access_token
       });
   
-      return result.data.sessions;
+      return result.data;
     } catch (error) {
       console.error('Error fetching workouts:', error);
       throw error;
@@ -160,5 +160,14 @@ export async function sessionStatus(sessionId: string, status: string) {
   
   return httpsCallable(functions, 'sessionStatus')({
     sessionId, status, authToken: session.access_token
+  });
+}
+
+export async function deleteSession(sessionId: string) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'deleteSession')({
+    sessionId, authToken: session.access_token
   });
 }

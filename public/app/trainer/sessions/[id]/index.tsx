@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { getTrainerSessions } from '@/utils/firebase';
+import { deleteSession, getTrainerSessions } from '@/utils/firebase';
 
 interface Session {
   id: string;
@@ -72,6 +72,25 @@ export default function SessionDetails() {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const {data} = await deleteSession(id as string);
+      if (!data?.success) {
+        throw new Error('Failed to delete session');
+      }
+      alert('Session deleted.');
+      router.back();
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      setError(error.message || 'Failed to save session data');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const pickImage = async (participantId: string) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -120,9 +139,14 @@ export default function SessionDetails() {
           onPress={handleSave}
           disabled={loading}
         >
-          <Text style={styles.saveButtonText}>
-            {loading ? 'Saving...' : 'Save'}
-          </Text>
+          <Text style={styles.saveButtonText}>Save</Text>
+        </Pressable>
+        <Pressable 
+          style={[styles.saveButton, loading && styles.disabledButton, { backgroundColor: '#DC2626' }]}
+          onPress={handleDelete}
+          disabled={loading}
+        >
+          <Text style={styles.saveButtonText}>Delete</Text>
         </Pressable>
       </View>
 

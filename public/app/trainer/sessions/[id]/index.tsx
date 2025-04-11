@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, Alert, Switch } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,11 @@ import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { deleteSession, getTrainerSessions } from '@/utils/firebase';
+
+const dateFormatOption = {
+  weekday: 'short', month: 'short', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hour12: true
+};
 
 interface Session {
   id: string;
@@ -32,7 +37,15 @@ interface Session {
     sets: number;
     reps: string;
   }>;
+  status: string;
 }
+
+const STATUS_OPTIONS = [
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 
 export default function SessionDetails() {
   const { id } = useLocalSearchParams();
@@ -56,14 +69,8 @@ export default function SessionDetails() {
     try {
       setLoading(true);
       setError(null);
-
-      Alert.alert(
-        'Success',
-        'Session data saved successfully',
-        [
-          { text: 'OK', onPress: () => router.back() }
-        ]
-      );
+      console.log("Saving session", session);
+      // alert('Session data saved successfully');
     } catch (error) {
       console.error('Error saving session:', error);
       setError(error.message || 'Failed to save session data');
@@ -103,7 +110,7 @@ export default function SessionDetails() {
       if (!result.canceled && result.assets.length > 0) {
         setSession(prev => ({
           ...prev,
-          participants: prev.participants.map(p => 
+          session_users: prev.session_users.map(p => 
             p.id === participantId 
               ? { ...p, media: [...p.media, result.assets[0].uri] }
               : p
@@ -116,10 +123,10 @@ export default function SessionDetails() {
     }
   };
 
-  const updateParticipant = (participantId: string, updates: Partial<Session['participants'][0]>) => {
+  const updateParticipant = (participantId: string, updates: Partial<Session['session_users'][0]>) => {
     setSession(prev => ({
       ...prev,
-      participants: prev.participants.map(p => 
+      session_users: prev.session_users.map(p => 
         p.id === participantId 
           ? { ...p, ...updates }
           : p
@@ -133,21 +140,26 @@ export default function SessionDetails() {
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </Pressable>
-        <Text style={styles.title}>Session Details</Text>
-        <Pressable 
-          style={[styles.saveButton, loading && styles.disabledButton]}
-          onPress={handleSave}
-          disabled={loading}
-        >
-          <Text style={styles.saveButtonText}>Save</Text>
-        </Pressable>
-        <Pressable 
-          style={[styles.saveButton, loading && styles.disabledButton, { backgroundColor: '#DC2626' }]}
-          onPress={handleDelete}
-          disabled={loading}
-        >
-          <Text style={styles.saveButtonText}>Delete</Text>
-        </Pressable>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>{session?.title}</Text>
+          <Text style={styles.headerTime}>{new Date(session?.start_time).toLocaleString('en-US', dateFormatOption)}</Text>
+        </View>
+        <View style={styles.headerButtons}>
+          <Pressable 
+            style={[styles.saveButton, loading && styles.disabledButton]}
+            onPress={handleSave}
+            disabled={loading}
+          >
+            <Text style={styles.saveButtonText}>Save</Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.saveButton, loading && styles.disabledButton, { backgroundColor: '#DC2626' }]}
+            onPress={handleDelete}
+            disabled={loading}
+          >
+            <Text style={styles.saveButtonText}>Delete</Text>
+          </Pressable>
+        </View>
       </View>
 
       {error && (
@@ -158,8 +170,32 @@ export default function SessionDetails() {
 
       <ScrollView style={styles.content}>
         <View style={styles.sessionInfo}>
-          <Text style={styles.sessionTitle}>{session?.title}</Text>
-          <Text style={styles.sessionTime}>{session?.start_time}</Text>
+          <View style={styles.statusContainer}>
+            <Text style={styles.statusLabel}>Status</Text>
+            <View style={styles.statusOptions}>
+              {STATUS_OPTIONS.map((option) => (
+                <Pressable
+                  key={option.value}
+                  style={[
+                    styles.statusOption,
+                    session?.status === option.value && option.value === 'cancelled' 
+                      ? styles.statusOptionCancelledActive 
+                      : session?.status === option.value 
+                        ? styles.statusOptionActive 
+                        : null
+                  ]}
+                  onPress={() => setSession(prev => ({ ...prev, status: option.value }))}
+                >
+                  <Text style={[
+                    styles.statusOptionText,
+                    session?.status === option.value && styles.statusOptionTextActive
+                  ]}>
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -184,103 +220,120 @@ export default function SessionDetails() {
             >
               <View style={styles.participantHeader}>
                 <Text style={styles.participantName}>{participant.users.display_name}</Text>
-                <BlurView intensity={80} style={styles.attendanceBadge}>
-                  <Text style={styles.attendanceText}>
+                <View style={styles.attendanceContainer}>
+                  <Text style={[
+                    styles.attendanceText,
+                    { color: participant.attendance === 'present' ? '#22C55E' : '#DC2626' }
+                  ]}>
                     {participant.attendance === 'present' ? 'Present' : 'Absent'}
                   </Text>
-                </BlurView>
-              </View>
-
-              <View style={styles.performanceSection}>
-                <Text style={styles.performanceLabel}>Performance Score</Text>
-                <TextInput
-                  style={styles.performanceInput}
-                  value={participant.performance?.toString()}
-                  onChangeText={(text) => {
-                    const score = parseInt(text) || 0;
-                    updateParticipant(participant.id, { performance: score });
-                  }}
-                  keyboardType="numeric"
-                  maxLength={3}
-                />
-              </View>
-
-              <View style={styles.feedbackSection}>
-                <Text style={styles.feedbackLabel}>Trainer Comments</Text>
-                <TextInput
-                  style={styles.feedbackInput}
-                  value={participant?.comments}
-                  onChangeText={(text) => updateParticipant(participant.id, { comments: text })}
-                  multiline
-                  numberOfLines={3}
-                  placeholder="Add your feedback..."
-                  placeholderTextColor="#64748B"
-                />
-              </View>
-
-              <View style={styles.exerciseFeedback}>
-                <View style={styles.exerciseField}>
-                  <Text style={styles.exerciseFieldLabel}>Best Exercise</Text>
-                  <TextInput
-                    style={styles.exerciseInput}
-                    value={participant?.bestExercise}
-                    onChangeText={(text) => updateParticipant(participant.id, { bestExercise: text })}
-                    placeholder="Best performed exercise"
-                    placeholderTextColor="#64748B"
-                  />
-                </View>
-
-                <View style={styles.exerciseField}>
-                  <Text style={styles.exerciseFieldLabel}>Needs Improvement</Text>
-                  <TextInput
-                    style={styles.exerciseInput}
-                    value={participant?.needsImprovement}
-                    onChangeText={(text) => updateParticipant(participant.id, { needsImprovement: text })}
-                    placeholder="Exercise to improve"
-                    placeholderTextColor="#64748B"
+                  <Switch
+                    value={participant.attendance === 'present'}
+                    onValueChange={(value) => {
+                      updateParticipant(participant.id, {
+                        attendance: value ? 'present' : 'absent'
+                      });
+                    }}
+                    trackColor={{ false: '#DC2626', true: '#22C55E' }}
+                    thumbColor="#FFFFFF"
                   />
                 </View>
               </View>
 
-              <View style={styles.mediaSection}>
-                <View style={styles.mediaSectionHeader}>
-                  <Text style={styles.mediaLabel}>Media</Text>
-                  <Pressable 
-                    style={styles.addMediaButton}
-                    onPress={() => pickImage(participant.id)}
-                  >
-                    <Ionicons name="camera" size={20} color="#4F46E5" />
-                    <Text style={styles.addMediaText}>Add Photo</Text>
-                  </Pressable>
-                </View>
+              {participant.attendance === 'present' && (
+                <>
+                  <View style={styles.performanceSection}>
+                    <Text style={styles.performanceLabel}>Performance Score</Text>
+                    <TextInput
+                      style={styles.performanceInput}
+                      value={participant.performance?.toString()}
+                      onChangeText={(text) => {
+                        const score = parseInt(text) || 0;
+                        updateParticipant(participant.id, { performance: score });
+                      }}
+                      keyboardType="numeric"
+                      maxLength={3}
+                    />
+                  </View>
 
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.mediaScroll}
-                >
-                  {participant.media?.map((url, index) => (
-                    <View key={index} style={styles.mediaPreview}>
-                      <Image source={{ uri: url }} style={styles.mediaImage} />
+                  <View style={styles.feedbackSection}>
+                    <Text style={styles.feedbackLabel}>Trainer Comments</Text>
+                    <TextInput
+                      style={styles.feedbackInput}
+                      value={participant?.comments}
+                      onChangeText={(text) => updateParticipant(participant.id, { comments: text })}
+                      multiline
+                      numberOfLines={3}
+                      placeholder="Add your feedback..."
+                      placeholderTextColor="#64748B"
+                    />
+                  </View>
+
+                  <View style={styles.exerciseFeedback}>
+                    <View style={styles.exerciseField}>
+                      <Text style={styles.exerciseFieldLabel}>Best Exercise</Text>
+                      <TextInput
+                        style={styles.exerciseInput}
+                        value={participant?.bestExercise}
+                        onChangeText={(text) => updateParticipant(participant.id, { bestExercise: text })}
+                        placeholder="Best performed exercise"
+                        placeholderTextColor="#64748B"
+                      />
+                    </View>
+
+                    <View style={styles.exerciseField}>
+                      <Text style={styles.exerciseFieldLabel}>Needs Improvement</Text>
+                      <TextInput
+                        style={styles.exerciseInput}
+                        value={participant?.needsImprovement}
+                        onChangeText={(text) => updateParticipant(participant.id, { needsImprovement: text })}
+                        placeholder="Exercise to improve"
+                        placeholderTextColor="#64748B"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.mediaSection}>
+                    <View style={styles.mediaSectionHeader}>
+                      <Text style={styles.mediaLabel}>Media</Text>
                       <Pressable 
-                        style={styles.removeMediaButton}
-                        onPress={() => {
-                          setSession(prev => ({
-                            ...prev,
-                            participants: prev.session_users.map(p => 
-                              p.id === participant.user_id 
-                                ? { ...p, media: p.media.filter((_, i) => i !== index) }
-                                : p
-                            )
-                          }));
-                        }}
+                        style={styles.addMediaButton}
+                        onPress={() => pickImage(participant.id)}
                       >
-                        <Ionicons name="close-circle" size={24} color="#EF4444" />
+                        <Ionicons name="camera" size={20} color="#4F46E5" />
+                        <Text style={styles.addMediaText}>Add Photo</Text>
                       </Pressable>
                     </View>
-                  ))}
-                </ScrollView>
-              </View>
+
+                    <ScrollView 
+                      horizontal 
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.mediaScroll}
+                    >
+                      {participant.media?.map((url, index) => (
+                        <View key={index} style={styles.mediaPreview}>
+                          <Image source={{ uri: url }} style={styles.mediaImage} />
+                          <Pressable 
+                            style={styles.removeMediaButton}
+                            onPress={() => {
+                              setSession(prev => ({
+                                ...prev,
+                                participants: prev.session_users.map(p => 
+                                  p.id === participant.user_id 
+                                    ? { ...p, media: p.media.filter((_, i) => i !== index) }
+                                    : p
+                                )
+                              }));
+                            }}
+                          >
+                            <Ionicons name="close-circle" size={24} color="#EF4444" />
+                          </Pressable>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </>
+              )}
             </Animated.View>
           ))}
         </View>
@@ -306,6 +359,24 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+  },
+  headerTitleContainer: {
+    flex: 1,
+    marginHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  headerTime: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 4,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
   },
   title: {
     fontSize: 18,
@@ -342,15 +413,47 @@ const styles = StyleSheet.create({
   sessionInfo: {
     marginBottom: 24,
   },
-  sessionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1E293B',
+  statusContainer: {
+    marginVertical: 16,
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748B',
     marginBottom: 8,
   },
-  sessionTime: {
-    fontSize: 16,
+  statusOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statusOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  statusOptionActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+  },
+  statusOptionCancelled: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+  },
+  statusOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
     color: '#64748B',
+  },
+  statusOptionTextActive: {
+    color: '#FFFFFF',
+  },
+  statusOptionCancelledActive: {
+    backgroundColor: '#DC2626',
+    borderColor: '#DC2626',
   },
   section: {
     marginBottom: 24,
@@ -412,16 +515,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
-  attendanceBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+  attendanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   attendanceText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#22C55E',
+    color: '#64748B',
   },
   performanceSection: {
     marginBottom: 16,

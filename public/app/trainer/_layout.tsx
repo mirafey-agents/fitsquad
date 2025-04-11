@@ -11,17 +11,29 @@ export default function TrainerDashboardLayout() {
       screenOptions={{
         headerStyle: {
           backgroundColor: colors.primary.light,
+          ...Platform.select({
+            ios: {
+              height: 44,
+            },
+            android: {
+              height: 56,
+            },
+            web: {
+              height: 40,
+            },
+          }),
         },
         headerTintColor: colors.primary.dark,
         headerTitleStyle: {
           fontWeight: typography.weight.semibold as any,
           fontSize: typography.size.lg,
+          ...Platform.select({
+            web: {
+              fontSize: typography.size.md,
+            },
+          }),
         },
-        headerLeft: () => (
-          <View style={styles.headerLeft}>
-            <DrawerToggleButton tintColor={colors.primary.dark} />
-          </View>
-        ),
+        headerLeft: undefined,
         headerBackground: () => (
           <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill}>
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.primary.light, opacity: 0.95 }]} />
@@ -35,12 +47,18 @@ export default function TrainerDashboardLayout() {
         headerTitleAlign: 'center',
         ...Platform.select({
           ios: {
-            headerTopInsetEnabled: true,
+            headerTopInsetEnabled: false,
           },
           android: {
             headerStyle: {
               backgroundColor: colors.primary.light,
-              height: 64 + spacing.xl,
+              height: 56,
+            },
+          },
+          web: {
+            headerStyle: {
+              backgroundColor: colors.primary.light,
+              height: 40,
             },
           },
         }),
@@ -51,6 +69,7 @@ export default function TrainerDashboardLayout() {
         options={{
           title: 'Trainer Dashboard',
           headerLargeTitle: true,
+          headerLeft: null,
         }}
       />
       <Stack.Screen 
@@ -107,7 +126,11 @@ export default function TrainerDashboardLayout() {
 
 const styles = StyleSheet.create({
   headerLeft: {
-    marginLeft: Platform.OS === 'ios' ? -8 : 0,
+    marginLeft: Platform.select({
+      ios: -8,
+      web: -4,
+      default: 0,
+    }),
     marginRight: spacing.sm,
   },
 });

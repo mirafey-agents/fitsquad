@@ -185,7 +185,7 @@ export const getExercises = onCall(
     }
   });
 
-export const createOrEditSession = onCall(
+export const createSession = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
@@ -196,7 +196,6 @@ export const createOrEditSession = onCall(
         userIds,
         exercises,
         authToken,
-        sessionId,
       } = request.data;
       // console.log(request.data);
       if (!title || !startTime || !exercises || !authToken) {
@@ -228,10 +227,9 @@ export const createOrEditSession = onCall(
       }
 
       // Create or update workout
-      const {data, error: updateError} = await getAdmin()
+      const {data, error: insertError} = await getAdmin()
         .from("sessions")
-        .upsert({
-          "id": sessionId,
+        .insert({
           title,
           "start_time": startTime,
           "trainer_id": userId,
@@ -241,14 +239,7 @@ export const createOrEditSession = onCall(
         .select()
         .single();
 
-      if (updateError) throw updateError;
-      // Delete existing participants
-      const {error: deleteError} = await getAdmin()
-        .from("session_users")
-        .delete()
-        .eq("session_id", data.id);
-
-      if (deleteError) throw deleteError;
+      if (insertError) throw insertError;
 
       // Add participants
       const participantsData = allUsers.map((userId: string) => ({
@@ -258,7 +249,7 @@ export const createOrEditSession = onCall(
         squad_id: squadId,
         exercises,
         status: "scheduled",
-        // scheduled, in_progress, completed, cancelled, missed
+        // scheduled, in_progress, completed, cancelled, absent
       }));
 
       const {error: participantsError} = await getAdmin()
@@ -268,6 +259,72 @@ export const createOrEditSession = onCall(
       if (participantsError) throw participantsError;
 
       return {success: true, sessionId: data.id};
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);
+
+export const updateSession = onCall(
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+  async (request: any) => {
+    try {
+      const {
+        authToken,
+        sessionId,
+        status,
+        sessionUsers,
+      } = request.data;
+
+      // console.log(request.data);
+      if (!authToken || !status || !sessionId) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters"
+        );
+      }
+
+      // Verify Supabase JWT
+      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      if (tokenError) {
+        throw new HttpsError("unauthenticated", "Invalid authentication token");
+      }
+
+      // Create or update workout
+      const {error: updateError} = await getAdmin()
+        .from("sessions")
+        .update({
+          "updated_at": new Date().toISOString(),
+          "status": status,
+        })
+        .eq("id", sessionId)
+        .eq("trainer_id", userId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      for (const user of sessionUsers) {
+        const {error: updateError} = await getAdmin()
+          .from("session_users")
+          .update({
+            status: user.status,
+            trainer_comments: user.trainer_comments,
+            performance_score: user.performance_score,
+            exercises: user.exercises,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("session_id", sessionId)
+          .eq("user_id", user.user_id);
+
+        if (updateError) throw updateError;
+      }
+
+      return {success: true};
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {

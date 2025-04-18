@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { deleteSession, getTrainerSessions } from '@/utils/firebase';
+import { deleteSession, getTrainerSessions, updateSession } from '@/utils/firebase';
 
 const dateFormatOption = {
   weekday: 'short', month: 'short', day: '2-digit',
@@ -24,9 +24,9 @@ interface Session {
       display_name: string;
       email: string;
     }
-    attendance: string;
-    performance: number;
-    comments: string;
+    status: string;
+    performance_score: number;
+    trainer_comments: string;
     bestExercise: string | null;
     needsImprovement: string | null;
     media: string[];
@@ -69,8 +69,13 @@ export default function SessionDetails() {
     try {
       setLoading(true);
       setError(null);
-      console.log("Saving session", session);
-      // alert('Session data saved successfully');
+      for (const participant of session.session_users) {
+        participant.status = (session.status == 'completed') ?
+          ((participant.status == 'completed') ? participant.status : 'absent') : session.status;
+      }
+      const {data} = await updateSession(id as string, session.status, session.session_users);
+      alert('Session Saved!');
+      router.back();
     } catch (error) {
       console.error('Error saving session:', error);
       setError(error.message || 'Failed to save session data');
@@ -223,15 +228,15 @@ export default function SessionDetails() {
                 <View style={styles.attendanceContainer}>
                   <Text style={[
                     styles.attendanceText,
-                    { color: participant.attendance === 'present' ? '#22C55E' : '#DC2626' }
+                    { color: participant.status === 'completed' ? '#22C55E' : '#DC2626' }
                   ]}>
-                    {participant.attendance === 'present' ? 'Present' : 'Absent'}
+                    {participant.status === 'completed' ? 'Present' : 'Absent'}
                   </Text>
                   <Switch
-                    value={participant.attendance === 'present'}
+                    value={participant.status === 'completed'}
                     onValueChange={(value) => {
                       updateParticipant(participant.id, {
-                        attendance: value ? 'present' : 'absent'
+                        status: value ? 'completed' : 'absent'
                       });
                     }}
                     trackColor={{ false: '#DC2626', true: '#22C55E' }}
@@ -240,16 +245,16 @@ export default function SessionDetails() {
                 </View>
               </View>
 
-              {participant.attendance === 'present' && (
+              {participant.status === 'completed' && (
                 <>
                   <View style={styles.performanceSection}>
                     <Text style={styles.performanceLabel}>Performance Score</Text>
                     <TextInput
                       style={styles.performanceInput}
-                      value={participant.performance?.toString()}
+                      value={participant.performance_score?.toString()}
                       onChangeText={(text) => {
                         const score = parseInt(text) || 0;
-                        updateParticipant(participant.id, { performance: score });
+                        updateParticipant(participant.id, { performance_score: score });
                       }}
                       keyboardType="numeric"
                       maxLength={3}
@@ -260,8 +265,8 @@ export default function SessionDetails() {
                     <Text style={styles.feedbackLabel}>Trainer Comments</Text>
                     <TextInput
                       style={styles.feedbackInput}
-                      value={participant?.comments}
-                      onChangeText={(text) => updateParticipant(participant.id, { comments: text })}
+                      value={participant?.trainer_comments}
+                      onChangeText={(text) => updateParticipant(participant.id, { trainer_comments: text })}
                       multiline
                       numberOfLines={3}
                       placeholder="Add your feedback..."

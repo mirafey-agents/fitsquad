@@ -131,16 +131,26 @@ export async function getExercises() {
   return httpsCallable(functions, 'getExercises')({authToken: session.access_token});
 }
 
-export async function createOrEditSession(
+export async function createSession(
   title: string="", startTime: string= "", squadId: string="",
-  userIds: Array<string>=null, exercises: Array<any>=null, sessionId: string="") {
+  userIds: Array<string>=null, exercises: Array<any>=null) {
   
-  console.log("title", title, "start", startTime, "squad", squadId, "users", userIds, "exercises", exercises, "sessionId", "sesison", sessionId);
+  console.log("title", title, "start", startTime, "squad", squadId, "users", userIds, "exercises", exercises);
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   
-  return httpsCallable(functions, 'createOrEditSession')({
-    title, startTime, squadId, userIds, exercises, sessionId,
+  return httpsCallable(functions, 'createSession')({
+    title, startTime, squadId, userIds, exercises,
+    authToken: session.access_token
+  });
+}
+
+export async function updateSession(
+  sessionId: string, status: string, sessionUsers: Array<any>) {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+  return httpsCallable(functions, 'updateSession')({
+    sessionId, status, sessionUsers,
     authToken: session.access_token
   });
 }
@@ -151,15 +161,6 @@ export async function voteSession(sessionId: string, mvpUserId: string) {
   
   return httpsCallable(functions, 'voteSession')({
     sessionId, mvpUserId, authToken: session.access_token
-  });
-}
-
-export async function sessionStatus(sessionId: string, status: string) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
-  
-  return httpsCallable(functions, 'sessionStatus')({
-    sessionId, status, authToken: session.access_token
   });
 }
 

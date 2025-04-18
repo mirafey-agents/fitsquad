@@ -7,7 +7,7 @@ import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 // import "react-datepicker/dist/react-datepicker.css";
 import { supabase } from '@/utils/supabase';
-import { getExercises, getMembers, getSquads, createOrEditSession } from '@/utils/firebase';
+import { getExercises, getMembers, getSquads, createSession } from '@/utils/firebase';
 
 interface Squad {
   id: string;
@@ -123,13 +123,12 @@ export default function CreateSession() {
       if (!session?.access_token) {
         throw new Error('No active session');
       }
-      const result = await createOrEditSession(
+      const result = await createSession(
         formData.title,
         formData.date.toISOString(),
         formData.selectedSquads[0].id,
         formData.selectedUsers.map(u => u.id),
-        formData.selectedExercises,
-        crypto.randomUUID()
+        formData.selectedExercises
       );
       if (!result.data?.success) {
         throw new Error('Failed to create session');
@@ -138,7 +137,7 @@ export default function CreateSession() {
       alert('Session created successfully');
       router.back();
     } catch (error) {
-
+      console.log('Error creating session:', error);
       setError('Failed to create session');
       alert('Some error occurred while creating the session');
     

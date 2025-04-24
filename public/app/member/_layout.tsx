@@ -1,10 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
-import Logo from '../../components/Logo';
+import Logo from '@/components/Logo';
 import { BlurView } from 'expo-blur';
 import { DrawerToggleButton } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, shadows, typography, spacing } from '../../constants/theme';
+import { colors, shadows, typography, spacing } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 
 export default function TabLayout() {
@@ -71,7 +71,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Daily Habits',
+          title: 'Home',
           headerTitleAlign: 'center',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
@@ -90,7 +90,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'profile',
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
@@ -99,6 +99,7 @@ export default function TabLayout() {
       <Tabs.Screen name="challenges" options={{href: null}}/>
       <Tabs.Screen name="progress" options={{href: null}}/>
       <Tabs.Screen name="onboarding" options={{href: null}}/>
+      <Tabs.Screen name="habits" options={{href: null}}/>
     </Tabs>
   );
 }

@@ -84,8 +84,8 @@ export default function HabitTracker({ preview = false }) {
             break;
           }
         }
-
-        return {
+          
+          return {
           ...habit,
           completionHistory: history,
           streak,
@@ -171,46 +171,33 @@ export default function HabitTracker({ preview = false }) {
 
   if (preview) {
     if(isLoading) {
-      return (
+    return (
         <>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary.dark} />
-          </View>
+        </View>
         </>
       )
     }
     return (
       <>
-      <View style={styles.habitsPreview}>
-        {selectedHabits.slice(0, 2).map((habit, index) => (
-          <Animated.View
-            key={habit.id}
-            entering={FadeInUp.delay(index * 100)}
-            style={styles.habitPreviewCard}
-          >
-            <BlurView
-              intensity={80}
-              style={[
-                styles.habitIcon,
-                habit.completed && styles.completedHabitIcon,
-              ]}
+        <View style={styles.habitsPreview}>
+          {selectedHabits.slice(0, 2).map((habit, index) => (
+            <Animated.View
+              key={habit.id}
+              entering={FadeInUp.delay(index * 100)}
+              style={styles.habitPreviewCard}
             >
-              <Ionicons
-                name={habit.icon as any}
-                size={24}
-                color={habit.completed ? colors.primary.light : colors.primary.dark}
-              />
-            </BlurView>
-            <View style={styles.habitPreviewInfo}>
+              <View style={styles.habitPreviewInfo}>
               <Text style={styles.habitName}>{habit.title}</Text>
-              <View style={styles.streakContainer}>
-                <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                <Text style={styles.streakText}>{habit.streak} days</Text>
+                <View style={styles.streakContainer}>
+                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
+                  <Text style={styles.streakText}>{habit.streak} days</Text>
+                </View>
               </View>
-            </View>
-          </Animated.View>
-        ))}
-      </View>
+            </Animated.View>
+          ))}
+        </View>
       <View style={styles.cardFooter}>
         <Text style={styles.cardFooterText}>View more</Text>
         <Ionicons name="arrow-forward" size={20} color={colors.primary.dark}/>
@@ -220,7 +207,7 @@ export default function HabitTracker({ preview = false }) {
   }
 
   if(isLoading) {
-    return (
+  return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary.dark} />
       </View>
@@ -235,46 +222,33 @@ export default function HabitTracker({ preview = false }) {
             key={habit.id}
             entering={FadeInUp.delay(index * 100)}
             style={styles.habitCard}
-          >
-            <View style={styles.habitInfo}>
-              <BlurView
-                intensity={80}
-                style={[
-                  styles.habitIcon,
-                  { marginRight: spacing.sm }
-                ]}
-              >
-                <Ionicons
-                  name={habit.icon as any}
-                  size={24}
-                  color={habit.completed ? colors.primary.light : colors.primary.dark}
-                />
-              </BlurView>
-              <View style={styles.habitDetails}>
+            >
+              <View style={styles.habitInfo}>
+                <View style={styles.habitDetails}>
                 <View style={styles.habitTitleRow}>
-                  <Text style={styles.habitName}>{habit.title}</Text>
+                  <Text style={[styles.habitName, { flex: 1, marginRight: spacing.md }]}>{habit.title}</Text>
                   <Pressable
-                    style={[styles.deleteButton, { position: 'absolute', right: 0, top: 0 }]}
-                    onPress={() => removeHabit(habit.id)}
-                  >
+                      style={styles.deleteButton}
+                      onPress={() => removeHabit(habit.id)}
+                    >
                     <Ionicons name="trash-outline" size={16} color={colors.semantic.error} />
                   </Pressable>
-                </View>
+                  </View>
                 <Text style={styles.habitDescription}>{habit.description}</Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.habitStatus}>
-              <View style={styles.streakContainer}>
-                <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                <Text style={styles.streakText}>{habit.streak} days</Text>
-              </View>
+              <View style={styles.habitStatus}>
+                <View style={styles.streakContainer}>
+                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
+                  <Text style={styles.streakText}>{habit.streak} days</Text>
+                </View>
               <View style={styles.historyContainer}>
                 <HabitHistory 
                   history={habit.completionHistory || []} 
                   onToggleCompletion={(date) => toggleCompletion(habit.id, new Date(date), habit.completionHistory?.find(h => h.date === date)?.completed)}
-                />
+                  />
+                </View>
               </View>
-            </View>
           </Animated.View>
         ))}
 
@@ -365,7 +339,7 @@ export default function HabitTracker({ preview = false }) {
           <Text style={styles.addButtonText}>Add Habit</Text>
         </Pressable>
       </View>
-      
+
       {showHabitPicker && (
         <BlurView intensity={80} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -497,12 +471,8 @@ export default function HabitTracker({ preview = false }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
-    minHeight: '100%',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary.light,
     padding: spacing.md,
-    display: 'flex',
-    flexDirection: 'column',
   },
   header: {
     flexDirection: 'row',
@@ -601,9 +571,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   habitName: {
-    fontSize: typography.size.sm,
-    fontWeight: '600',
-    color: colors.gray[900],
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.medium,
+    color: colors.primary.dark,
+    flexShrink: 1,
   },
   habitDescription: {
     fontSize: typography.size.xs,
@@ -621,7 +592,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: spacing.xs,
-    borderRadius: borderRadius.sm,
+    marginLeft: spacing.xs,
   },
   historyContainer: {
     flexDirection: 'row',
@@ -923,6 +894,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.xs,
+    width: '100%',
   },
   cardFooter: {
     padding: spacing.md,

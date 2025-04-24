@@ -131,3 +131,61 @@ export const createOrEditSquad = onCall(
     }
   }
 );
+
+export const deleteSquad = onCall(
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+  async (request: any) => {
+    try {
+      const {squadId, authToken} = request.data;
+
+      if (!squadId || !authToken) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters: squadId and authToken"
+        );
+      }
+
+      // Verify Supabase JWT
+      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      if (tokenError) {
+        throw new HttpsError("unauthenticated", "Invalid authentication token");
+      }
+
+      // Check if user is the creator of the squad
+      const {data: squad, error: squadError} = await getAdmin()
+        .from("squads")
+        .select("created_by")
+        .eq("id", squadId)
+        .single();
+
+      if (squadError) throw squadError;
+
+      if (squad.created_by !== userId) {
+        throw new HttpsError("permission-denied",
+          "User is not the creator of the squad");
+      }
+      const {error: deleteError} = await getAdmin()
+        .from("squad_members")
+        .delete()
+        .eq("squad_id", squadId);
+
+      if (deleteError) throw deleteError;
+
+      // Delete squad
+      const {error: deleteError2} = await getAdmin()
+        .from("squads")
+        .delete()
+        .eq("id", squadId);
+
+      if (deleteError2) throw deleteError2;
+
+      return {success: true};
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);

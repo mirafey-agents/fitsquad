@@ -30,7 +30,11 @@ export {
   setHabitCompletion,
 } from "./habits";
 
-export {getSquads, createOrEditSquad} from "./squads";
+export {
+  getSquads,
+  createOrEditSquad,
+  deleteSquad,
+} from "./squads";
 
 export const helloWorld = onRequest(
   {cors: true},

@@ -172,14 +172,11 @@ export default function HabitTracker({ preview = false }) {
   if (preview) {
     if(isLoading) {
       return (
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Daily Habits</Text>
-          </View>
+        <>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary.dark} />
           </View>
-        </View>
+        </>
       )
     }
     return (

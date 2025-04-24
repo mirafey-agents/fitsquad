@@ -5,9 +5,9 @@ import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRootNavigationState } from 'expo-router';
-import Logo from '../../components/Logo';
-import { getLoggedInUser } from '../../utils/supabase';
-import {getUserSessions} from '../../utils/firebase';
+import Logo from '@/components/Logo';
+import { getLoggedInUser } from '@/utils/supabase';
+import {getChallenges, getUserSessions} from '@/utils/firebase';
 
 import {
   colors,
@@ -15,14 +15,13 @@ import {
   spacing,
   borderRadius,
   typography,
-} from '../../constants/theme';
-import HabitTracker from '../../components/HabitTracker';
-import DailyChallenges from '../../components/DailyChallenges';
+} from '@/constants/theme';
+import HabitTracker from '@/components/HabitTracker';
+import DailyChallenges from '@/components/DailyChallenges';
 import {
   format,
   isSameDay,
   isAfter,
-  isBefore,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
@@ -37,30 +36,31 @@ const renderDailyHabits = () => (
   <Animated.View entering={FadeInUp.delay(200)}>
     <Pressable
       style={[styles.card, { backgroundColor: colors.transparent.coral }]}
-      onPress={() => router.push('/habits')}
+      onPress={() => router.push('./habits', {relativeToDirectory: true})}
     >
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleContainer}>
           <Ionicons name="list" size={24} color={colors.primary.dark} />
-          <Text style={styles.cardTitle}>Daily Check-in</Text>
+          <Text style={styles.cardTitle}>Daily Habits</Text>
         </View>
-        <BlurView intensity={80} style={styles.cardBadge}>
-          <Text style={styles.cardBadgeText}>Important</Text>
-        </BlurView>
       </View>
 
       <HabitTracker preview={true} />
-      <DailyChallenges preview={true} />
-
-      <View style={styles.cardFooter}>
-        <Text style={styles.cardFooterText}>View full details</Text>
-        <Ionicons
-          name="arrow-forward"
-          size={20}
-          color={colors.primary.dark}
-        />
-      </View>
     </Pressable>
+  </Animated.View>
+);
+
+const renderChallenges = () => (
+  <Animated.View entering={FadeInUp.delay(200)}>
+    <View style={[styles.card, { backgroundColor: colors.transparent.mint }]}>
+      <View style={styles.cardHeader}>
+          <View style={styles.cardTitleContainer}>
+            <Ionicons name="trophy" size={24} color={colors.primary.dark} />
+            <Text style={styles.cardTitle}>Challenges</Text>
+          </View>
+      </View>
+      <DailyChallenges preview={true} />
+    </View>
   </Animated.View>
 );
 
@@ -343,7 +343,7 @@ export default function Home() {
     setUserData(userData);
     getUserSessions(new Date(2024,1,1), new Date(2025,12,1)).then(
       (sessions) => {
-        console.log('workouts: ', sessions);
+        console.log('sessions: ', sessions);
         setSessions(sessions as any[]);
       }
     );
@@ -496,6 +496,7 @@ export default function Home() {
           handleVote
         })}
         {renderDailyHabits()}
+        {renderChallenges()}
       </View>
     </ScrollView>
   );

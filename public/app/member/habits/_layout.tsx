@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { colors, typography } from '../../constants/theme';
+import { colors, typography } from '@/constants/theme';
 
 export default function HabitsLayout() {
   return (
@@ -21,7 +21,7 @@ export default function HabitsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: 'Daily Habits & Accountability',
+          title: 'Daily Habits',
         }}
       />
     </Stack>

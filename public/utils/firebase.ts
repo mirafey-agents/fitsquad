@@ -66,6 +66,7 @@ export async function getTrainerSessions(
     throw error;
   }
 }
+
 export async function createMember(member: any) {
 
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -135,8 +136,8 @@ export async function createSession(
   title: string="", startTime: string= "", squadId: string="",
   userIds: Array<string>=null, exercises: Array<any>=null) {
   
-  console.log("title", title, "start", startTime, "squad", squadId, "users", userIds, "exercises", exercises);
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // console.log("title", title, "start", startTime, "squad", squadId, "users", userIds, "exercises", exercises);
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   
   return httpsCallable(functions, 'createSession')({
@@ -171,4 +172,49 @@ export async function deleteSession(sessionId: string) {
   return httpsCallable(functions, 'deleteSession')({
     sessionId, authToken: session.access_token
   });
+}
+
+export async function getHabitIdeas() {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return (await httpsCallable(functions, 'getHabitIdeas')({
+    authToken: session.access_token,
+  })).data;
+}
+
+export async function getHabitsHistory() {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return (await httpsCallable(functions, 'getHabitsHistory')({
+    authToken: session.access_token,
+  })).data;
+}
+
+export async function setHabitCompletion(habitId: string, date: Date, completed: boolean) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return (await httpsCallable(functions, 'setHabitCompletion')({
+    habitId, date, completed, authToken: session.access_token
+  })).data;
+}
+
+export async function addHabit(title: string, description: string) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return (await httpsCallable(functions, 'addHabit')({
+    title, description, authToken: session.access_token,
+  })).data;
+}
+
+export async function deleteHabit(habitId: string) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return (await httpsCallable(functions, 'deleteHabit')({
+    habitId, authToken: session.access_token,
+  })).data;
 }

@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '../constants/theme';
 import { supabase } from '../utils/supabase';
+// import { getChallenges } from '@/utils/firebase';
 
 interface DailyWorkout {
   id: string;
@@ -16,47 +17,51 @@ interface DailyWorkout {
   completed_at?: string;
 }
 
-export default function DailyChallenges({ preview = false }) {
-  const [workouts, setWorkouts] = useState<DailyWorkout[]>([]);
+export default function DailyChallenges({ preview = false, date=new Date() }) {
+  const [challenges, setChallenges] = useState<[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Sample data for demonstration
   const DEMO_WORKOUTS = [
-    {
-      id: 'e8fd159b-57c4-4d36-9bd7-a59ca13057bb',
-      title: 'Morning Cardio Blast',
-      description: 'Start your day with this energizing cardio session',
-      exercise: 'Jump Rope + High Knees',
-      target: '10 mins jump rope + 100 high knees',
-      completed: false,
-      completed_at: null
-    },
-    {
-      id: 'f8fd159b-57c4-4d36-9bd7-a59ca13057bc',
-      title: 'Core Challenge',
-      description: 'Focus on strengthening your core',
-      exercise: 'Plank Variations',
-      target: '1 min each: standard, side, reverse',
-      completed: true,
-      completed_at: new Date().toISOString()
-    },
-    {
-      id: 'a8fd159b-57c4-4d36-9bd7-a59ca13057bd',
-      title: 'Evening Mobility',
-      description: 'End your day with mobility work',
-      exercise: 'Dynamic Stretching',
-      target: 'Full body mobility routine - 15 mins',
-      completed: false,
-      completed_at: null
-    }
+    {title: 'Coming Soon!'},
+    // {
+    //   id: 'e8fd159b-57c4-4d36-9bd7-a59ca13057bb',
+    //   title: 'Morning Cardio Blast',
+    //   description: 'Start your day with this energizing cardio session',
+    //   exercise: 'Jump Rope + High Knees',
+    //   target: '10 mins jump rope + 100 high knees',
+    //   completed: false,
+    //   completed_at: null
+    // },
+    // {
+    //   id: 'f8fd159b-57c4-4d36-9bd7-a59ca13057bc',
+    //   title: 'Core Challenge',
+    //   description: 'Focus on strengthening your core',
+    //   exercise: 'Plank Variations',
+    //   target: '1 min each: standard, side, reverse',
+    //   completed: true,
+    //   completed_at: new Date().toISOString()
+    // },
+    // {
+    //   id: 'a8fd159b-57c4-4d36-9bd7-a59ca13057bd',
+    //   title: 'Evening Mobility',
+    //   description: 'End your day with mobility work',
+    //   exercise: 'Dynamic Stretching',
+    //   target: 'Full body mobility routine - 15 mins',
+    //   completed: false,
+    //   completed_at: null
+    // }
   ];
 
   useEffect(() => {
-    fetchDailyWorkouts();
+    // getChallenges(date).then((challenges) => {
+    //   console.log('challenges: ', challenges);
+    //   setChallenges(challenges.data);
+    // });
   }, []);
 
-  const fetchDailyWorkouts = async () => {
+  const fetchDailyChallenges = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,7 +75,7 @@ export default function DailyChallenges({ preview = false }) {
 
       if (fetchError) throw fetchError;
       // Use demo data if no data from backend
-      setWorkouts(data?.length ? data : DEMO_WORKOUTS);
+      setChallenges(data?.length ? data : DEMO_WORKOUTS);
     } catch (error) {
       console.error('Error fetching daily workouts:', error);
       setError('Failed to load daily workouts');
@@ -79,7 +84,7 @@ export default function DailyChallenges({ preview = false }) {
     }
   };
 
-  const handleWorkoutComplete = async (workoutId: string) => {
+  const handleChallengeComplete = async (challengeId: string) => {
     try {
       const { error: updateError } = await supabase
         .from('daily_workouts')
@@ -91,7 +96,7 @@ export default function DailyChallenges({ preview = false }) {
 
       if (updateError) throw updateError;
 
-      setWorkouts(prev =>
+      setChallenges(prev =>
         prev.map(w =>
           w.id === workoutId
             ? { ...w, completed: true, completed_at: new Date().toISOString() }
@@ -106,14 +111,6 @@ export default function DailyChallenges({ preview = false }) {
   if (preview) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Today's Challenges</Text>
-          <Pressable style={styles.viewAllButton}>
-            <Text style={styles.viewAllText}>View All</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.primary.dark} />
-          </Pressable>
-        </View>
-
         <View style={styles.previewList}>
           {DEMO_WORKOUTS.slice(0, 2).map((workout, index) => (
             <Animated.View
@@ -121,13 +118,13 @@ export default function DailyChallenges({ preview = false }) {
               entering={FadeInUp.delay(index * 100)}
               style={styles.workoutPreviewCard}
             >
-              <BlurView intensity={80} style={styles.workoutIcon}>
+              {/* <BlurView intensity={80} style={styles.workoutIcon}>
                 <Ionicons
                   name="barbell"
                   size={24}
                   color={workout.completed ? colors.semantic.success : colors.primary.dark}
                 />
-              </BlurView>
+              </BlurView> */}
               <View style={styles.workoutPreviewInfo}>
                 <Text style={styles.workoutTitle}>{workout.title}</Text>
                 <Text style={styles.workoutTarget}>{workout.target}</Text>
@@ -154,7 +151,7 @@ export default function DailyChallenges({ preview = false }) {
         <Text style={styles.loadingText}>Loading challenges...</Text>
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
-      ) : workouts.length === 0 ? (
+      ) : challenges.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="barbell" size={48} color={colors.gray[300]} />
           <Text style={styles.emptyStateText}>No challenges for today</Text>
@@ -164,14 +161,14 @@ export default function DailyChallenges({ preview = false }) {
         </View>
       ) : (
         <ScrollView style={styles.workoutList}>
-          {workouts.map((workout, index) => (
+          {challenges.map((workout, index) => (
             <Animated.View
               key={workout.id}
               entering={FadeInUp.delay(index * 100)}
             >
               <Pressable
                 style={styles.workoutCard}
-                onPress={() => !workout.completed && handleWorkoutComplete(workout.id)}
+                onPress={() => !workout.completed && handleChallengeComplete(workout.id)}
               >
                 <View style={styles.workoutHeader}>
                   <BlurView intensity={80} style={styles.workoutIcon}>
@@ -214,7 +211,7 @@ export default function DailyChallenges({ preview = false }) {
                 {!workout.completed && (
                   <Pressable
                     style={styles.completeButton}
-                    onPress={() => handleWorkoutComplete(workout.id)}
+                    onPress={() => handleChallengeComplete(workout.id)}
                   >
                     <Text style={styles.completeButtonText}>Mark as Complete</Text>
                     <Ionicons name="checkmark-circle" size={20} color={colors.primary.light} />

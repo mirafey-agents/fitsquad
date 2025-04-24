@@ -1,218 +1,156 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { colors, typography, spacing, borderRadius, shadows } from '../constants/theme';
-import { router } from 'expo-router';
+import { colors, typography, spacing, borderRadius } from '@/constants/theme';
+import { deleteHabit, getHabitsHistory, setHabitCompletion } from '@/utils/firebase';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
-const PRESET_HABITS = {
-  health: [
-    {
-      id: '1',
-      name: 'Workout',
-      icon: 'fitness',
-      description: 'Complete daily workout routine',
-    },
-    {
-      id: '2',
-      name: 'Hydration',
-      icon: 'water',
-      description: 'Drink 3L of water',
-    },
-    {
-      id: '3',
-      name: 'Sleep',
-      icon: 'moon',
-      description: 'Sleep 7+ hours',
-    },
-  ],
-  fitness: [
-    {
-      id: '4',
-      name: 'Stretching',
-      icon: 'body',
-      description: '15 minutes of stretching',
-    },
-    {
-      id: '5',
-      name: 'Cardio',
-      icon: 'heart',
-      description: '30 minutes cardio',
-    },
-    {
-      id: '6',
-      name: 'Strength',
-      icon: 'barbell',
-      description: 'Strength training session',
-    },
-  ],
-  diet: [
-    {
-      id: '7',
-      name: 'Healthy Breakfast',
-      icon: 'nutrition',
-      description: 'Start day with protein-rich meal',
-    },
-    {
-      id: '8',
-      name: 'Meal Prep',
-      icon: 'restaurant',
-      description: 'Prepare healthy meals',
-    },
-    {
-      id: '9',
-      name: 'Track Calories',
-      icon: 'calculator',
-      description: 'Log daily food intake',
-    },
-  ],
-  avoid: [
-    {
-      id: '10',
-      name: 'No Junk Food',
-      icon: 'fast-food',
-      description: 'Avoid processed foods',
-    },
-    {
-      id: '11',
-      name: 'No Late Snacks',
-      icon: 'moon',
-      description: 'No eating after 8 PM',
-    },
-    {
-      id: '12',
-      name: 'No Sugary Drinks',
-      icon: 'cafe',
-      description: 'Avoid sodas and sugary beverages',
-    },
-  ],
-};
+
+interface HabitCompletion {
+  habitId: string;
+  date: string;
+}
 
 interface Habit {
   id: string;
-  name: string;
-  icon: string;
+  title: string;
   description: string;
-  streak: number;
-  completed: boolean;
-  lastCompleted?: string;
-  category?: string;
+  completions: Array<HabitCompletion>;
+  completionHistory?: Array<{ date: string; completed: boolean }>;
+  streak?: number;
+  completed?: boolean;
 }
 
+const HabitHistory = ({ history, onToggleCompletion }: { history: Array<{ date: string; completed: boolean }>, onToggleCompletion: (date: string) => void }) => {
+
+  return (
+    <View style={styles.historyContainer}>
+      {history.slice(0, 7).map((day, index) => (
+        <Pressable
+          key={day.date}
+          onPress={() => onToggleCompletion(day.date)}
+          style={styles.historyDay}
+        >
+          <Ionicons
+            name={'checkmark-circle'}
+            size={16}
+            color={day.completed ? colors.semantic.success : colors.gray[300]}
+          />
+        </Pressable>
+      ))}
+    </View>
+  );
+};
+
 export default function HabitTracker({ preview = false }) {
+  const router = useRouter();
   const [selectedHabits, setSelectedHabits] = useState<Habit[]>([]);
   const [showHabitPicker, setShowHabitPicker] = useState(false);
   const [showCustomHabit, setShowCustomHabit] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<keyof typeof PRESET_HABITS>('health');
-  const [editingHabit, setEditingHabit] = useState<{id: string, name: string} | null>(null);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [customHabit, setCustomHabit] = useState({
-    name: '',
-    description: '',
-    icon: 'star',
+    title: '',
+    description: ''
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
+
+  const fetchHabits = async () => {
+    setIsLoading(true);
+    try {
+      const habits = await getHabitsHistory();
+      console.log("habits", habits);
+
+      const habitsWithHistory = habits?.map(habit => {
+        const history = Array(30).fill(false).map((_, index) => {
+          const date = new Date();
+          date.setDate(date.getDate() - index);
+          const dateStr = date.toISOString().split('T')[0];
+          return {
+            date: dateStr,
+            completed: habit.completions.some(c => c.date === dateStr)
+          };
+        });
+
+        let streak = 0;
+        for (let i = 0; i < history.length; i++) {
+          if (history[i].completed) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+
+        return {
+          ...habit,
+          completionHistory: history,
+          streak,
+          completed: history[0].completed
+        };
+      });
+
+      setSelectedHabits(habitsWithHistory);
+    } catch (error) {
+      console.error("Error fetching habits:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    // Load saved habits from storage in a real app
-    setSelectedHabits(
-      PRESET_HABITS.health.slice(0, 2).map(habit => ({
-        ...habit,
-        streak: Math.floor(Math.random() * 10),
-        completed: false,
-        lastCompleted: undefined,
-      }))
-    );
+    fetchHabits();
   }, []);
 
-  const handleHabitPress = (habit: Habit) => {
-    completeHabit(habit.id);
-    
+  const toggleCompletion = async (habitId: string, date: Date, completed: boolean) => {
+    // console.log("toggleCompletion", habitId, date, completed);
+    await setHabitCompletion(habitId, date, !completed);
+    await fetchHabits();
     // Visual feedback
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  const completeHabit = (habitId: string) => {
-    setSelectedHabits(prev =>
-      prev.map(h => {
-        if (h.id === habitId) {
-          const today = new Date().toISOString().split('T')[0];
-          const wasCompletedToday = h.lastCompleted === today;
-          
-          return {
-            ...h,
-            completed: !wasCompletedToday,
-            streak: !wasCompletedToday ? h.streak + 1 : h.streak,
-            lastCompleted: !wasCompletedToday ? today : undefined,
-          };
-        }
-        return h;
-      })
-    );
-  };
-
-  const addHabit = (habit: typeof PRESET_HABITS[keyof typeof PRESET_HABITS][0]) => {
-    if (selectedHabits.length >= 3) {
-      Alert.alert('Maximum Habits', 'You can only track up to 3 habits at a time.');
-      return;
-    }
-
-    if (selectedHabits.some(h => h.id === habit.id)) {
-      Alert.alert('Already Added', 'This habit is already being tracked.');
-      return;
-    }
-
-    setSelectedHabits(prev => [
-      ...prev,
-      {
-        ...habit,
-        streak: 0,
-        completed: false,
-      },
-    ]);
-    setShowHabitPicker(false);
-  };
-
-  const editHabit = (habitId: string) => {
-    const habit = selectedHabits.find(h => h.id === habitId);
-    if (!habit) return;
-    setEditingHabit({ id: habitId, name: habit.name });
-  };
+  // const editHabit = (habitId: string) => {
+  //   const habit = selectedHabits.find(h => h.id === habitId);
+  //   if (!habit) return;
+  //   setEditingHabit(habit);
+  // };
 
   const handleSaveEdit = () => {
     if (editingHabit) {
       setSelectedHabits(prev =>
         prev.map(h =>
-          h.id === editingHabit.id ? { ...h, name: editingHabit.name } : h
+          h.id === editingHabit.id ? { ...h, name: editingHabit.title } : h
         )
       );
       setEditingHabit(null);
     }
   };
 
-  const removeHabit = (habitId: string) => {
-    Alert.alert(
-      'Remove Habit',
-      'Are you sure you want to remove this habit? Your streak will be lost.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            setSelectedHabits(prev => prev.filter(h => h.id !== habitId));
-          },
-        },
-      ]
-    );
+  const removeHabit = async (habitId: string) => {
+    setHabitToDelete(habitId);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (habitToDelete) {
+      await deleteHabit(habitToDelete);
+      await fetchHabits();
+      setShowDeleteModal(false);
+      setHabitToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setHabitToDelete(null);
   };
 
   const addCustomHabit = () => {
-    if (!customHabit.name || !customHabit.description) {
+    if (!customHabit.title || !customHabit.description) {
       Alert.alert('Missing Information', 'Please fill in all fields.');
       return;
     }
@@ -226,37 +164,87 @@ export default function HabitTracker({ preview = false }) {
     };
 
     setSelectedHabits(prev => [...prev, newHabit]);
-    setCustomHabit({ name: '', description: '', icon: 'star' });
+    setCustomHabit({ title: '', description: '', icon: 'star' });
     setShowCustomHabit(false);
     setShowHabitPicker(false);
   };
 
   if (preview) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Daily Habits</Text>
-          <Pressable
-            style={styles.viewAllButton}
-            onPress={() => router.push('/habits')}
-          >
-            <Text style={styles.viewAllText}>View All</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.primary.dark} />
-          </Pressable>
+    if(isLoading) {
+      return (
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Daily Habits</Text>
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary.dark} />
+          </View>
         </View>
-
-        <View style={styles.habitsPreview}>
-          {selectedHabits.slice(0, 2).map((habit, index) => (
-            <Animated.View
-              key={habit.id}
-              entering={FadeInUp.delay(index * 100)}
-              style={styles.habitPreviewCard}
+      )
+    }
+    return (
+      <>
+      <View style={styles.habitsPreview}>
+        {selectedHabits.slice(0, 2).map((habit, index) => (
+          <Animated.View
+            key={habit.id}
+            entering={FadeInUp.delay(index * 100)}
+            style={styles.habitPreviewCard}
+          >
+            <BlurView
+              intensity={80}
+              style={[
+                styles.habitIcon,
+                habit.completed && styles.completedHabitIcon,
+              ]}
             >
+              <Ionicons
+                name={habit.icon as any}
+                size={24}
+                color={habit.completed ? colors.primary.light : colors.primary.dark}
+              />
+            </BlurView>
+            <View style={styles.habitPreviewInfo}>
+              <Text style={styles.habitName}>{habit.title}</Text>
+              <View style={styles.streakContainer}>
+                <Ionicons name="flame" size={16} color={colors.accent.coral} />
+                <Text style={styles.streakText}>{habit.streak} days</Text>
+              </View>
+            </View>
+          </Animated.View>
+        ))}
+      </View>
+      <View style={styles.cardFooter}>
+        <Text style={styles.cardFooterText}>View more</Text>
+        <Ionicons name="arrow-forward" size={20} color={colors.primary.dark}/>
+      </View>
+      </>
+    );
+  }
+
+  if(isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary.dark} />
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.habitsContainer}>
+        {selectedHabits?.map((habit, index) => (
+          <Animated.View
+            key={habit.id}
+            entering={FadeInUp.delay(index * 100)}
+            style={styles.habitCard}
+          >
+            <View style={styles.habitInfo}>
               <BlurView
                 intensity={80}
                 style={[
                   styles.habitIcon,
-                  habit.completed && styles.completedHabitIcon,
+                  { marginRight: spacing.sm }
                 ]}
               >
                 <Ionicons
@@ -265,96 +253,35 @@ export default function HabitTracker({ preview = false }) {
                   color={habit.completed ? colors.primary.light : colors.primary.dark}
                 />
               </BlurView>
-              <View style={styles.habitPreviewInfo}>
-                <Text style={styles.habitName}>{habit.name}</Text>
-                <View style={styles.streakContainer}>
-                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                  <Text style={styles.streakText}>{habit.streak} days</Text>
+              <View style={styles.habitDetails}>
+                <View style={styles.habitTitleRow}>
+                  <Text style={styles.habitName}>{habit.title}</Text>
+                  <Pressable
+                    style={[styles.deleteButton, { position: 'absolute', right: 0, top: 0 }]}
+                    onPress={() => removeHabit(habit.id)}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={colors.semantic.error} />
+                  </Pressable>
                 </View>
+                <Text style={styles.habitDescription}>{habit.description}</Text>
               </View>
-            </Animated.View>
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Daily Habits</Text>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => setShowHabitPicker(true)}
-        >
-          <Ionicons name="add" size={20} color={colors.primary.dark} />
-          <Text style={styles.addButtonText}>Add Habit</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.habitsContainer}>
-        {selectedHabits.map((habit, index) => (
-          <Animated.View
-            key={habit.id}
-            entering={FadeInUp.delay(index * 100)}
-            style={styles.habitCard}
-          >
-            <Pressable
-              style={styles.habitContent}
-              onPress={() => handleHabitPress(habit)}
-              onLongPress={() => removeHabit(habit.id)}
-            >
-              <View style={styles.habitInfo}>
-                <BlurView
-                  intensity={80}
-                  style={[
-                    styles.habitIcon,
-                    habit.completed && styles.completedHabitIcon,
-                  ]}
-                >
-                  <Ionicons
-                    name={habit.icon as any}
-                    size={24}
-                    color={habit.completed ? colors.primary.light : colors.primary.dark}
-                  />
-                </BlurView>
-                <View style={styles.habitDetails}>
-                  <Text style={styles.habitName}>{habit.name}</Text>
-                  <Text style={styles.habitDescription}>{habit.description}</Text>
-                  <View style={styles.habitActions}>
-                    <Pressable
-                      style={styles.editButton}
-                      onPress={() => editHabit(habit.id)}
-                    >
-                      <Ionicons name="create" size={16} color={colors.primary.dark} />
-                    </Pressable>
-                    <Pressable
-                      style={styles.deleteButton}
-                      onPress={() => removeHabit(habit.id)}
-                    >
-                      <Ionicons name="trash" size={16} color={colors.semantic.error} />
-                    </Pressable>
-                  </View>
-                </View>
+            </View>
+            <View style={styles.habitStatus}>
+              <View style={styles.streakContainer}>
+                <Ionicons name="flame" size={16} color={colors.accent.coral} />
+                <Text style={styles.streakText}>{habit.streak} days</Text>
               </View>
-              <View style={styles.habitStatus}>
-                <View style={styles.streakContainer}>
-                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                  <Text style={styles.streakText}>{habit.streak} days</Text>
-                </View>
-                <View style={styles.checkContainer}>
-                  <Ionicons
-                    name={habit.completed ? "checkmark-circle" : "checkmark-circle-outline"}
-                    size={32}
-                    color={habit.completed ? colors.semantic.success : colors.gray[300]}
-                  />
-                </View>
+              <View style={styles.historyContainer}>
+                <HabitHistory 
+                  history={habit.completionHistory || []} 
+                  onToggleCompletion={(date) => toggleCompletion(habit.id, new Date(date), habit.completionHistory?.find(h => h.date === date)?.completed)}
+                />
               </View>
-            </Pressable>
+            </View>
           </Animated.View>
         ))}
 
-        {selectedHabits.length === 0 && (
+        {(!selectedHabits || selectedHabits?.length === 0) && (
           <View style={styles.emptyState}>
             <Ionicons name="list" size={48} color={colors.gray[300]} />
             <Text style={styles.emptyStateText}>No habits added yet</Text>
@@ -364,7 +291,84 @@ export default function HabitTracker({ preview = false }) {
           </View>
         )}
       </View>
+      {editingHabit && (
+        <BlurView intensity={80} style={styles.modalOverlay}>
+          <View style={styles.editModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Habit</Text>
+              <Pressable 
+                style={styles.closeButton}
+                onPress={() => setEditingHabit(null)}
+              >
+                <Ionicons name="close" size={24} color={colors.gray[500]} />
+              </Pressable>
+            </View>
+            <View style={styles.editForm}>
+              <Text style={styles.inputLabel}>Habit Title</Text>
+              <TextInput
+                style={styles.input}
+                value={editingHabit.title}
+                onChangeText={(text) => setEditingHabit(prev => prev ? {...prev, name: text} : null)}
+                placeholder="Enter habit title"
+                placeholderTextColor={colors.gray[400]}
+              />
+              <Pressable 
+                style={styles.saveEditButton}
+                onPress={handleSaveEdit}
+              >
+                <Text style={styles.saveEditButtonText}>Save Changes</Text>
+              </Pressable>
+            </View>
+          </View>
+        </BlurView>
+      )}
 
+      {showDeleteModal && (
+        <BlurView intensity={80} style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Remove Habit</Text>
+              <Pressable
+                style={styles.closeButton}
+                onPress={handleDeleteCancel}
+              >
+                <Ionicons name="close" size={24} color={colors.gray[500]} />
+              </Pressable>
+            </View>
+            <View style={styles.deleteModalContent}>
+              <Text style={styles.deleteModalText}>
+                Are you sure you want to remove this habit? Your streaks will be lost.
+              </Text>
+              <View style={styles.deleteModalActions}>
+                <Pressable
+                  style={[styles.deleteModalButton, styles.deleteModalButtonCancel]}
+                  onPress={handleDeleteCancel}
+                >
+                  <Text style={styles.deleteModalButtonText}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.deleteModalButton, styles.deleteModalButtonConfirm]}
+                  onPress={handleDeleteConfirm}
+                >
+                  <Text style={[styles.deleteModalButtonText, styles.deleteModalButtonTextConfirm]}>
+                    Remove
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </BlurView>
+      )}
+      <View style={styles.header}>
+        <Pressable
+          style={styles.addButton}
+          onPress={() => router.push('/member/habits/add')}
+        >
+          <Ionicons name="add" size={20} color={colors.primary.dark} />
+          <Text style={styles.addButtonText}>Add Habit</Text>
+        </Pressable>
+      </View>
+      
       {showHabitPicker && (
         <BlurView intensity={80} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -383,35 +387,15 @@ export default function HabitTracker({ preview = false }) {
 
             {!showCustomHabit ? (
               <ScrollView style={styles.modalScroll}>
-                <View style={styles.categoryTabs}>
-                  {(Object.keys(PRESET_HABITS) as Array<keyof typeof PRESET_HABITS>).map((category) => (
-                    <Pressable
-                      key={category}
-                      style={[
-                        styles.categoryTab,
-                        selectedCategory === category && styles.selectedCategoryTab
-                      ]}
-                      onPress={() => setSelectedCategory(category)}
-                    >
-                      <Text style={[
-                        styles.categoryTabText,
-                        selectedCategory === category && styles.selectedCategoryTabText
-                      ]}>
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-
                 <View style={styles.habitsList}>
-                  {PRESET_HABITS[selectedCategory].map((habit, index) => (
+                  {habitIdeas.map((habit, index) => (
                     <Animated.View
                       key={habit.id}
                       entering={FadeInUp.delay(index * 100)}
                     >
                       <Pressable
                         style={styles.habitOption}
-                        onPress={() => addHabit(habit)}
+                        onPress={() => addNewHabit(habit.title, habit.description)}
                       >
                         <BlurView intensity={80} style={styles.habitOptionIcon}>
                           <Ionicons
@@ -421,7 +405,7 @@ export default function HabitTracker({ preview = false }) {
                           />
                         </BlurView>
                         <View style={styles.habitOptionInfo}>
-                          <Text style={styles.habitOptionName}>{habit.name}</Text>
+                          <Text style={styles.habitOptionName}>{habit.title}</Text>
                           <Text style={styles.habitOptionDescription}>
                             {habit.description}
                           </Text>
@@ -448,12 +432,12 @@ export default function HabitTracker({ preview = false }) {
               <ScrollView style={styles.modalScroll}>
                 <View style={styles.customHabitForm}>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Habit Name</Text>
+                    <Text style={styles.inputLabel}>Habit Title</Text>
                     <TextInput
                       style={styles.input}
-                      value={customHabit.name}
-                      onChangeText={(text) => setCustomHabit(prev => ({ ...prev, name: text }))}
-                      placeholder="Enter habit name"
+                      value={customHabit.title}
+                      onChangeText={(text) => setCustomHabit(prev => ({ ...prev, title: text }))}
+                      placeholder="Enter habit title"
                       placeholderTextColor={colors.gray[400]}
                     />
                   </View>
@@ -509,56 +493,31 @@ export default function HabitTracker({ preview = false }) {
           </View>
         </BlurView>
       )}
-      
-      {editingHabit && (
-        <BlurView intensity={80} style={styles.modalOverlay}>
-          <View style={styles.editModalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Habit</Text>
-              <Pressable 
-                style={styles.closeButton}
-                onPress={() => setEditingHabit(null)}
-              >
-                <Ionicons name="close" size={24} color={colors.gray[500]} />
-              </Pressable>
-            </View>
-            <View style={styles.editForm}>
-              <Text style={styles.inputLabel}>Habit Name</Text>
-              <TextInput
-                style={styles.input}
-                value={editingHabit.name}
-                onChangeText={(text) => setEditingHabit(prev => prev ? {...prev, name: text} : null)}
-                placeholder="Enter habit name"
-                placeholderTextColor={colors.gray[400]}
-              />
-              <Pressable 
-                style={styles.saveEditButton}
-                onPress={handleSaveEdit}
-              >
-                <Text style={styles.saveEditButtonText}>Save Changes</Text>
-              </Pressable>
-            </View>
-          </View>
-        </BlurView>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.xl,
+    flex: 1,
+    height: '100%',
+    minHeight: '100%',
+    backgroundColor: colors.gray[100],
+    padding: spacing.md,
+    display: 'flex',
+    flexDirection: 'column',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.gray[100],
   },
   title: {
     fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    fontWeight: 'bold',
+    color: colors.gray[900],
   },
   viewAllButton: {
     flexDirection: 'row',
@@ -572,27 +531,37 @@ const styles = StyleSheet.create({
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.gray[100],
     borderRadius: borderRadius.full,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    width: '100%',
   },
   addButtonText: {
     fontSize: typography.size.sm,
     color: colors.primary.dark,
+    fontWeight: typography.weight.medium as any,
+    textAlign: 'center',
   },
   habitsContainer: {
-    gap: spacing.md,
+    padding: spacing.sm,
+    gap: spacing.sm,
   },
   habitsPreview: {
     flexDirection: 'row',
     gap: spacing.md,
   },
   habitCard: {
-    backgroundColor: colors.primary.light,
-    borderRadius: borderRadius.lg,
-    ...shadows.sm,
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   habitPreviewCard: {
     flex: 1,
@@ -602,7 +571,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    ...shadows.sm,
+    ...{
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
   },
   habitContent: {
     flexDirection: 'row',
@@ -611,37 +582,36 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   habitInfo: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
   },
   habitIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.gray[100],
   },
   completedHabitIcon: {
     backgroundColor: colors.primary.dark,
   },
   habitDetails: {
     flex: 1,
+    marginLeft: spacing.xs,
   },
   habitPreviewInfo: {
     flex: 1,
   },
   habitName: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-    marginBottom: spacing.xs,
+    fontSize: typography.size.sm,
+    fontWeight: '600',
+    color: colors.gray[900],
   },
   habitDescription: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     color: colors.gray[500],
-    marginBottom: spacing.xs,
+    marginTop: 2,
   },
   habitActions: {
     flexDirection: 'row',
@@ -654,28 +624,40 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: spacing.xs,
-    backgroundColor: colors.semantic.error + '10',
     borderRadius: borderRadius.sm,
+  },
+  historyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginVertical: spacing.xs,
+  },
+  historyDay: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.full,
   },
   habitStatus: {
     alignItems: 'flex-end',
+    gap: spacing.xs,
   },
   streakContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.accent.coral + '20',
-    borderRadius: borderRadius.full,
   },
   streakText: {
-    fontSize: typography.size.sm,
-    color: colors.accent.coral,
-    fontWeight: typography.weight.medium as any,
+    fontSize: typography.size.xs,
+    color: colors.gray[700],
   },
   checkContainer: {
-    marginTop: spacing.sm,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
@@ -701,35 +683,30 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: Platform.OS === 'web' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.9)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
     alignItems: 'center',
-    zIndex: Platform.OS === 'web' ? 9999999 : 99999,
-    height: Platform.OS === 'web' ? '100vh' : '100%',
+    justifyContent: 'center',
+    zIndex: 99999,
+    height: '100%',
     width: '100%',
     pointerEvents: 'auto',
   },
   modalContent: {
     width: '90%',
     maxWidth: 400,
-    maxHeight: Platform.OS === 'web' ? '85vh' : '85%',
+    maxHeight: '85%',
     backgroundColor: '#FFFFFF',
     borderRadius: borderRadius.lg,
     position: 'relative',
-    zIndex: Platform.OS === 'web' ? 10000000 : 100000,
-    overflow: 'hidden',
-    ...(Platform.OS === 'web' ? {
-      display: 'flex',
-      flexDirection: 'column',
-      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-    } : {}),
-    ...shadows.lg,
+    zIndex: 100000,
+    ...{
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
   },
   modalScroll: {
-    flex: 1,
     position: 'relative',
-    zIndex: Platform.OS === 'web' ? 10000001 : 100001,
-    overflow: Platform.OS === 'web' ? 'auto' : 'scroll',
+    zIndex: 100001,
+    overflow: 'scroll',
     WebkitOverflowScrolling: 'touch',
   },
   modalHeader: {
@@ -741,7 +718,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.gray[200],
     backgroundColor: '#FFFFFF',
     position: 'relative',
-    zIndex: Platform.OS === 'web' ? 10000002 : 100002,
+    zIndex: 100002,
   },
   modalTitle: {
     fontSize: typography.size.lg,
@@ -767,12 +744,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedCategoryTab: {
-    backgroundColor: colors.primary.dark,
+    backgroundColor: colors.primary,
   },
   categoryTabText: {
     fontSize: typography.size.sm,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    fontWeight: '600',
+    color: colors.text,
   },
   selectedCategoryTabText: {
     color: colors.primary.light,
@@ -829,7 +806,7 @@ const styles = StyleSheet.create({
   customHabitForm: {
     padding: spacing.md,
     paddingBottom: spacing.xl * 2,
-    minHeight: Platform.OS === 'web' ? 400 : 'auto',
+    minHeight: 'auto',
     backgroundColor: '#FFFFFF',
   },
   inputGroup: {
@@ -850,8 +827,7 @@ const styles = StyleSheet.create({
   },
   textArea: {
     height: 100,
-    textAlignVertical: Platform.OS === 'web' ? undefined : 'top',
-    minHeight: 100,
+    textAlignVertical: 'top',
   },
   iconPicker: {
     flexDirection: 'row',
@@ -867,10 +843,10 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   selectedIcon: {
-    backgroundColor: colors.primary.dark,
+    backgroundColor: colors.primary,
   },
   createHabitButton: {
-    backgroundColor: colors.primary.dark,
+    backgroundColor: colors.primary,
     padding: spacing.md,
     borderRadius: borderRadius.md,
     alignItems: 'center',
@@ -878,7 +854,7 @@ const styles = StyleSheet.create({
   },
   createHabitButtonText: {
     fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
+    fontWeight: '600',
     color: colors.primary.light,
   },
   editModalContent: {
@@ -886,13 +862,15 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     backgroundColor: colors.primary.light,
     borderRadius: borderRadius.lg,
-    ...shadows.lg,
+    ...{
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
   },
   editForm: {
     padding: spacing.md,
   },
   saveEditButton: {
-    backgroundColor: colors.primary.dark,
+    backgroundColor: colors.primary,
     padding: spacing.md,
     borderRadius: borderRadius.md,
     alignItems: 'center',
@@ -900,7 +878,61 @@ const styles = StyleSheet.create({
   },
   saveEditButtonText: {
     fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
+    fontWeight: '600',
     color: colors.primary.light,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  deleteModalContent: {
+    padding: spacing.md,
+  },
+  deleteModalText: {
+    fontSize: typography.size.md,
+    color: colors.gray[700],
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  deleteModalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  deleteModalButton: {
+    flex: 1,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  deleteModalButtonCancel: {
+    backgroundColor: colors.gray[100],
+  },
+  deleteModalButtonConfirm: {
+    backgroundColor: colors.semantic.error,
+  },
+  deleteModalButtonText: {
+    fontSize: typography.size.md,
+    fontWeight: '600',
+    color: colors.gray[700],
+  },
+  deleteModalButtonTextConfirm: {
+    color: colors.primary.light,
+  },
+  habitTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  cardFooter: {
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[200],
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

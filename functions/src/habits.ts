@@ -20,15 +20,14 @@ export const getHabitIdeas = onCall(
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
 
-      const { data, error: fetchError } = await getAdmin()
-        .from('daily_habits')
-        .select('*')
-        .is('user_id', null);
+      const {data, error: fetchError} = await getAdmin()
+        .from("daily_habits")
+        .select("*")
+        .is("user_id", null);
 
       if (fetchError) throw fetchError;
-      
-      return data;
 
+      return data;
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {
@@ -53,16 +52,16 @@ export const getHabitsHistory = onCall(
       }
 
       // Verify Supabase JWT
-      const { userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = verifySupabaseToken(authToken);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
 
-      const { data, error: fetchError } = await getAdmin()
-        .from('daily_habits')
-        .select('*, completions: daily_habit_completions(*)')
-        .eq('user_id', userId);
-        
+      const {data, error: fetchError} = await getAdmin()
+        .from("daily_habits")
+        .select("*, completions: daily_habit_completions(*)")
+        .eq("user_id", userId);
+
       if (fetchError) throw fetchError;
 
       return data;
@@ -87,7 +86,7 @@ export const addHabit = onCall(
       }
 
       const {error: dbError} = await getAdmin()
-        .from('daily_habits')
+        .from("daily_habits")
         .insert({
           user_id: userId,
           title,
@@ -118,18 +117,18 @@ export const deleteHabit = onCall(
       }
 
       const {error: dbError} = await getAdmin()
-        .from('daily_habit_completions')
+        .from("daily_habit_completions")
         .delete()
-        .eq('user_id', userId)
-        .eq('habit_id', habitId);
+        .eq("user_id", userId)
+        .eq("habit_id", habitId);
 
       if (dbError) throw dbError;
 
       const {error: dbError2} = await getAdmin()
-        .from('daily_habits')
+        .from("daily_habits")
         .delete()
-        .eq('user_id', userId)
-        .eq('id', habitId);
+        .eq("user_id", userId)
+        .eq("id", habitId);
 
       if (dbError2) throw dbError2;
 
@@ -156,7 +155,7 @@ export const setHabitCompletion = onCall(
         authToken,
       } = request.data;
 
-      if (!habitId || !date || typeof completed === 'undefined' || !authToken) {
+      if (!habitId || !date || typeof completed === "undefined" || !authToken) {
         throw new HttpsError(
           "invalid-argument",
           "Missing one of: habitId, date, completed, or auth_token"
@@ -169,30 +168,28 @@ export const setHabitCompletion = onCall(
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
 
-      if(completed) {
+      if (completed) {
         const {error: dbError} = await getAdmin()
-          .from('daily_habit_completions')
-        .upsert({
-          user_id: userId,
-          habit_id: habitId,
-          date,
-        });
-  
-        if (dbError) throw dbError;
+          .from("daily_habit_completions")
+          .upsert({
+            user_id: userId,
+            habit_id: habitId,
+            date,
+          });
 
+        if (dbError) throw dbError;
       } else {
         const {error: dbError} = await getAdmin()
-          .from('daily_habit_completions')
+          .from("daily_habit_completions")
           .delete()
-            .eq('user_id', userId)
-            .eq('habit_id', habitId)
-            .eq('date', date);
-        
+          .eq("user_id", userId)
+          .eq("habit_id", habitId)
+          .eq("date", date);
+
         if (dbError) throw dbError;
       }
 
       return {success: true};
-
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {

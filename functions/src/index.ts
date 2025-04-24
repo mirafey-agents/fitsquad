@@ -27,7 +27,7 @@ export {
   getHabitsHistory,
   addHabit,
   deleteHabit,
-  setHabitCompletion
+  setHabitCompletion,
 } from "./habits";
 
 export {getSquads, createOrEditSquad} from "./squads";

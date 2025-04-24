@@ -10,7 +10,8 @@ setGlobalOptions({region: "asia-south1"});
 
 // Import functions from their respective files
 export {getMembers, createMember} from "./members";
-export {getUserSessions,
+export {
+  getUserSessions,
   getTrainerSessions,
   getExercises,
   createSession,
@@ -20,6 +21,15 @@ export {getUserSessions,
   deleteSession,
   getSessionParticipants,
 } from "./sessions";
+
+export {
+  getHabitIdeas,
+  getHabitsHistory,
+  addHabit,
+  deleteHabit,
+  setHabitCompletion
+} from "./habits";
+
 export {getSquads, createOrEditSquad} from "./squads";
 
 export const helloWorld = onRequest(

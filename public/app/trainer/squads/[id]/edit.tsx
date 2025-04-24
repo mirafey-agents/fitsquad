@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { getMembers, getSquads, createOrEditSquad } from '@/utils/firebase';
+import { getMembers, getSquads, createOrEditSquad, deleteSquad } from '@/utils/firebase';
 import { colors } from '@/constants/theme';
+import ConfirmModal from '@/components/ConfirmModal';
 
 
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -21,6 +22,7 @@ export default function EditSquad() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -87,36 +89,22 @@ export default function EditSquad() {
         // console.log("Selected Members:", selectedMembers);
       const ack = await createOrEditSquad(
         squadName, squadDescription, isPrivate, selectedDays, selectedMembers, id);
-      // const { data: squad, error: squadError } = await supabase
-      //   .from('squads')
-      //   .insert({
-      //     name: squadName,
-      //     description: squadDescription,
-      //     is_private: isPrivate,
-      //     schedule: selectedDays,
-      //     created_by: '00000000-0000-0000-0000-000000000000' // Demo user ID
-      //   })
-      //   .select()
-      //   .single();
-
-      // if (squadError) throw squadError;
-
-      // const membersData = selectedMembers.map(memberId => ({
-      //   squad_id: squad.id,
-      //   user_id: memberId,
-      //   role: 'member'
-      // }));
-
-      // const { error: membersError } = await supabase
-      //   .from('squad_members')
-      //   .insert(membersData);
-
-      // if (membersError) throw membersError;
       console.log("Squad Edited:", ack);
       alert("Squad Saved successfully");
       router.back();
     } catch (error) {
       console.error('Error creating squad:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const ack = await deleteSquad(id);
+      console.log("Squad Deleted:", ack);
+      alert("Squad Deleted successfully");
+      router.back();
+    } catch (error) {
+      console.error('Error deleting squad:', error);
     }
   };
 
@@ -128,159 +116,172 @@ export default function EditSquad() {
         </Pressable>
         <Text style={styles.title}>Edit Squad</Text>
         
-        <Pressable 
-        style={[
-            styles.createButton,
-            (!squadName || selectedMembers.length === 0) && styles.disabledButton
-        ]}
-        onPress={handleEdit}
-        disabled={!squadName || selectedMembers.length === 0}
-        >
-        <Text style={styles.createButtonText}>Save</Text>
-        </Pressable>
+        <View style={styles.headerButtons}>
+          <Pressable 
+            style={[styles.saveButton, (!squadName || selectedMembers.length === 0) && styles.disabledButton]}
+            onPress={handleEdit}
+            disabled={!squadName || selectedMembers.length === 0}
+          >
+            <Ionicons name="save-outline" size={20} color="#FFFFFF" />
+          </Pressable>
+          <Pressable 
+            style={[styles.saveButton, styles.deleteButton]}
+            onPress={() => setShowDeleteModal(true)}
+          >
+            <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+          </Pressable>
+        </View>
       </View>
 
-        <ScrollView style={styles.content}>
-            <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Squad Details</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Squad Name"
-                value={squadName}
-                onChangeText={setSquadName}
-                placeholderTextColor="#64748B"
-            />
-            <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Description"
-                value={squadDescription}
-                onChangeText={setSquadDescription}
-                multiline
-                numberOfLines={4}
-                placeholderTextColor="#64748B"
-            />
-            <View style={styles.privacyToggle}>
-                <Text style={styles.privacyLabel}>Private Squad</Text>
-                <Switch
-                value={isPrivate}
-                onValueChange={setIsPrivate}
-                trackColor={{ false: '#E2E8F0', true: '#818CF8' }}
-                thumbColor={isPrivate ? '#4F46E5' : '#FFFFFF'}
-                />
-            </View>
-            </View>
+      {showDeleteModal && (
+        <ConfirmModal
+          displayText="Are you sure you want to delete this squad? This action cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteModal(false)}
+        />
+      )}
 
-            <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Schedule</Text>
-            <View style={styles.daysGrid}>
-                {WEEK_DAYS.map((day) => (
-                <Pressable
-                    key={day}
-                    style={[
-                    styles.dayButton,
-                    selectedDays.includes(day) && styles.selectedDay
-                    ]}
-                    onPress={() => toggleDay(day)}
-                >
-                    <Text style={[
-                    styles.dayText,
-                    selectedDays.includes(day) && styles.selectedDayText
-                    ]}>{day}</Text>
-                </Pressable>
-                ))}
-        </View>
+      <ScrollView style={styles.content}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Squad Details</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Squad Name"
+            value={squadName}
+            onChangeText={setSquadName}
+            placeholderTextColor="#64748B"
+          />
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Description"
+            value={squadDescription}
+            onChangeText={setSquadDescription}
+            multiline
+            numberOfLines={4}
+            placeholderTextColor="#64748B"
+          />
+          <View style={styles.privacyToggle}>
+            <Text style={styles.privacyLabel}>Private Squad</Text>
+            <Switch
+              value={isPrivate}
+              onValueChange={setIsPrivate}
+              trackColor={{ false: '#E2E8F0', true: '#818CF8' }}
+              thumbColor={isPrivate ? '#4F46E5' : '#FFFFFF'}
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Add Members</Text>
-        <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#64748B" />
-            <TextInput
-            style={styles.searchInput}
-            placeholder="Search members"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#64748B"
-            />
+          <Text style={styles.sectionTitle}>Schedule</Text>
+          <View style={styles.daysGrid}>
+            {WEEK_DAYS.map((day) => (
+              <Pressable
+                key={day}
+                style={[
+                  styles.dayButton,
+                  selectedDays?.includes(day) && styles.selectedDay
+                ]}
+                onPress={() => toggleDay(day)}
+              >
+                <Text style={[
+                  styles.dayText,
+                  selectedDays?.includes(day) && styles.selectedDayText
+                ]}>{day}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
-        <ScrollView 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Add Members</Text>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#64748B" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search members"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#64748B"
+            />
+          </View>
+
+          <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filterContainer}
-        >
+          >
             <Pressable
-            style={[
+              style={[
                 styles.filterChip,
                 !selectedServiceType && styles.selectedFilter
-            ]}
-            onPress={() => setSelectedServiceType(null)}
+              ]}
+              onPress={() => setSelectedServiceType(null)}
             >
-            <Text style={[
+              <Text style={[
                 styles.filterText,
                 !selectedServiceType && styles.selectedFilterText
-            ]}>All</Text>
+              ]}>All</Text>
             </Pressable>
             <Pressable
-            style={[
+              style={[
                 styles.filterChip,
                 selectedServiceType === 'Personal Training' && styles.selectedFilter
-            ]}
-            onPress={() => setSelectedServiceType('Personal Training')}
+              ]}
+              onPress={() => setSelectedServiceType('Personal Training')}
             >
-            <Text style={[
+              <Text style={[
                 styles.filterText,
                 selectedServiceType === 'Personal Training' && styles.selectedFilterText
-            ]}>Personal Training</Text>
+              ]}>Personal Training</Text>
             </Pressable>
             <Pressable
-            style={[
+              style={[
                 styles.filterChip,
                 selectedServiceType === 'Group Training' && styles.selectedFilter
-            ]}
-            onPress={() => setSelectedServiceType('Group Training')}
+              ]}
+              onPress={() => setSelectedServiceType('Group Training')}
             >
-            <Text style={[
+              <Text style={[
                 styles.filterText,
                 selectedServiceType === 'Group Training' && styles.selectedFilterText
-            ]}>Group Training</Text>
+              ]}>Group Training</Text>
             </Pressable>
-        </ScrollView>
+          </ScrollView>
 
-        {filteredMembers.map((member, index) => (
+          {filteredMembers.map((member, index) => (
             <Animated.View
-            key={member.id}
-            entering={FadeInUp.delay(index * 100)}
+              key={member.id}
+              entering={FadeInUp.delay(index * 100)}
             >
-            <Pressable
+              <Pressable
                 style={[
-                styles.memberCard,
-                selectedMembers.includes(member.id) && styles.selectedMember
+                  styles.memberCard,
+                  selectedMembers.includes(member.id) && styles.selectedMember
                 ]}
                 onPress={() => toggleMember(member.id)}
-            >
+              >
                 <View style={styles.memberInfo}>
-                <View>
+                  <View>
                     <Text style={styles.memberName}>{member.display_name}</Text>
                     <Text style={styles.memberEmail}>{member.email}</Text>
-                </View>
-                <BlurView intensity={80} style={styles.serviceTypeBadge}>
+                  </View>
+                  <BlurView intensity={80} style={styles.serviceTypeBadge}>
                     <Text style={styles.serviceTypeText}>{member.serviceType}</Text>
-                </BlurView>
+                  </BlurView>
                 </View>
                 <View style={styles.memberPerformance}>
-                <Text style={styles.performanceLabel}>Performance</Text>
-                <Text style={styles.performanceValue}>{member.performance}%</Text>
+                  <Text style={styles.performanceLabel}>Performance</Text>
+                  <Text style={styles.performanceValue}>{member.performance}%</Text>
                 </View>
                 {selectedMembers.includes(member.id) && (
-                <View style={styles.selectedIndicator}>
+                  <View style={styles.selectedIndicator}>
                     <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
-                </View>
+                  </View>
                 )}
-            </Pressable>
+              </Pressable>
             </Animated.View>
-        ))}
-    </View>
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
@@ -309,16 +310,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
-  createButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#4F46E5',
-    borderRadius: 20,
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  createButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+  saveButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: '#6366F1',
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  deleteButton: {
+    backgroundColor: '#EF4444',
   },
   disabledButton: {
     opacity: 0.5,

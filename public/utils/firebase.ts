@@ -125,6 +125,15 @@ export async function createOrEditSquad(name, description, isPrivate, schedule, 
   });
 }
 
+export async function deleteSquad(squadId: string) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'deleteSquad')(
+    {squadId, authToken: session.access_token}
+  );
+} 
+
 export async function getExercises() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;

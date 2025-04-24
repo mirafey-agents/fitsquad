@@ -2,10 +2,10 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, Alert,
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { deleteSession, getTrainerSessions, updateSession } from '@/utils/firebase';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const dateFormatOption = {
   weekday: 'short', month: 'short', day: '2-digit',
@@ -52,6 +52,7 @@ export default function SessionDetails() {
   const [session, setSession] = useState<Session>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     if (typeof id === 'string') {
@@ -155,17 +156,25 @@ export default function SessionDetails() {
             onPress={handleSave}
             disabled={loading}
           >
-            <Text style={styles.saveButtonText}>Save</Text>
+            <Ionicons name="save-outline" size={20} color="#FFFFFF" />
           </Pressable>
           <Pressable 
-            style={[styles.saveButton, loading && styles.disabledButton, { backgroundColor: '#DC2626' }]}
-            onPress={handleDelete}
+            style={[styles.saveButton, loading && styles.disabledButton, { backgroundColor: '#EF4444' }]}
+            onPress={() => setShowDeleteModal(true)}
             disabled={loading}
           >
-            <Text style={styles.saveButtonText}>Delete</Text>
+            <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
+
+      {showDeleteModal && (
+        <ConfirmModal
+          displayText="Are you sure you want to delete this session? This action cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteModal(false)}
+        />
+      )}
 
       {error && (
         <View style={styles.errorContainer}>
@@ -389,10 +398,11 @@ const styles = StyleSheet.create({
     color: '#1E293B',
   },
   saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#4F46E5',
-    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: '#6366F1',
+    borderRadius: 6,
+    marginLeft: 8,
   },
   disabledButton: {
     opacity: 0.5,

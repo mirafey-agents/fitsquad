@@ -5,7 +5,9 @@ import { colors, spacing } from '@/constants/theme';
 export default function HabitsPage() {
   return (
     <View style={styles.container}>
-      <HabitTracker />
+      <ScrollView>
+        <HabitTracker />
+      </ScrollView>
     </View>
   );
 }

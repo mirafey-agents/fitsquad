@@ -26,44 +26,6 @@ export default function ManageSquads() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDeleteSquad = async (squadId: string) => {
-    Alert.alert(
-      'Delete Squad',
-      'Are you sure you want to delete this squad? This will remove all members and workout plans associated with this squad.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              
-              const { error: deleteError } = await supabase
-                .from('squads')
-                .delete()
-                .eq('id', squadId);
-
-              if (deleteError) throw deleteError;
-              
-              // Update local state
-              setSquads(prev => prev.filter(squad => squad.id !== squadId));
-              Alert.alert('Success', 'Squad deleted successfully');
-            } catch (error) {
-              console.error('Error deleting squad:', error);
-              Alert.alert('Error', 'Failed to delete squad');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
   useEffect(() => {
     fetchSquads();
   }, []);
@@ -100,7 +62,7 @@ export default function ManageSquads() {
           style={styles.createButton}
           onPress={() => router.push('./create', {relativeToDirectory: true})}
         >
-          <Text style={styles.createButtonText}>Create Squad</Text>
+          <Ionicons name="add" size={20} color="#FFFFFF" />
         </Pressable>
       </View>
 
@@ -144,39 +106,6 @@ export default function ManageSquads() {
                     <Text style={styles.memberCountText}>{squad.squad_members.length}</Text>
                   </BlurView>
                 </View>
-
-                <View style={styles.squadActions}>
-                  <Pressable 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`./${squad.id}/edit`, {relativeToDirectory: true})}
-                  >
-                    <Ionicons name="create" size={20} color="#4F46E5" />
-                    <Text style={styles.actionButtonText}>Edit</Text>
-                  </Pressable>
-                  <Pressable 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`./${squad.id}/calendar`, {relativeToDirectory: true})}
-                  >
-                    <Ionicons name="calendar" size={20} color="#4F46E5" />
-                    <Text style={styles.actionButtonText}>Schedule</Text>
-                  </Pressable>
-                  <Pressable 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`./${squad.id}/members`, {relativeToDirectory: true})}
-                  >
-                    <Ionicons name="people" size={20} color="#4F46E5" />
-                    <Text style={styles.actionButtonText}>Members</Text>
-                  </Pressable>
-                  <Pressable 
-                    style={[styles.actionButton, styles.deleteButton]}
-                    onPress={() => {
-                      handleDeleteSquad(squad.id);
-                    }}
-                  >
-                    <Ionicons name="trash" size={20} color="#EF4444" />
-                    <Text style={styles.actionButtonText}>Delete</Text>
-                  </Pressable>
-                </View>
               </Pressable>
             </Animated.View>
           ))
@@ -210,15 +139,14 @@ const styles = StyleSheet.create({
     color: '#1E293B',
   },
   createButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#4F46E5',
-    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: '#6366F1',
+    borderRadius: 6,
+    marginLeft: 8,
   },
-  createButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+  disabledButton: {
+    backgroundColor: '#E2E8F0',
   },
   searchContainer: {
     padding: 20,

@@ -7,6 +7,7 @@ import { colors, typography, spacing, borderRadius } from '@/constants/theme';
 import { deleteHabit, getHabitsHistory, setHabitCompletion } from '@/utils/firebase';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import ConfirmModal from './ConfirmModal';
 
 
 interface HabitCompletion {
@@ -295,40 +296,11 @@ export default function HabitTracker({ preview = false }) {
       )}
 
       {showDeleteModal && (
-        <BlurView intensity={80} style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Remove Habit</Text>
-              <Pressable
-                style={styles.closeButton}
-                onPress={handleDeleteCancel}
-              >
-                <Ionicons name="close" size={24} color={colors.gray[500]} />
-              </Pressable>
-            </View>
-            <View style={styles.deleteModalContent}>
-              <Text style={styles.deleteModalText}>
-                Are you sure you want to remove this habit? Your streaks will be lost.
-              </Text>
-              <View style={styles.deleteModalActions}>
-                <Pressable
-                  style={[styles.deleteModalButton, styles.deleteModalButtonCancel]}
-                  onPress={handleDeleteCancel}
-                >
-                  <Text style={styles.deleteModalButtonText}>Cancel</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.deleteModalButton, styles.deleteModalButtonConfirm]}
-                  onPress={handleDeleteConfirm}
-                >
-                  <Text style={[styles.deleteModalButtonText, styles.deleteModalButtonTextConfirm]}>
-                    Remove
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </BlurView>
+        <ConfirmModal
+          displayText="Are you sure you want to remove this habit? Your streaks will be lost."
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       )}
       <View style={styles.header}>
         <Pressable

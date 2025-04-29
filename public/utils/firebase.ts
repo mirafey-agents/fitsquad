@@ -101,6 +101,15 @@ export async function getMembers(memberId: string | null) {
   });
 }
 
+export async function deleteMember(memberId: string | null) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  
+  return httpsCallable(functions, 'deleteMember')({
+    memberId, authToken: session.access_token
+  });
+}
+
 export async function getSquads(squadId: string | null) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;

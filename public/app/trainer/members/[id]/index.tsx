@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '../../../../utils/supabase';
+import { supabase } from '@/utils/supabase';
+import { deleteMember, getMembers } from '@/utils/firebase';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface Member {
   id: string;
@@ -41,6 +43,7 @@ export default function MemberDetails() {
   const [squads, setSquads] = useState<Squad[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (typeof id === 'string') {
@@ -54,14 +57,9 @@ export default function MemberDetails() {
       setError(null);
 
       // Fetch member details
-      const { data: memberData, error: memberError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', memberId)
-        .single();
-
-      if (memberError) throw memberError;
-      setMember(memberData);
+      const {data: memberData} = await getMembers(memberId);
+      console.log(memberData[0]);
+      setMember(memberData[0]);
 
       // Fetch squads the member belongs to
       const { data: squadData, error: squadError } = await supabase
@@ -159,6 +157,26 @@ export default function MemberDetails() {
     }
   };
 
+  const handleDelete = async () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const {data: deletedMember} = await deleteMember(member?.id);
+      console.log(deletedMember);
+      alert("Member deleted!");
+      router.back();
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      alert("Failed to delete member. Please try again.");
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -217,10 +235,10 @@ export default function MemberDetails() {
         </Pressable>
         <Text style={styles.title}>Member Details</Text>
         <Pressable 
-          style={styles.editButton}
-          onPress={() => router.push(`./edit`, {relativeToDirectory: true})}
+          style={styles.deleteButton}
+          onPress={handleDelete}
         >
-          <Text style={styles.editButtonText}>Edit</Text>
+          <Ionicons name="trash-outline" size={24} color="#EF4444" />
         </Pressable>
       </View>
 
@@ -362,19 +380,19 @@ export default function MemberDetails() {
                   <View style={styles.measurementItem}>
                     <Text style={styles.measurementLabel}>Height</Text>
                     <Text style={styles.measurementValue}>
-                      {member.height ? `${member.height} cm` : 'Not provided'}
+                      {member.height ? `${member.height} cm` : 'NA'}
                     </Text>
                   </View>
                   <View style={styles.measurementItem}>
                     <Text style={styles.measurementLabel}>Weight</Text>
                     <Text style={styles.measurementValue}>
-                      {member.weight ? `${member.weight} kg` : 'Not provided'}
+                      {member.weight ? `${member.weight} kg` : 'NA'}
                     </Text>
                   </View>
                   <View style={styles.measurementItem}>
                     <Text style={styles.measurementLabel}>Body Fat</Text>
                     <Text style={styles.measurementValue}>
-                      {member.body_fat ? `${member.body_fat}%` : 'Not provided'}
+                      {member.body_fat ? `${member.body_fat}%` : 'NA'}
                     </Text>
                   </View>
                 </View>
@@ -496,7 +514,7 @@ export default function MemberDetails() {
           </Animated.View>
         )}
 
-        <View style={styles.actionButtons}>
+        {/* <View style={styles.actionButtons}>
           {member.onboarding_status === 'completed' && (
             <Pressable 
               style={styles.assessmentButton}
@@ -506,8 +524,16 @@ export default function MemberDetails() {
               <Text style={styles.assessmentButtonText}>Schedule Assessment</Text>
             </Pressable>
           )}
-        </View>
+        </View> */}
       </ScrollView>
+
+      {showDeleteConfirm && (
+        <ConfirmModal
+          displayText="Are you sure you want to delete this member? This action cannot be undone."
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
+      )}
     </View>
   );
 }
@@ -535,16 +561,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
-  editButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#4F46E5',
-    borderRadius: 20,
-  },
-  editButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+  deleteButton: {
+    padding: 8,
   },
   content: {
     padding: 20,

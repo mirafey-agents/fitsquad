@@ -2,10 +2,9 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Switch
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { createMember } from '../../../utils/firebase';
-import { supabase } from '../../../utils/supabase';
+import { createMember } from '@/utils/firebase';
+import { supabase } from '@/utils/supabase';
 import * as Yup from 'yup';
 
 interface Squad {
@@ -381,7 +380,7 @@ export default function AddMember() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInUp.delay(400)}>
+        {/* <Animated.View entering={FadeInUp.delay(400)}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Invitation Settings</Text>
             
@@ -410,7 +409,7 @@ export default function AddMember() {
               </View>
             )}
           </View>
-        </Animated.View>
+        </Animated.View> */}
       </ScrollView>
     </View>
   );

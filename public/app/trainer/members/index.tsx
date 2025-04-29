@@ -6,6 +6,8 @@ import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '@/utils/supabase';
 import { getMembers } from '@/utils/firebase';
+import { colors, shadows } from '@/constants/theme';
+
 interface Member {
   id: string;
   display_name: string;
@@ -145,7 +147,7 @@ export default function MemberManagement() {
           style={styles.addButton}
           onPress={() => router.push('./add', {relativeToDirectory: true})}
         >
-          <Text style={styles.addButtonText}>Add Member</Text>
+          <Ionicons name="add" size={24} color="#FFFFFF" />
         </Pressable>
       </View>
 
@@ -294,16 +296,16 @@ export default function MemberManagement() {
                   </View>
                 </View>
 
-                <View style={styles.memberDetails}>
+                {/* <View style={styles.memberDetails}>
                   {member.primary_goal && (
                     <View style={styles.detailItem}>
                       <Ionicons name="flag" size={16} color="#64748B" />
                       <Text style={styles.detailText}>Goal: {member.primary_goal}</Text>
                     </View>
                   )}
-                </View>
+                </View> */}
 
-                <View style={styles.memberActions}>
+                {/* <View style={styles.memberActions}>
                   <Pressable 
                     style={styles.actionButton}
                     onPress={() => router.push(`./${member.id}/edit`, {relativeToDirectory: true})}
@@ -327,7 +329,7 @@ export default function MemberManagement() {
                     <Ionicons name="trash" size={20} color="#EF4444" />
                     <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
                   </Pressable>
-                </View>
+                </View> */}
               </Pressable>
             </Animated.View>
           ))
@@ -361,15 +363,14 @@ const styles = StyleSheet.create({
     color: '#1E293B',
   },
   addButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     backgroundColor: '#4F46E5',
-    borderRadius: 20,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -20,
+    ...shadows.md,
   },
   searchContainer: {
     padding: 20,

@@ -9,7 +9,7 @@ import {setGlobalOptions} from "firebase-functions/v2";
 setGlobalOptions({region: "asia-south1"});
 
 // Import functions from their respective files
-export {getMembers, createMember} from "./members";
+export {getMembers, createMember, deleteMember} from "./members";
 export {
   getUserSessions,
   getTrainerSessions,

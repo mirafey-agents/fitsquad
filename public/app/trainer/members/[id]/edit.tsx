@@ -2,9 +2,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Switch
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '../../../../utils/supabase';
+import { supabase } from '@/utils/supabase';
 import * as Yup from 'yup';
 
 interface Squad {

@@ -162,7 +162,7 @@ export default function MemberManagement() {
         </View>
       </View>
 
-      <View style={styles.filterSection}>
+      {/* <View style={styles.filterSection}>
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -229,9 +229,9 @@ export default function MemberManagement() {
             ]}>Active</Text>
           </Pressable>
         </ScrollView>
-      </View>
+      </View> */}
 
-      <View style={styles.actionsRow}>
+      {/* <View style={styles.actionsRow}>
         <Pressable 
           style={styles.invitationsButton}
           onPress={() => router.push('./invitations', {relativeToDirectory: true})}
@@ -239,7 +239,7 @@ export default function MemberManagement() {
           <Ionicons name="mail" size={16} color="#4F46E5" />
           <Text style={styles.invitationsText}>Manage Invitations</Text>
         </Pressable>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.content}>
         {loading ? (

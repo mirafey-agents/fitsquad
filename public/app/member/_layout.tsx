@@ -1,8 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
-import Logo from '@/components/Logo';
 import { BlurView } from 'expo-blur';
-import { DrawerToggleButton } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, shadows, typography, spacing } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
@@ -17,20 +15,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: {
-          backgroundColor: colors.primary.light,
-        },
-        headerTitleStyle: {
-          fontSize: typography.size.lg,
-          fontWeight: typography.weight.semibold as any,
-        },
-        headerLeft: () => (
-          <View style={styles.headerLeft}>
-            <DrawerToggleButton tintColor={colors.primary.dark} />
-          </View>
-        ),
-        headerTitle: () => <Logo size="small" />,
-        headerShadowVisible: false,
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.primary.light,
           borderTopColor: colors.gray[200],
@@ -71,8 +56,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          headerTitleAlign: 'center',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -81,7 +64,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="analytics"
         options={{
-          title: 'Insights',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="pulse" size={size} color={color} />
           ),
@@ -90,7 +72,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),

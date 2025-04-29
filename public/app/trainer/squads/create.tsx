@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ export default function CreateSquad() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchMembers();
@@ -57,17 +58,21 @@ export default function CreateSquad() {
   });
 
   const handleCreate = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
     try {
       const id = crypto.randomUUID();
       const ack = await createOrEditSquad(
         squadName, squadDescription, isPrivate, selectedDays, selectedMembers, id);
       console.log("Squad created:", ack);
-      // if (membersError) throw membersError;
-      console.log("Squad created:", ack);
       alert("Squad created successfully");
       router.back();
     } catch (error) {
       console.error('Error creating squad:', error);
+      alert("Failed to create squad. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,12 +86,16 @@ export default function CreateSquad() {
         <Pressable 
           style={[
             styles.createButton,
-            (!squadName || selectedMembers.length === 0) && styles.disabledButton
+            (!squadName || selectedMembers.length === 0 || isLoading) && styles.disabledButton
           ]}
           onPress={handleCreate}
-          disabled={!squadName || selectedMembers.length === 0}
+          disabled={!squadName || selectedMembers.length === 0 || isLoading}
         >
-          <Text style={styles.createButtonText}>Create</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.createButtonText}>Create</Text>
+          )}
         </Pressable>
       </View>
 
@@ -109,15 +118,15 @@ export default function CreateSquad() {
             numberOfLines={4}
             placeholderTextColor="#64748B"
           />
-          <View style={styles.privacyToggle}>
+          {/* <View style={styles.privacyToggle}>
             <Text style={styles.privacyLabel}>Private Squad</Text>
             <Switch
               value={isPrivate}
               onValueChange={setIsPrivate}
               trackColor={{ false: '#E2E8F0', true: '#818CF8' }}
               thumbColor={isPrivate ? '#4F46E5' : '#FFFFFF'}
-            />
-          </View>
+            /> 
+          </View>*/}
         </View>
 
         <View style={styles.section}>

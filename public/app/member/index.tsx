@@ -1,5 +1,5 @@
 import React, { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -7,7 +7,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRootNavigationState } from 'expo-router';
 import Logo from '@/components/Logo';
 import { getLoggedInUser } from '@/utils/supabase';
-import {getChallenges, getUserSessions} from '@/utils/firebase';
+import {getChallenges, getUserSessions, voteSession} from '@/utils/firebase';
+import { Dimensions } from 'react-native';
+import ConfirmModal from '@/components/ConfirmModal';
 
 import {
   colors,
@@ -22,8 +24,7 @@ import {
   format,
   isSameDay,
   isAfter,
-  startOfMonth,
-  endOfMonth,
+  addDays,
   eachDayOfInterval,
 } from 'date-fns';
 
@@ -67,13 +68,11 @@ const renderChallenges = () => (
 const renderWorkoutReview = ({
   selectedWorkout,
   isFutureDate,
-  userVotes,
   handleVote
 }: {
   selectedWorkout: any;
   isFutureDate: boolean;
-  userVotes: { mvp: string | null; toughest: string | null };
-  handleVote: (type: 'mvp' | 'toughest', id: string) => void;
+  handleVote: (type: 'mvp' | 'toughest', sessionId: string, id: string) => void;
 }) => (
   <Animated.View entering={FadeInUp.delay(300)}>
     <View
@@ -119,7 +118,7 @@ const renderWorkoutReview = ({
             <Text style={styles.workoutTime}>
               {new Date(selectedWorkout.start_time).toLocaleString('en-US', dateFormatOption)} with {selectedWorkout?.session.trainer.display_name}
             </Text>
-            {selectedWorkout.status === 'completed' && (
+            {/* {selectedWorkout.status === 'completed' && (
               <View style={styles.energyPointsContainer}>
                 <Ionicons
                   name="flash"
@@ -130,7 +129,7 @@ const renderWorkoutReview = ({
                   {selectedWorkout?.energyPoints} Energy Points Earned
                 </Text>
               </View>
-            )}
+            )} */}
           </View>
 
           {selectedWorkout.session.status === 'completed' && (
@@ -162,12 +161,10 @@ const renderWorkoutReview = ({
               </View>
 
               <View style={styles.votingSection}>
-                <Text style={styles.votingTitle}>Cast Your Votes</Text>
-
                 {/* MVP Voting */}
                 <View style={styles.votingCategory}>
                   <Text style={styles.votingCategoryTitle}>
-                    MVP of the Session
+                    MVP (Click to vote)
                   </Text>
                   <ScrollView
                     horizontal
@@ -177,18 +174,16 @@ const renderWorkoutReview = ({
                     {selectedWorkout.participants.map((participant) => (
                       <Pressable
                         key={participant.id}
-                        style={[
-                          styles.participantCard,
-                          userVotes.mvp === participant.id &&
-                            styles.selectedVoteCard,
-                          participant.hasVoted && styles.votedCard,
-                        ]}
+                        style={[styles.participantCard]}
                         onPress={() =>
-                          !participant.hasVoted &&
-                          handleVote('mvp', participant.id)
+                          handleVote('mvp', selectedWorkout.session.id, participant.id)
                         }
-                        disabled={participant.hasVoted}
                       >
+                        {selectedWorkout.mvpUserId === participant.id && (
+                            <View style={styles.crownContainer}>
+                              <Ionicons name="trophy" size={20} color={colors.accent.coral} />
+                            </View>
+                        )}
                         <View style={styles.participantAvatar}>
                           <Text style={styles.participantInitials}>
                             {participant.display_name
@@ -202,25 +197,24 @@ const renderWorkoutReview = ({
                         </Text>
                         <View style={styles.voteCount}>
                           <Ionicons
-                            name="trophy"
+                            name="bookmark"
                             size={16}
                             color={colors.accent.coral}
                           />
                           <Text style={styles.voteCountText}>
-                            {participant.mvpVotes}
+                            {participant.votesFor}
                           </Text>
                         </View>
-                        {participant.hasVoted && (
+                        {selectedWorkout.vote_mvp_user_id === participant.id && (
                           <BlurView
                             intensity={80}
                             style={styles.votedBadge}
                           >
                             <Ionicons
-                              name="checkmark"
+                              name="bookmark"
                               size={16}
                               color={colors.semantic.success}
                             />
-                            <Text style={styles.votedText}>Voted</Text>
                           </BlurView>
                         )}
                       </Pressable>
@@ -229,7 +223,7 @@ const renderWorkoutReview = ({
                 </View>
 
                 {/* Toughest Exercise Voting */}
-                <View style={styles.votingCategory}>
+                {/* <View style={styles.votingCategory}>
                   <Text style={styles.votingCategoryTitle}>
                     Toughest Exercise
                   </Text>
@@ -249,7 +243,7 @@ const renderWorkoutReview = ({
                         ]}
                         onPress={() =>
                           !exercise.hasVoted &&
-                          handleVote('toughest', exercise.id)
+                          handleVote('toughest', selectedWorkout.id, exercise.id)
                         }
                         disabled={exercise.hasVoted}
                       >
@@ -289,7 +283,7 @@ const renderWorkoutReview = ({
                       </Pressable>
                     ))}
                   </ScrollView>
-                </View>
+                </View> */}
               </View>
             </>
           )}
@@ -324,6 +318,13 @@ const renderWorkoutReview = ({
 );
 
 export default function Home() {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingVote, setPendingVote] = useState<{
+    type: 'mvp' | 'toughest';
+    sessionId: string;
+    id: string;
+  } | null>(null);
 
   const rootNavigationState = useRootNavigationState()
   const navigatorReady = rootNavigationState?.key != null
@@ -368,28 +369,44 @@ export default function Home() {
     new Date(new Date().setHours(23, 59, 59, 999))
   );
 
-  const handleVote = (type: 'mvp' | 'toughest', id: string) => {
-    setUserVotes((prev) => {
-      const newVotes = { ...prev };
-      if (prev[type] === id) {
-        newVotes[type] = null;
-      } else {
-        newVotes[type] = id;
-      }
-      return newVotes;
-    });
+  const handleVote = async (type: 'mvp' | 'toughest', sessionId: string, id: string) => {
+    setPendingVote({ type, sessionId, id });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmVote = async () => {
+    if (!pendingVote) return;
+    
+    const result = await voteSession(pendingVote.sessionId, pendingVote.id);
+    console.log('vote result: ', result);
+
+    const sessions = await getUserSessions(new Date(2024,1,1), new Date(2025,12,1));
+    console.log('sessions: ', sessions);
+
+    setSessions(sessions as any[]);
+    setShowConfirmModal(false);
+    setPendingVote(null);
+  };
+
+  const handleCancelVote = () => {
+    setShowConfirmModal(false);
+    setPendingVote(null);
   };
 
   const getCalendarDays = () => {
-    const start = startOfMonth(selectedDate);
-    const end = endOfMonth(selectedDate);
+    const start = addDays(CURRENT_DATE, -15);
+    const end = addDays(CURRENT_DATE, 15);
     return eachDayOfInterval({ start, end });
   };
 
   const getWorkoutIndicator = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
+    const workout = sessions.find((session: any) => 
+      new Date(session.start_time).toDateString() === date.toDateString());
+    if (workout) {
+      return workout.status;
+    }
     return null;
-
     // if (
     //   isBefore(date, new Date()) &&
     //   workout.completed &&
@@ -406,6 +423,24 @@ export default function Home() {
   const getEnergyPoints = (date: Date) => {
     return 0;
   };
+
+  const scrollToSelectedDate = (date: Date) => {
+    if (scrollViewRef.current) {
+      const dayWidth = 64 + spacing.sm; // width of each day + margin
+      const screenWidth = Dimensions.get('window').width;
+      const days = getCalendarDays();
+      const selectedIndex = days.findIndex(d => isSameDay(d, date));
+      
+      if (selectedIndex !== -1) {
+        const offset = (selectedIndex * dayWidth) - (screenWidth / 2) + (dayWidth / 2);
+        scrollViewRef.current.scrollTo({ x: offset, animated: true });
+      }
+    }
+  };
+
+  useEffect(() => {
+    scrollToSelectedDate(selectedDate);
+  }, [selectedDate]);
 
   return (
     <ScrollView style={styles.container}>
@@ -432,6 +467,7 @@ export default function Home() {
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.calendar}
@@ -492,12 +528,19 @@ export default function Home() {
         {renderWorkoutReview({
           selectedWorkout,
           isFutureDate,
-          userVotes,
           handleVote
         })}
         {renderDailyHabits()}
         {renderChallenges()}
       </View>
+
+      {showConfirmModal && pendingVote && (
+        <ConfirmModal
+          displayText={`Are you sure you want to vote for this ${pendingVote.type === 'mvp' ? 'participant' : 'exercise'}?`}
+          onConfirm={handleConfirmVote}
+          onCancel={handleCancelVote}
+        />
+      )}
     </ScrollView>
   );
 }
@@ -871,5 +914,19 @@ const styles = StyleSheet.create({
     color: colors.gray[500],
     textAlign: 'center',
     marginTop: spacing.xs,
+  },
+  crownContainer: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: colors.primary.light,
+    borderRadius: 12,
+    padding: 4,
+    zIndex: 1,
+    shadowColor: colors.primary.dark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });

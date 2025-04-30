@@ -1,7 +1,8 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '@/constants/theme';
+import { useState } from 'react';
 
 interface ConfirmModalProps {
   displayText: string;
@@ -10,14 +11,35 @@ interface ConfirmModalProps {
 }
 
 export default function ConfirmModal({ displayText, onConfirm, onCancel }: ConfirmModalProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setIsLoading(true);
+    try {
+      await onCancel();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <BlurView intensity={80} style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Confirm Action</Text>
           <Pressable
-            style={styles.closeButton}
-            onPress={onCancel}
+            style={[styles.closeButton, isLoading && styles.disabledButton]}
+            onPress={handleCancel}
+            disabled={isLoading}
           >
             <Ionicons name="close" size={24} color={colors.gray[500]} />
           </Pressable>
@@ -26,18 +48,28 @@ export default function ConfirmModal({ displayText, onConfirm, onCancel }: Confi
           <Text style={styles.modalText}>{displayText}</Text>
           <View style={styles.modalActions}>
             <Pressable
-              style={[styles.modalButton, styles.modalButtonCancel]}
-              onPress={onCancel}
+              style={[styles.modalButton, styles.modalButtonCancel, isLoading && styles.disabledButton]}
+              onPress={handleCancel}
+              disabled={isLoading}
             >
-              <Text style={styles.modalButtonText}>Cancel</Text>
+              {isLoading ? (
+                <ActivityIndicator color={colors.primary.dark} />
+              ) : (
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              )}
             </Pressable>
             <Pressable
-              style={[styles.modalButton, styles.modalButtonConfirm]}
-              onPress={onConfirm}
+              style={[styles.modalButton, styles.modalButtonConfirm, isLoading && styles.disabledButton]}
+              onPress={handleConfirm}
+              disabled={isLoading}
             >
-              <Text style={[styles.modalButtonText, styles.modalButtonTextConfirm]}>
-                Confirm
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color={colors.primary.light} />
+              ) : (
+                <Text style={[styles.modalButtonText, styles.modalButtonTextConfirm]}>
+                  Confirm
+                </Text>
+              )}
             </Pressable>
           </View>
         </View>
@@ -111,5 +143,8 @@ const styles = StyleSheet.create({
   },
   modalButtonTextConfirm: {
     color: colors.primary.light,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 }); 

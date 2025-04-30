@@ -32,8 +32,35 @@ export async function getUserSessions(startDate: Date, endDate: Date) {
         endDate,
         authToken: session.access_token
       });
+
+      //Todo: Move this to the backend
+      // Calculate votesFor for each participant in each session
+      const sessionsWithVotes = (result.data as any[]).map(session => {
+        const participantsWithVotes = session.participants.map(participant => {
+          // Count how many times this participant was voted for as MVP
+          const votesFor = session.participants.filter(p => 
+            p.vote_mvp_user_id === participant.id
+          ).length;
+          
+          return {
+            ...participant,
+            votesFor
+          };
+        });
+
+        // Find the participant with maximum votes
+        const mvp = participantsWithVotes.reduce((prev, current) => 
+          (prev.votesFor > current.votesFor) ? prev : current
+        );
+
+        return {
+          ...session,
+          participants: participantsWithVotes,
+          mvpUserId: mvp.votesFor > 0 ? mvp.id : null
+        };
+      });
   
-      return result.data;
+      return sessionsWithVotes;
     } catch (error) {
       console.error('Error fetching workouts:', error);
       throw error;
@@ -174,12 +201,12 @@ export async function updateSession(
   });
 }
 
-export async function voteSession(sessionId: string, mvpUserId: string) {
+export async function voteSession(sessionId: string, voteMvpId: string) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   
   return httpsCallable(functions, 'voteSession')({
-    sessionId, mvpUserId, authToken: session.access_token
+    sessionId, voteMvpId, authToken: session.access_token
   });
 }
 

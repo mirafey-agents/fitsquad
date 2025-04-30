@@ -20,6 +20,7 @@ export {
   sessionStatus,
   deleteSession,
   getSessionParticipants,
+  voteSession,
 } from "./sessions";
 
 export {

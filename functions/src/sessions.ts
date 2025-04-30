@@ -47,14 +47,16 @@ export const getUserSessions = onCall(
       const sessionIds = data.map((item: any) => item.session_id);
       const {data: sessionParticipants, error: sessionError} = await getAdmin()
         .from("session_users")
-        .select("session_id, users!user_id(id, display_name)")
+        .select("session_id, users!user_id(id, display_name), vote_mvp_user_id")
         .in("session_id", sessionIds);
       if (sessionError) throw sessionError;
 
       const participantsDict: any = {};
       sessionParticipants.forEach((item: any) => {
         participantsDict[item.session_id] =
-        (participantsDict[item.session_id] || []).concat(item.users);
+        (participantsDict[item.session_id] || []).concat(
+          {...item.users, vote_mvp_user_id: item.vote_mvp_user_id}
+        );
       });
 
       for (const userSession of data) {
@@ -339,17 +341,18 @@ export const voteSession = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {sessionId, voteMVP, authToken} = request.data;
-      if (!sessionId || !voteMVP || !authToken) {
+      const {sessionId, voteMvpId, authToken} = request.data;
+      if (!sessionId || !voteMvpId || !authToken) {
         throw new HttpsError("invalid-argument", "Missing required parameters");
       }
       const {userId, error: tokenError} = verifySupabaseToken(authToken);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
+      // console.log(userId, voteMvpId, sessionId);
       const {error: updateError} = await getAdmin()
         .from("session_users")
-        .update({vote_mvp: voteMVP})
+        .update({vote_mvp_user_id: voteMvpId})
         .eq("session_id", sessionId)
         .eq("user_id", userId);
 

@@ -7,9 +7,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRootNavigationState } from 'expo-router';
 import Logo from '@/components/Logo';
 import { getLoggedInUser } from '@/utils/supabase';
-import {getChallenges, getUserSessions, voteSession} from '@/utils/firebase';
+import { voteSession } from '@/utils/firebase';
 import { Dimensions } from 'react-native';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useSessions } from '@/app/context/SessionsContext';
 
 import {
   colors,
@@ -328,7 +329,7 @@ export default function Home() {
 
   const rootNavigationState = useRootNavigationState()
   const navigatorReady = rootNavigationState?.key != null
-  const [sessions, setSessions] = useState<any[]>([]);
+  const { sessions, refreshSessions } = useSessions();
 
   useEffect(() => {
     if (!navigatorReady) return;
@@ -342,12 +343,8 @@ export default function Home() {
     }
     
     setUserData(userData);
-    getUserSessions(new Date(2024,1,1), new Date(2025,12,1)).then(
-      (sessions) => {
-        console.log('sessions: ', sessions);
-        setSessions(sessions as any[]);
-      }
-    );
+    refreshSessions();
+    console.log('sessions: ', sessions);
   }, [navigatorReady])
 
   const CURRENT_DATE = new Date();
@@ -380,10 +377,7 @@ export default function Home() {
     const result = await voteSession(pendingVote.sessionId, pendingVote.id);
     console.log('vote result: ', result);
 
-    const sessions = await getUserSessions(new Date(2024,1,1), new Date(2025,12,1));
-    console.log('sessions: ', sessions);
-
-    setSessions(sessions as any[]);
+    await refreshSessions();
     setShowConfirmModal(false);
     setPendingVote(null);
   };

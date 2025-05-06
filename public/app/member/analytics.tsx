@@ -3,9 +3,8 @@ import { useState, useEffect } from 'react';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
-import { router } from 'expo-router';
-import { supabase } from '../../utils/supabase';
+import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
+import { useSessions } from '@/app/context/SessionsContext';
 
 // Squad Insights Data
 const SQUAD_INSIGHTS = {
@@ -36,6 +35,7 @@ const SQUAD_INSIGHTS = {
 };
 
 export default function Analytics() {
+  const { sessions, refreshSessions } = useSessions();
   const [selectedInput, setSelectedInput] = useState(null);
   const [activeTab, setActiveTab] = useState<'squad' | 'trainer'>('squad');
   const [trainerInputs, setTrainerInputs] = useState([]);
@@ -44,59 +44,53 @@ export default function Analytics() {
   const [timeframe, setTimeframe] = useState<'weekly' | 'monthly'>('weekly');
 
   useEffect(() => {
-    fetchTrainerInputs();
+    setLoading(true);
+    refreshSessions();
+    setLoading(false);
   }, []);
 
-  const fetchTrainerInputs = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('workout_participants')
-        .select(`
-          *,
-          workout:workouts(
-            title,
-            scheduled_time,
-            trainer:created_by(display_name, email)
-          ),
-          best_exercise:exercises!best_exercise(*),
-          needs_improvement:exercises!needs_improvement(*)
-        `)
-        .eq('user_id', '00000000-0000-0000-0000-000000000000')
-        .order('input_timestamp', { ascending: false });
+  useEffect(() => {
+    getTrainerInputsFromSessions().then(inputs => {
+      console.log('inputs: ', inputs);
+      setTrainerInputs(inputs);
+    });
+  }, [sessions]);
 
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const formattedInputs = data.map(input => ({
-          id: input.id,
-          date: input.input_timestamp,
-          trainer: {
-            name: input.workout?.trainer?.display_name || 'Unknown Trainer',
-            image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop',
-            verified: true
-          },
-          type: input.trainer_input_type || 'assessment',
-          title: input.workout?.title || 'Workout Session',
-          performance_score: input.performance_score || 0,
-          feedback: input.trainer_comments,
-          media: input.media_urls || [],
-          best_exercise: input.best_exercise?.name,
-          needs_improvement: input.needs_improvement?.name,
-          session: {
-            title: input.session_title,
-            time: input.session_time,
-            exercises: input.session_exercises || []
-          }
-        }));
-
-        setTrainerInputs(formattedInputs);
+  const getTrainerInputsFromSessions = async () => {
+    return sessions.map(session => ({
+      id: session.id,
+      date: session.start_time,
+      trainer: {
+        name: session.session.trainer.display_name,
+        image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop',
+        verified: true
+      },
+      type: 'workout',
+      title: session.session.title,
+      performance_score: session.performance_score,
+      feedback: session.trainer_comments,
+      media: [],
+      session: {
+        title: session.session.title,
+        time: session.start_time,
+        exercises: session.exercises
       }
-    } catch (error) {
-      console.error('Error fetching trainer inputs:', error);
-      setError('Failed to load trainer inputs');
-    } finally {
-      setLoading(false);
+    }));
+  };
+
+  const renderStars = (score: number) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Ionicons
+          key={i}
+          name={i <= score ? "star" : "star-outline"}
+          size={16}
+          color={i <= score ? colors.semantic.warning : colors.gray[300]}
+        />
+      );
     }
+    return stars;
   };
 
   const renderSquadInsights = () => (
@@ -291,15 +285,12 @@ export default function Analytics() {
 
               <View style={styles.performanceSection}>
                 <Text style={styles.sectionLabel}>Performance Score</Text>
-                <View style={styles.performanceBar}>
-                  <View 
-                    style={[
-                      styles.performanceFill, 
-                      { width: `${input.performance_score}%` }
-                    ]} 
-                  />
+                <View style={styles.performanceContent}>
+                  <View style={styles.starsContainer}>
+                    {renderStars(input.performance_score)}
+                  </View>
+                  <Text style={styles.performanceScore}>{input.performance_score}/5</Text>
                 </View>
-                <Text style={styles.performanceScore}>{input.performance_score}%</Text>
               </View>
 
               <View style={styles.feedbackSection}>
@@ -461,16 +452,11 @@ export default function Analytics() {
                 <View style={styles.modalPerformance}>
                   <Text style={styles.modalSectionTitle}>Performance Score</Text>
                   <View style={styles.modalPerformanceContent}>
-                    <View style={styles.modalPerformanceBar}>
-                      <View 
-                        style={[
-                          styles.modalPerformanceFill,
-                          { width: `${selectedInput.performance_score}%` }
-                        ]}
-                      />
+                    <View style={styles.starsContainer}>
+                      {renderStars(selectedInput.performance_score)}
                     </View>
                     <Text style={styles.modalPerformanceScore}>
-                      {selectedInput.performance_score}%
+                      {selectedInput.performance_score}/5
                     </Text>
                   </View>
                 </View>
@@ -872,22 +858,22 @@ const styles = StyleSheet.create({
     color: colors.gray[500],
     marginBottom: spacing.xs,
   },
-  performanceBar: {
-    height: 8,
-    backgroundColor: colors.gray[200],
-    borderRadius: borderRadius.full,
-    marginBottom: spacing.xs,
-    overflow: 'hidden',
+  performanceContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.gray[100],
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
   },
-  performanceFill: {
-    height: '100%',
-    backgroundColor: colors.semantic.success,
-    borderRadius: borderRadius.full,
+  starsContainer: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   performanceScore: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.medium as any,
-    color: colors.semantic.success,
+    color: colors.primary.dark,
   },
   feedbackSection: {
     marginBottom: spacing.md,
@@ -1043,26 +1029,15 @@ const styles = StyleSheet.create({
   modalPerformanceContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-  },
-  modalPerformanceBar: {
-    flex: 1,
-    height: 12,
-    backgroundColor: colors.gray[200],
-    borderRadius: borderRadius.full,
-    overflow: 'hidden',
-  },
-  modalPerformanceFill: {
-    height: '100%',
-    backgroundColor: colors.semantic.success,
-    borderRadius: borderRadius.full,
+    justifyContent: 'space-between',
+    backgroundColor: colors.gray[100],
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
   },
   modalPerformanceScore: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.bold as any,
-    color: colors.semantic.success,
-    width: 60,
-    textAlign: 'right',
+    color: colors.primary.dark,
   },
   modalFeedback: {
     marginBottom: spacing.xl,

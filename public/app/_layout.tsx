@@ -3,9 +3,9 @@ import { Stack, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { SessionsProvider } from '@/app/context/SessionsContext';
 
 import { Drawer } from 'expo-router/drawer';
-import Logo from '../components/Logo';
 import { getLoggedInUser } from '../utils/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -58,7 +58,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
+    <SessionsProvider>
       <StatusBar style="light" />
       <Drawer
         screenOptions={{
@@ -127,9 +127,10 @@ export default function RootLayout() {
         <Drawer.Screen name="member" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="progress" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="challenges" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="context/SessionsContext" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="login" options={{ drawerItemStyle: { display: 'none' } }} />
 
       </Drawer>
-    </>
+    </SessionsProvider>
   );
 }

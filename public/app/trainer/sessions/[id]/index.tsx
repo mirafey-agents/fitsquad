@@ -6,6 +6,7 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { deleteSession, getTrainerSessions, updateSession } from '@/utils/firebase';
 import ConfirmModal from '@/components/ConfirmModal';
+import { colors, spacing, borderRadius, typography } from '@/constants/theme';
 
 const dateFormatOption = {
   weekday: 'short', month: 'short', day: '2-digit',
@@ -46,6 +47,39 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
 ];
+
+const StarRating = ({ value, onValueChange }: { value: number, onValueChange: (value: number) => void }) => {
+  const renderStars = () => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Pressable
+          key={i}
+          onPress={() => onValueChange(i)}
+          style={styles.starButton}
+        >
+          <Image
+            source={require('@/assets/images/icon.png')}
+            style={[
+              styles.starIcon,
+              { opacity: i <= value ? 1 : 0.3 }
+            ]}
+          />
+        </Pressable>
+      );
+    }
+    return stars;
+  };
+
+  return (
+    <View style={styles.starRatingContainer}>
+      <View style={styles.starsContainer}>
+        {renderStars()}
+      </View>
+      <Text style={styles.ratingValue}>{value}/5</Text>
+    </View>
+  );
+};
 
 export default function SessionDetails() {
   const { id } = useLocalSearchParams();
@@ -258,15 +292,11 @@ export default function SessionDetails() {
                 <>
                   <View style={styles.performanceSection}>
                     <Text style={styles.performanceLabel}>Performance Score</Text>
-                    <TextInput
-                      style={styles.performanceInput}
-                      value={participant.performance_score?.toString()}
-                      onChangeText={(text) => {
-                        const score = parseInt(text) || 0;
+                    <StarRating
+                      value={participant.performance_score || 0}
+                      onValueChange={(score) => {
                         updateParticipant(participant.id, { performance_score: score });
                       }}
-                      keyboardType="numeric"
-                      maxLength={3}
                     />
                   </View>
 
@@ -645,5 +675,32 @@ const styles = StyleSheet.create({
     right: -8,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
+  },
+  starRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.gray[100],
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.xs,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  starButton: {
+    padding: spacing.xs,
+  },
+  ratingValue: {
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.medium as any,
+    color: colors.primary.dark,
+    marginLeft: spacing.md,
+  },
+  starIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
   },
 });

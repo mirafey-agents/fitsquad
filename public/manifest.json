@@ -1,0 +1,31 @@
+{
+  "name": "FitSquad",
+  "short_name": "FitSquad",
+  "description": "Your personal fitness companion",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "transparent",
+  "theme_color": "#2B86C5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/icon-1024x1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+} 

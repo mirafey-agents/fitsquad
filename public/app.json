@@ -19,12 +19,54 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.png",
+      "name": "FitSquad",
+      "shortName": "FitSquad",
+      "lang": "en",
+      "scope": "/",
+      "display": "standalone",
+      "startUrl": "/",
+      "orientation": "portrait",
+      "description": "Your personal fitness companion",
+      "dir": "ltr",
+      "preferRelatedApplications": false,
+      "themeColor": "#2B86C5",
+      "backgroundColor": "#ffffff",
       "build": {
         "babel": {
           "include": [
             "@expo/vector-icons"
           ]
         }
+      },
+      "pwa": {
+        "name": "Fit Squad Club",
+        "shortName": "FitSquad",
+        "description": "Your personal fitness companion",
+        "startUrl": "/",
+        "display": "standalone",
+        "backgroundColor": "#ffffff",
+        "themeColor": "#2B86C5",
+        "orientation": "portrait",
+        "icons": [
+          {
+            "src": "./assets/images/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "./assets/images/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "./assets/images/icon-1024x1024.png",
+            "sizes": "1024x1024",
+            "type": "image/png",
+            "purpose": "any maskable"
+          }
+        ]
       }
     },
     "plugins": [

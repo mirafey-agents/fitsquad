@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
     <!-- Blue square background -->
-    <rect width="512" height="512" fill="#2B86C5"/>
+    <rect width="512" height="512" fill="rgba(43, 134, 197, 0.1)"/>
     
     <!-- Phi symbol -->
     <path d="M 256 80

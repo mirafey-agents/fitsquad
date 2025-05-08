@@ -1,8 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography } from '../constants/theme';
-
+import { colors, typography } from '@/constants/theme';
+import { Image } from 'expo-image';
 export default function Logo({ size = 'medium' }: { size?: 'small' | 'medium' | 'large' }) {
   const iconSize = size === 'small' ? 20 : size === 'medium' ? 24 : 32;
   const fontSize = size === 'small' ? 16 : size === 'medium' ? 20 : 24;
@@ -10,7 +9,8 @@ export default function Logo({ size = 'medium' }: { size?: 'small' | 'medium' | 
   return (
     <View style={styles.container}>
       <BlurView intensity={80} style={styles.logoContainer}>
-        <Ionicons name="fitness" size={iconSize} color={colors.primary.dark} />
+        <Image source={require('@/assets/images/icon-transparent.png')}
+        style={{ width: 40, height: 40 }} />
       </BlurView>
       <Text style={[styles.text, { fontSize }]}>
         <Text style={styles.fit}>Fit</Text>
@@ -43,6 +43,6 @@ const styles = StyleSheet.create({
     color: colors.primary.dark,
   },
   squad: {
-    color: colors.accent.coral,
+    color: colors.primary.light,
   },
 });

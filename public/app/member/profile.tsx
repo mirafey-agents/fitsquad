@@ -5,22 +5,26 @@ import {
   ScrollView,
   Pressable,
   Image,
+  TouchableOpacity,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { Buffer } from 'buffer';
 import {
   colors,
   shadows,
   typography,
   spacing,
   borderRadius,
-} from '../../constants/theme';
+} from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import OnboardingFlow from '../../components/OnboardingFlow';
-import { checkOnboardingStatus } from '../../utils/supabase';
+import OnboardingFlow from '@/components/OnboardingFlow';
+import { checkOnboardingStatus } from '@/utils/supabase';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { getMedia, uploadMedia } from '@/utils/firebase';
 
 const PROFILE_DATA = {
   name: 'Guest',
@@ -83,10 +87,17 @@ export default function Profile() {
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [profilePic, setProfilePic] = useState(null);
 
+  const getProfilePic = async () => {
+    const data = await getMedia(userData.id, 'profilepic', null, null);
+    const b64 = Buffer.from(Object.values(data.data)).toString('base64');
+    setProfilePic(b64);
+  }
   useEffect(() => {
     checkOnboardingStatus().then(({ isComplete, userData }) => {
       setIsOnboardingComplete(isComplete);
+      getProfilePic();
       setUserData(userData);
     });
   }, []);
@@ -98,6 +109,35 @@ export default function Profile() {
     checkOnboardingStatus().then(({ userData }) => {
       setUserData(userData);
     });
+  };
+
+  const handleImagePick = async () => {
+    // Request permission to access the media library
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    // Launch the image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    console.log('result', result);
+    if (!result.canceled) {
+      // Call your upload function here
+      await uploadMedia(
+        result.assets[0],
+        userData.id,
+        'profilepic',
+        null
+      );
+      getProfilePic();
+    }
   };
 
   if (showOnboarding) {
@@ -120,13 +160,13 @@ export default function Profile() {
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <Image
-              source={{
-                uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200&auto=format&fit=crop',
-              }}
+              source={{uri:`data:image/jpeg;base64,${profilePic}`}}
               style={styles.avatar}
             />
             <View style={styles.editAvatarButton}>
+            <TouchableOpacity onPress={handleImagePick}>
               <Ionicons name="camera" size={16} color={colors.primary.light} />
+            </TouchableOpacity>
             </View>
           </View>
           <Text style={styles.name}>

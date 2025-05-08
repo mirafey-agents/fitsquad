@@ -1,6 +1,6 @@
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
-import { supabase } from '../utils/supabase';
+import { supabase } from '@/utils/supabase';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -262,4 +262,50 @@ export async function deleteHabit(habitId: string) {
   return (await httpsCallable(functions, 'deleteHabit')({
     habitId, authToken: session.access_token,
   })).data;
+}
+
+export async function uploadMedia(
+  asset: any,
+  userId: string,
+  category: string,
+  categoryId: string
+) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  const postUrl = (await httpsCallable(functions, 'getUploadUrl')({
+    authToken: session.access_token, userId, category, categoryId,
+    mimeType: asset.mimeType,
+  })).data;
+
+  console.log('postUrl', postUrl);
+  try {
+    const response = await fetch(postUrl as string, {
+      method: 'PUT',
+      body: asset.file,
+    headers: {
+      "Content-Type": asset.mimeType,
+      "x-goog-content-length-range": "0,20000000",
+    },
+  });
+
+    return response.status;
+  } catch (error) {
+    console.error('Error uploading media:', error);
+    throw error;
+  }
+}
+
+export async function getMedia(
+  userId: string,
+  category: string,
+  categoryId: string,
+  objectId: string
+) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  return (await httpsCallable(functions, 'getMedia')({
+    userId, category, categoryId, objectId, authToken: session.access_token
+  }));
 }

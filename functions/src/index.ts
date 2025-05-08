@@ -37,6 +37,13 @@ export {
   deleteSquad,
 } from "./squads";
 
+export {
+  getUploadUrl,
+  getMediaFetchUrl,
+  listMedia,
+  getMedia,
+} from "./media";
+
 export const helloWorld = onRequest(
   {cors: true},
   (request, response) => {

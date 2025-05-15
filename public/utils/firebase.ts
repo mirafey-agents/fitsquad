@@ -273,14 +273,14 @@ export async function uploadMedia(
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
 
-  const postUrl = (await httpsCallable(functions, 'getUploadUrl')({
+  const {url, mediaId} = (await httpsCallable(functions, 'getUploadUrl')({
     authToken: session.access_token, userId, category, categoryId,
     mimeType: asset.mimeType,
-  })).data;
+  })).data as {url: string, mediaId: string};
 
-  console.log('postUrl', postUrl);
+  console.log('postUrl', url);
   try {
-    const response = await fetch(postUrl as string, {
+    const response = await fetch(url as string, {
       method: 'PUT',
       body: asset.file,
     headers: {
@@ -288,8 +288,11 @@ export async function uploadMedia(
       "x-goog-content-length-range": "0,20000000",
     },
   });
+  const processResult = (await httpsCallable(functions, 'processUploadedMedia')({
+      authToken: session.access_token, userId, category, categoryId, mediaId
+    })).data;
 
-    return response.status;
+  return response.status;
   } catch (error) {
     console.error('Error uploading media:', error);
     throw error;
@@ -309,3 +312,31 @@ export async function getMedia(
     userId, category, categoryId, objectId, authToken: session.access_token
   }));
 }
+
+export async function deleteMedia(
+  userId: string,
+  category: string,
+  categoryId: string,
+  objectId: string
+) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  return (await httpsCallable(functions, 'deleteMedia')({
+    userId, category, categoryId, objectId, authToken: session.access_token
+  }));
+}
+
+export async function listMedia(
+  userId: string,
+  category: string,
+  categoryId: string
+) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  return (await httpsCallable(functions, 'listMedia')({
+    userId, category, categoryId, authToken: session.access_token
+  })).data;
+}
+

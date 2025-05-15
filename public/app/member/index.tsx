@@ -1,4 +1,4 @@
-import React, { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -186,12 +186,20 @@ const renderWorkoutReview = ({
                             </View>
                         )}
                         <View style={styles.participantAvatar}>
-                          <Text style={styles.participantInitials}>
-                            {participant.display_name
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
-                          </Text>
+                            <View style={styles.initialsContainer}>
+                              <Text style={styles.participantInitials}>
+                                {participant.display_name
+                                  .split(' ')
+                                  .map((n) => n[0])
+                                  .join('')}
+                              </Text>
+                            </View>
+                          <View style={styles.avatarContainer}>
+                            <Image 
+                              source={{ uri: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${participant.id}/profilepic/1/1-thumbnail` }}
+                              style={styles.avatarImage}
+                            />
+                          </View>
                         </View>
                         <Text style={styles.participantName}>
                           {participant.display_name}
@@ -789,18 +797,35 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   participantAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary.dark,
-    alignItems: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  avatarContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  initialsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    alignItems: 'center',
+    backgroundColor: '#E2E8F0',
   },
   participantInitials: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.bold as any,
-    color: colors.primary.light,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#64748B',
   },
   participantName: {
     fontSize: typography.size.sm,

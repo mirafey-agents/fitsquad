@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { deleteSession, getTrainerSessions, updateSession } from '@/utils/firebase';
+import { deleteMedia, deleteSession, getTrainerSessions, listMedia, updateSession, uploadMedia } from '@/utils/firebase';
 import ConfirmModal from '@/components/ConfirmModal';
 import { colors, spacing, borderRadius, typography } from '@/constants/theme';
 
@@ -30,7 +30,10 @@ interface Session {
     trainer_comments: string;
     bestExercise: string | null;
     needsImprovement: string | null;
-    media: string[];
+    media: Array<{
+      mediaId: string;
+      thumbnail_url: string;
+    }>;
   }>;
   exercises: Array<{
     id: string;
@@ -58,13 +61,12 @@ const StarRating = ({ value, onValueChange }: { value: number, onValueChange: (v
           onPress={() => onValueChange(i)}
           style={styles.starButton}
         >
-          <Image
-            source={require('@/assets/images/icon.png')}
-            style={[
-              styles.starIcon,
-              { opacity: i <= value ? 1 : 0.3 }
-            ]}
-          />
+          <Ionicons
+            key={i}
+            name={i <= value ? "star" : "star-outline"}
+            size={16}
+            color={i <= value ? colors.semantic.warning : colors.gray[300]}
+        />
         </Pressable>
       );
     }
@@ -93,13 +95,20 @@ export default function SessionDetails() {
       fetchSession();
     }
   }, [id]);
+
   const fetchSession = async () => {
     const sessions = await getTrainerSessions(null, null, id as string, true);
-    console.log(sessions);
+    console.log('Fetched sessions:', sessions);
     const session = sessions[0];
     session.exercises = session.session_users[0].exercises;
-    setSession(sessions[0]);
+    // await setSession(session);
+    await Promise.all(session.session_users.map(async (participant) => {
+      const media = await listMedia(participant.user_id, 'session', session.id) as string[];
+      participant.media = media;
+    }));
+    await setSession(session);
   }
+
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -138,7 +147,7 @@ export default function SessionDetails() {
     }
   };
   
-  const pickImage = async (participantId: string) => {
+  const pickUploadMedia = async (participantId: string) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -148,15 +157,10 @@ export default function SessionDetails() {
       });
 
       if (!result.canceled && result.assets.length > 0) {
-        setSession(prev => ({
-          ...prev,
-          session_users: prev.session_users.map(p => 
-            p.id === participantId 
-              ? { ...p, media: [...p.media, result.assets[0].uri] }
-              : p
-          )
-        }));
+        await uploadMedia(result.assets[0], participantId, 'session', id as string);
+        router.replace('./', {relativeToDirectory: true});
       }
+      
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image');
@@ -267,7 +271,25 @@ export default function SessionDetails() {
               style={styles.participantCard}
             >
               <View style={styles.participantHeader}>
-                <Text style={styles.participantName}>{participant.users.display_name}</Text>
+                <View style={styles.participantInfo}>
+                  <View style={styles.participantAvatar}>
+                    <View style={styles.initialsContainer}>
+                        <Text style={styles.participantInitials}>
+                          {participant.users.display_name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </Text>
+                    </View>
+                    <View style={styles.avatarContainer}>
+                      <Image 
+                        source={{ uri: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${participant.users.id}/profilepic/1/1-thumbnail` }}
+                        style={styles.avatarImage}
+                      />
+                    </View>
+                  </View>
+                  <Text style={styles.participantName}>{participant.users.display_name}</Text>
+                </View>
                 <View style={styles.attendanceContainer}>
                   <Text style={[
                     styles.attendanceText,
@@ -339,42 +361,39 @@ export default function SessionDetails() {
 
                   <View style={styles.mediaSection}>
                     <View style={styles.mediaSectionHeader}>
-                      <Text style={styles.mediaLabel}>Media</Text>
+                      <ScrollView 
+                        horizontal 
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.mediaScroll}
+                      >
+                        {participant.media?.length > 0 && participant.media.map((mediaObj, index) => (
+                          <View key={index} style={styles.mediaPreview}>
+                            <View style={styles.mediaPlaceholder}>
+                              <Image 
+                                source={{ uri: mediaObj.thumbnail_url }}
+                                style={{ width: 80, height: 80 }}
+                              />
+                            </View>
+                            <Pressable 
+                              style={styles.removeMediaButton}
+                              onPress={() => {
+                                deleteMedia(participant.user_id, 'session', session.id, mediaObj.mediaId);
+                                router.replace('./', {relativeToDirectory: true});
+                              }}
+                            >
+                              <Ionicons name="close-circle" size={20} color="#EF4444" />
+                            </Pressable>
+                          </View>
+                        ))}
+                      </ScrollView>
                       <Pressable 
                         style={styles.addMediaButton}
-                        onPress={() => pickImage(participant.id)}
+                        onPress={() => pickUploadMedia(participant.users.id)}
                       >
                         <Ionicons name="camera" size={20} color="#4F46E5" />
-                        <Text style={styles.addMediaText}>Add Photo</Text>
+                        <Text style={styles.addMediaText}>Add</Text>
                       </Pressable>
                     </View>
-
-                    <ScrollView 
-                      horizontal 
-                      showsHorizontalScrollIndicator={false}
-                      style={styles.mediaScroll}
-                    >
-                      {participant.media?.map((url, index) => (
-                        <View key={index} style={styles.mediaPreview}>
-                          <Image source={{ uri: url }} style={styles.mediaImage} />
-                          <Pressable 
-                            style={styles.removeMediaButton}
-                            onPress={() => {
-                              setSession(prev => ({
-                                ...prev,
-                                participants: prev.session_users.map(p => 
-                                  p.id === participant.user_id 
-                                    ? { ...p, media: p.media.filter((_, i) => i !== index) }
-                                    : p
-                                )
-                              }));
-                            }}
-                          >
-                            <Ionicons name="close-circle" size={24} color="#EF4444" />
-                          </Pressable>
-                        </View>
-                      ))}
-                    </ScrollView>
                   </View>
                 </>
               )}
@@ -555,6 +574,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  participantInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  participantAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  initialsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E2E8F0',
+  },
+  participantInitials: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#64748B',
+  },
   participantName: {
     fontSize: 18,
     fontWeight: '600',
@@ -659,14 +716,21 @@ const styles = StyleSheet.create({
   },
   mediaScroll: {
     marginHorizontal: -8,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   mediaPreview: {
     position: 'relative',
     marginHorizontal: 8,
+    width: 80,
+    height: 80,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+    overflow: 'visible',
   },
   mediaImage: {
-    width: 120,
-    height: 120,
+    width: '100%',
+    height: '100%',
     borderRadius: 8,
   },
   removeMediaButton: {
@@ -675,6 +739,8 @@ const styles = StyleSheet.create({
     right: -8,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    padding: 2,
+    zIndex: 1,
   },
   starRatingContainer: {
     flexDirection: 'row',
@@ -702,5 +768,16 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     resizeMode: 'contain',
+  },
+  mediaPlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mediaPlaceholderText: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 4,
   },
 });

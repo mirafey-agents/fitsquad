@@ -89,15 +89,17 @@ export default function Profile() {
   const [userData, setUserData] = useState(null);
   const [profilePic, setProfilePic] = useState(null);
 
-  const getProfilePic = async () => {
-    const data = await getMedia(userData.id, 'profilepic', null, null);
-    const b64 = Buffer.from(Object.values(data.data)).toString('base64');
-    setProfilePic(b64);
+  const getProfilePic = async (id: string) => {
+    if (id) {
+      const data = await getMedia(id, 'profilepic', null, null);
+      const b64 = Buffer.from(Object.values(data.data)).toString('base64');
+      setProfilePic(b64);
+    }
   }
   useEffect(() => {
     checkOnboardingStatus().then(({ isComplete, userData }) => {
       setIsOnboardingComplete(isComplete);
-      getProfilePic();
+      getProfilePic(userData.id);
       setUserData(userData);
     });
   }, []);
@@ -136,7 +138,7 @@ export default function Profile() {
         'profilepic',
         null
       );
-      getProfilePic();
+      getProfilePic(userData.id);
     }
   };
 

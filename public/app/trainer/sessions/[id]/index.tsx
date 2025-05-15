@@ -83,6 +83,10 @@ const StarRating = ({ value, onValueChange }: { value: number, onValueChange: (v
   );
 };
 
+const trimName = (name: string, maxLength = 15) => {
+  return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
+};
+
 export default function SessionDetails() {
   const { id } = useLocalSearchParams();
   const [session, setSession] = useState<Session>(null);
@@ -288,7 +292,9 @@ export default function SessionDetails() {
                       />
                     </View>
                   </View>
-                  <Text style={styles.participantName}>{participant.users.display_name}</Text>
+                  <Text style={styles.participantName}>
+                    {trimName(participant.users.display_name)}
+                  </Text>
                 </View>
                 <View style={styles.attendanceContainer}>
                   <Text style={[

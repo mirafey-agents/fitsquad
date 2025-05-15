@@ -42,6 +42,8 @@ export {
   getMediaFetchUrl,
   listMedia,
   getMedia,
+  deleteMedia,
+  processUploadedMedia,
 } from "./media";
 
 export const helloWorld = onRequest(

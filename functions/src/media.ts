@@ -26,7 +26,7 @@ const makeKey = (
 };
 
 export const getUploadUrl = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
       const {authToken, mimeType, userId, category, categoryId} = request.data;
@@ -78,7 +78,7 @@ export const getUploadUrl = onCall(
 );
 
 export const processUploadedMedia = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
       const {authToken, userId, category, categoryId, mediaId} = request.data;
@@ -137,7 +137,7 @@ export const processUploadedMedia = onCall(
 );
 
 export const getMediaFetchUrl = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
       const {
@@ -190,7 +190,7 @@ export const getMediaFetchUrl = onCall(
 );
 
 export const listMedia = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
       const {authToken, userId, category, categoryId} = request.data;
@@ -244,7 +244,7 @@ export const listMedia = onCall(
 );
 
 export const getMedia = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
       const {
@@ -288,7 +288,7 @@ export const getMedia = onCall(
 );
 
 export const deleteMedia = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
       const {

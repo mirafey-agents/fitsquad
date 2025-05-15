@@ -2,8 +2,8 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {verifySupabaseToken} from "./auth";
 import {storageBucket} from "./fs";
 import * as crypto from "crypto";
-import { getRole } from "./supabase";
-import * as sharp from 'sharp';
+import {getRole} from "./supabase";
+import * as sharp from "sharp";
 
 const makeKey = (
   userId: string, category: string,
@@ -21,7 +21,8 @@ const makeKey = (
     objectId = "1";
   }
 
-  return `media/${userId}/${category}/${categoryId}/${objectId}${isThumbnail ? "-thumbnail": ""}`;
+  const basePath = `media/${userId}/${category}/${categoryId}/${objectId}`;
+  return `${basePath}${isThumbnail ? "-thumbnail" : ""}`;
 };
 
 export const getUploadUrl = onCall(
@@ -41,7 +42,10 @@ export const getUploadUrl = onCall(
       }
       const role = await getRole(authUId);
       if (authUId !== userId && role !== "trainer") {
-        throw new HttpsError("permission-denied", "User not permitted to upload media");
+        throw new HttpsError(
+          "permission-denied",
+          "User not permitted to upload media"
+        );
       }
 
       // Create a reference to the storage service
@@ -62,7 +66,7 @@ export const getUploadUrl = onCall(
 
       const [url] = await file.getSignedUrl(options as any);
 
-      return { url, mediaId };
+      return {url, mediaId};
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {
@@ -90,7 +94,10 @@ export const processUploadedMedia = onCall(
       }
       const role = await getRole(authUId);
       if (authUId !== userId && role !== "trainer") {
-        throw new HttpsError("permission-denied", "User not permitted to upload media");
+        throw new HttpsError(
+          "permission-denied",
+          "User not permitted to upload media"
+        );
       }
 
       // Get the original file
@@ -101,24 +108,24 @@ export const processUploadedMedia = onCall(
       // Generate thumbnail
       const thumbnailBuffer = await sharp(originalBuffer)
         .resize(150, 150, {
-          fit: 'cover',
-          position: 'center'
+          fit: "cover",
+          position: "center",
         })
-        .jpeg({ quality: 80 })
+        .jpeg({quality: 80})
         .toBuffer();
 
       // Upload thumbnail
       const thumbnailKey = makeKey(userId, category, categoryId, mediaId, true);
       const thumbnailFile = storageBucket.file(thumbnailKey);
       await thumbnailFile.save(thumbnailBuffer, {
-        contentType: 'image/jpeg',
+        contentType: "image/jpeg",
         public: true,
         metadata: {
-          cacheControl: 'public, max-age=18000'
-        }
+          cacheControl: "public, max-age=18000",
+        },
       });
 
-      return { success: true };
+      return {success: true};
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {
@@ -133,10 +140,16 @@ export const getMediaFetchUrl = onCall(
   {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {authToken, userId, category, categoryId, objectId, isThumbnail = false} = request.data;
+      const {
+        authToken, userId, category,
+        categoryId, objectId, isThumbnail = false,
+      } = request.data;
 
       if (!authToken || !userId) {
-        throw new HttpsError("invalid-argument", "Missing required parameters");
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters"
+        );
       }
 
       // Verify Supabase JWT
@@ -146,7 +159,10 @@ export const getMediaFetchUrl = onCall(
       }
       const role = await getRole(authUId);
       if (authUId !== userId && role !== "trainer") {
-        throw new HttpsError("permission-denied", "User not permitted to upload media");
+        throw new HttpsError(
+          "permission-denied",
+          "User not permitted to upload media"
+        );
       }
 
       // Create a reference to the storage service
@@ -180,17 +196,26 @@ export const listMedia = onCall(
       const {authToken, userId, category, categoryId} = request.data;
 
       if (!authToken || !userId) {
-        throw new HttpsError("invalid-argument", "Missing required parameters");
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters"
+        );
       }
 
       // Verify Sought (in promise)pabase JWT
       const {userId: authUId, error} = verifySupabaseToken(authToken);
       if (error) {
-        throw new HttpsError("unauthenticated", "Invalid authentication token");
+        throw new HttpsError(
+          "unauthenticated",
+          "Invalid authentication token"
+        );
       }
       const role = await getRole(authUId);
       if (authUId !== userId && role !== "trainer") {
-        throw new HttpsError("permission-denied", "User not permitted to upload media");
+        throw new HttpsError(
+          "permission-denied",
+          "User not permitted to upload media"
+        );
       }
 
       // Create a reference to the storage service
@@ -198,13 +223,16 @@ export const listMedia = onCall(
       const [files] = await storageBucket.getFiles({prefix});
 
       return files
-      .filter((key: any) => !key.name.endsWith("-thumbnail"))
-      .map((key: any) => {
-        return {
-          mediaId: key.name.split("/").pop(),
-          thumbnail_url: `https://storage.googleapis.com/${storageBucket.name}/${key.name}-thumbnail`,
-        };
-      });
+        .filter((key: any) => !key.name.endsWith("-thumbnail"))
+        .map((key: any) => {
+          const baseUrl = "https://storage.googleapis.com";
+          const bucketName = storageBucket.name;
+          const thumbnailPath = `${key.name}-thumbnail`;
+          return {
+            mediaId: key.name.split("/").pop(),
+            thumbnail_url: `${baseUrl}/${bucketName}/${thumbnailPath}`,
+          };
+        });
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {
@@ -219,7 +247,10 @@ export const getMedia = onCall(
   {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {authToken, userId, category, categoryId, objectId} = request.data;
+      const {
+        authToken, userId, category,
+        categoryId, objectId,
+      } = request.data;
 
       if (!authToken || !userId) {
         throw new HttpsError("invalid-argument", "Missing required parameters");
@@ -228,11 +259,17 @@ export const getMedia = onCall(
       // Verify Sought (in promise)pabase JWT
       const {userId: authUId, error} = verifySupabaseToken(authToken);
       if (error) {
-        throw new HttpsError("unauthenticated", "Invalid authentication token");
+        throw new HttpsError(
+          "unauthenticated",
+          "Invalid authentication token"
+        );
       }
       const role = await getRole(authUId);
       if (authUId !== userId && role !== "trainer") {
-        throw new HttpsError("permission-denied", "User not permitted to upload media");
+        throw new HttpsError(
+          "permission-denied",
+          "User not permitted to upload media"
+        );
       }
 
       // Create a reference to the storage service
@@ -254,27 +291,39 @@ export const deleteMedia = onCall(
   {secrets: ["SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {authToken, userId, category, categoryId, objectId} = request.data;
+      const {
+        authToken, userId, category,
+        categoryId, objectId,
+      } = request.data;
 
       if (!authToken || !userId) {
-        throw new HttpsError("invalid-argument", "Missing required parameters");
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters"
+        );
       }
 
       // Verify Sought (in promise)pabase JWT
       const {userId: authUId, error} = verifySupabaseToken(authToken);
       if (error) {
-        throw new HttpsError("unauthenticated", "Invalid authentication token");
+        throw new HttpsError(
+          "unauthenticated",
+          "Invalid authentication token"
+        );
       }
       const role = await getRole(authUId);
       if (authUId !== userId && role !== "trainer") {
-        throw new HttpsError("permission-denied", "User not permitted to upload media");
+        throw new HttpsError(
+          "permission-denied",
+          "User not permitted to upload media"
+        );
       }
 
       // Create a reference to the storage service
       const key = makeKey(userId, category, categoryId, objectId);
       await storageBucket.deleteFiles({prefix: key});
-  
-      return { success: true };
+
+      return {success: true};
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {

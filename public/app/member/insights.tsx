@@ -62,7 +62,7 @@ export default function Analytics() {
       date: session.start_time,
       trainer: {
         name: session.session.trainer.display_name,
-        image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop',
+        image: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${session.session.trainer.id}/profilepic/1/1-thumbnail`,
         verified: true
       },
       type: 'workout',
@@ -130,7 +130,7 @@ export default function Analytics() {
           <BlurView intensity={80} style={styles.cardContent}>
             <Ionicons name="fitness" size={24} color={colors.accent.coral} />
             <Text style={styles.cardValue}>{SQUAD_INSIGHTS.currentMonth.avgPerformance}</Text>
-            <Text style={styles.cardLabel}>Avg Performance</Text>
+            <Text style={styles.cardLabel}>Avg Performbance</Text>
             <Text style={styles.cardSubtext}>
               {SQUAD_INSIGHTS.currentMonth.totalWorkouts} workouts
             </Text>
@@ -541,14 +541,14 @@ export default function Analytics() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.primary.dark,
   },
   header: {
     padding: spacing.md,
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.full,
     padding: spacing.xs,
   },
@@ -562,16 +562,16 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   activeTab: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[700],
     ...shadows.sm,
   },
   tabText: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.medium as any,
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
   activeTabText: {
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   content: {
     flex: 1,
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
   },
   timeframeSelector: {
     flexDirection: 'row',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.full,
     padding: spacing.xs,
     marginBottom: spacing.md,
@@ -593,16 +593,16 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   activeTimeframe: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[700],
     ...shadows.sm,
   },
   timeframeText: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
     fontWeight: typography.weight.medium as any,
   },
   activeTimeframeText: {
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   overviewCards: {
     flexDirection: 'row',
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
   },
   overviewCard: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     ...shadows.sm,
   },
@@ -623,12 +623,12 @@ const styles = StyleSheet.create({
   cardValue: {
     fontSize: typography.size['2xl'],
     fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginVertical: spacing.xs,
   },
   cardLabel: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
   improvement: {
     fontSize: typography.size.sm,
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   },
   cardSubtext: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginTop: spacing.xs,
   },
   toughExercisesSection: {
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.md,
   },
   exerciseScroll: {
@@ -658,13 +658,13 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     marginRight: spacing.md,
     width: 160,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     ...shadows.sm,
   },
   exerciseName: {
     fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.sm,
   },
   exerciseStats: {
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   difficultyBadge: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
   difficultyText: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   votesBadge: {
     flexDirection: 'row',
@@ -703,24 +703,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
     ...shadows.sm,
   },
   goldCard: {
-    backgroundColor: colors.transparent.warning,
+    backgroundColor: colors.gray[700],
     borderColor: colors.semantic.warning,
     borderWidth: 1,
   },
   silverCard: {
-    backgroundColor: colors.gray[100],
-    borderColor: colors.gray[300],
+    backgroundColor: colors.gray[700],
+    borderColor: colors.gray[400],
     borderWidth: 1,
   },
   bronzeCard: {
-    backgroundColor: colors.transparent.error,
+    backgroundColor: colors.gray[700],
     borderColor: colors.semantic.error,
     borderWidth: 1,
   },
@@ -728,14 +728,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.primary.dark,
+    backgroundColor: colors.gray[700],
     alignItems: 'center',
     justifyContent: 'center',
   },
   rankText: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.bold as any,
-    color: colors.primary.light,
+    color: colors.gray[200],
   },
   memberInfo: {
     flex: 1,
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.xs,
   },
   achievementTags: {
@@ -752,14 +752,14 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   achievementTag: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
   },
   achievementText: {
     fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   performanceBadge: {
     backgroundColor: colors.semantic.success + '20',
@@ -780,18 +780,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
   },
   statText: {
     fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     fontWeight: typography.weight.medium as any,
   },
   inputCard: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
   trainerName: {
     fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   verifiedBadge: {
     padding: spacing.xs,
@@ -830,7 +830,7 @@ const styles = StyleSheet.create({
   },
   inputDate: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
   typeBadge: {
     paddingHorizontal: spacing.sm,
@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
   inputTitle: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.md,
   },
   performanceSection: {
@@ -855,14 +855,14 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.medium as any,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginBottom: spacing.xs,
   },
   performanceContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     padding: spacing.sm,
     borderRadius: borderRadius.md,
   },
@@ -873,14 +873,14 @@ const styles = StyleSheet.create({
   performanceScore: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   feedbackSection: {
     marginBottom: spacing.md,
   },
   feedbackText: {
     fontSize: typography.size.md,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     lineHeight: typography.lineHeight.relaxed,
   },
   exerciseFeedback: {
@@ -935,13 +935,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   sessionDetails: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
   },
   sessionTime: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginBottom: spacing.sm,
   },
   exerciseList: {
@@ -954,11 +954,11 @@ const styles = StyleSheet.create({
   },
   exerciseItemName: {
     fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   exerciseItemDetails: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
   modalOverlay: {
     flex: 1,
@@ -966,7 +966,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     maxHeight: '90%',
@@ -978,12 +978,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.gray[700],
   },
   modalTitle: {
     fontSize: typography.size.xl,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   closeButton: {
     padding: spacing.sm,
@@ -1011,11 +1011,11 @@ const styles = StyleSheet.create({
   modalTrainerName: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   modalInputDate: {
     fontSize: typography.size.md,
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
   modalPerformance: {
     marginBottom: spacing.xl,
@@ -1023,28 +1023,28 @@ const styles = StyleSheet.create({
   modalSectionTitle: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.md,
   },
   modalPerformanceContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     padding: spacing.md,
     borderRadius: borderRadius.lg,
   },
   modalPerformanceScore: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   modalFeedback: {
     marginBottom: spacing.xl,
   },
   modalFeedbackText: {
     fontSize: typography.size.md,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     lineHeight: typography.lineHeight.relaxed,
   },
   modalExerciseFeedback: {
@@ -1065,7 +1065,7 @@ const styles = StyleSheet.create({
   },
   modalExerciseLabel: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginBottom: spacing.xs,
   },
   modalExerciseName: {
@@ -1098,11 +1098,11 @@ const styles = StyleSheet.create({
   },
   modalSessionTime: {
     fontSize: typography.size.md,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginBottom: spacing.md,
   },
   modalExerciseList: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
   },
@@ -1112,19 +1112,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.gray[600],
   },
   modalExerciseItemName: {
     fontSize: typography.size.md,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   modalExerciseItemDetails: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
   loadingText: {
     fontSize: typography.size.md,
-    color: colors.gray[500],
+    color: colors.gray[400],
     textAlign: 'center',
     marginTop: spacing.xl,
   },
@@ -1142,13 +1142,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   emptyDescription: {
     fontSize: typography.size.md,
-    color: colors.gray[500],
+    color: colors.gray[400],
     textAlign: 'center',
   },
 });

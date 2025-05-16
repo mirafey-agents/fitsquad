@@ -1,8 +1,12 @@
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { Buffer } from 'buffer';
+import { getMedia, uploadMedia } from '@/utils/firebase';
+import { updateUserProfile } from '@/utils/supabase';
+import { checkOnboardingStatus } from '@/utils/supabase';
 
 const CERTIFICATIONS = [
   'NASM (National Academy of Sports Medicine)',
@@ -46,20 +50,41 @@ const SPECIALIZATIONS = [
   'Online Coaching',
 ];
 
+const sampleBio = 'Certified personal trainer with 8 years of experience helping clients achieve their fitness goals through personalized training programs. Students include The Furious Five & the dragon warrior, Po Ping.';
+
 export default function EditTrainerProfile() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [userData, setUserData] = useState(null);
   const [showCertDropdown, setShowCertDropdown] = useState(false);
   const [showExpDropdown, setShowExpDropdown] = useState(false);
   const [selectedCert, setSelectedCert] = useState('NASM (National Academy of Sports Medicine)');
   const [selectedExp, setSelectedExp] = useState('5-10 years');
   const [selectedSpecs, setSelectedSpecs] = useState<string[]>(['HIIT', 'Strength Training', 'Nutrition']);
-  const [formData, setFormData] = useState({
-    name: 'Sarah Chen',
-    bio: 'Certified personal trainer with 8 years of experience helping clients achieve their fitness goals through personalized training programs.',
-    hourlyRate: '75',
-  });
+
+  const getProfilePic = async (id: string) => {
+    if (id) {
+      const data = await getMedia(id, 'profilepic', null, null);
+      const b64 = Buffer.from(Object.values(data.data)).toString('base64');
+      setProfileImage(b64);
+    }
+  }
+
+  useEffect(() => {
+    checkOnboardingStatus().then(({ userData }) => {
+      console.log(userData)
+      setUserData(userData);
+      getProfilePic(userData.id);
+    });
+  }, []);
 
   const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert('Permission to access camera roll is required!');
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -68,7 +93,13 @@ export default function EditTrainerProfile() {
     });
 
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      await uploadMedia(
+        result.assets[0],
+        userData.id,
+        'profilepic',
+        null
+      );
+      getProfilePic(userData.id);
     }
   };
 
@@ -80,8 +111,11 @@ export default function EditTrainerProfile() {
     );
   };
 
-  const handleSave = () => {
-    // Here you would typically save the profile data
+  const handleSave = async () => {
+    if (!userData?.id) return;
+    await updateUserProfile({ display_name: userData.display_name, bio: userData.bio });
+    // Refresh userData after update
+    checkOnboardingStatus().then(({ userData }) => setUserData(userData));
     router.back();
   };
 
@@ -103,7 +137,10 @@ export default function EditTrainerProfile() {
             <Text style={styles.label}>Profile Photo</Text>
             <Pressable style={styles.imageUpload} onPress={pickImage}>
               {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                <Image 
+                  source={{uri:`data:image/jpeg;base64,${profileImage}`}}
+                  style={styles.profileImage} 
+                />
               ) : (
                 <View style={styles.imagePlaceholder}>
                   <Ionicons name="camera" size={32} color="#94A3B8" />
@@ -117,15 +154,15 @@ export default function EditTrainerProfile() {
             <Text style={styles.label}>Basic Information</Text>
             <TextInput
               style={styles.input}
-              value={formData.name}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+              value={userData?.display_name || ''}
+              onChangeText={(text) => setUserData(prev => ({ ...prev, display_name: text }))}
               placeholder="Full Name"
               placeholderTextColor="#94A3B8"
             />
             <TextInput
               style={[styles.input, styles.textArea]}
-              value={formData.bio}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, bio: text }))}
+              value={userData?.bio || sampleBio}
+              onChangeText={(text) => setUserData(prev => ({ ...prev, bio: text }))}
               placeholder="Professional Bio"
               multiline
               numberOfLines={4}
@@ -204,15 +241,6 @@ export default function EditTrainerProfile() {
                 </ScrollView>
               )}
             </View>
-
-            <TextInput
-              style={[styles.input, { marginTop: 12 }]}
-              value={formData.hourlyRate}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, hourlyRate: text }))}
-              placeholder="Hourly Rate ($)"
-              keyboardType="numeric"
-              placeholderTextColor="#94A3B8"
-            />
           </View>
 
           <View style={styles.inputGroup}>

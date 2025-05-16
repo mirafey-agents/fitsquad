@@ -17,8 +17,8 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.primary.light,
-          borderTopColor: colors.gray[200],
+          backgroundColor: colors.gray[800],
+          borderTopColor: colors.gray[800],
           borderTopWidth: 0.5,
           height: Platform.select({
             ios: 88,
@@ -37,12 +37,12 @@ export default function TabLayout() {
             <View
               style={[
                 StyleSheet.absoluteFill,
-                { backgroundColor: colors.primary.light, opacity: 0.95 },
+                { backgroundColor: colors.gray[800], opacity: 0.95 },
               ]}
             />
           </BlurView>
         ),
-        tabBarActiveTintColor: colors.primary.dark,
+        tabBarActiveTintColor: colors.gray[200],
         tabBarInactiveTintColor: colors.gray[500],
         tabBarLabelStyle: {
           fontSize: typography.size.xs,
@@ -56,14 +56,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="analytics"
+        name="insights"
         options={{
+          title: 'Insights',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="pulse" size={size} color={color} />
           ),
@@ -72,6 +74,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),

@@ -30,19 +30,23 @@ import {
 } from 'date-fns';
 
 const dateFormatOption = {
-  weekday: 'short', month: 'short', day: '2-digit',
-  hour: '2-digit', minute: '2-digit', hour12: true
+  weekday: 'short' as const,
+  month: 'short' as const,
+  day: '2-digit' as const,
+  hour: '2-digit' as const,
+  minute: '2-digit' as const,
+  hour12: true
 };
 
 const renderDailyHabits = () => (
   <Animated.View entering={FadeInUp.delay(200)}>
     <Pressable
-      style={[styles.card, { backgroundColor: colors.transparent.coral }]}
+      style={[styles.card, { backgroundColor: colors.gray[800] }]}
       onPress={() => router.push('./habits', {relativeToDirectory: true})}
     >
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleContainer}>
-          <Ionicons name="list" size={24} color={colors.primary.dark} />
+          <Ionicons name="list" size={24} color={colors.primary.light} />
           <Text style={styles.cardTitle}>Daily Habits</Text>
         </View>
       </View>
@@ -54,10 +58,10 @@ const renderDailyHabits = () => (
 
 const renderChallenges = () => (
   <Animated.View entering={FadeInUp.delay(200)}>
-    <View style={[styles.card, { backgroundColor: colors.transparent.mint }]}>
+    <View style={[styles.card]}>
       <View style={styles.cardHeader}>
           <View style={styles.cardTitleContainer}>
-            <Ionicons name="trophy" size={24} color={colors.primary.dark} />
+            <Ionicons name="trophy" size={24} color={colors.primary.light} />
             <Text style={styles.cardTitle}>Challenges</Text>
           </View>
       </View>
@@ -77,7 +81,7 @@ const renderWorkoutReview = ({
 }) => (
   <Animated.View entering={FadeInUp.delay(300)}>
     <View
-      style={[styles.card, { backgroundColor: colors.transparent.mint }]}
+      style={[styles.card]}
     >
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleContainer}>
@@ -446,28 +450,29 @@ export default function Home() {
 
   return (
     <ScrollView style={styles.container}>
-      <LinearGradient
-        colors={[colors.accent.coral, colors.accent.mint]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <Logo size="large" />
-          <Text style={styles.greeting}>
-            Hello {userData?.profile?.display_name || 'Guest'}
-          </Text>
-          <Text style={styles.subtitle}>Let's crush today's goals! 💪</Text>
+      <View style={styles.headerBar}>
+        <View style={styles.headerProfileRow}>
+          <Image
+            source={{ uri: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${userData?.user?.id}/profilepic/1/1-thumbnail` }}
+            style={styles.profileImage}
+          />
+          <View style={styles.headerTextGroup}>
+            <Text style={styles.greeting} numberOfLines={1}>
+              Hello {userData?.profile?.display_name || 'Guest'}
+            </Text>
+            <Text style={styles.subtitle} numberOfLines={1}>
+              Let's crush today's goals!
+            </Text>
+          </View>
         </View>
-      </LinearGradient>
+      </View>
 
       <View style={styles.calendarContainer}>
-        <View style={styles.monthHeader}>
+        <View style={styles.monthHeaderRow}>
           <Text style={styles.monthText}>
             {format(selectedDate, 'MMMM yyyy')}
           </Text>
         </View>
-
         <ScrollView
           ref={scrollViewRef}
           horizontal
@@ -475,50 +480,30 @@ export default function Home() {
           style={styles.calendar}
         >
           {getCalendarDays().map((date) => {
-            const isToday = isSameDay(date, CURRENT_DATE);
             const isSelected = isSameDay(date, selectedDate);
-            const workoutIndicator = getWorkoutIndicator(date);
-            const energyPoints = getEnergyPoints(date);
-
+            const workout = sessions.find((session: any) => new Date(session.start_time).toDateString() === date.toDateString());
+            let indicatorColor = null;
+            if (workout) {
+              if (workout.status === 'completed') {
+                indicatorColor = colors.semantic.success;
+              } else if (workout.status === 'scheduled' || workout.status === 'planned') {
+                indicatorColor = colors.accent.coral;
+              }
+            }
             return (
               <Pressable
                 key={date.toISOString()}
-                style={[
-                  styles.calendarDay,
-                  isSelected && styles.selectedDay,
-                  isToday && styles.today,
-                ]}
+                style={[styles.calendarDayPill, isSelected && styles.selectedDayPill]}
                 onPress={() => setSelectedDate(date)}
               >
-                <Text
-                  style={[styles.dayName, isSelected && styles.selectedDayText]}
-                >
+                <Text style={[styles.dayOfWeekPill, isSelected && styles.selectedDayOfWeekPill]}>
                   {format(date, 'EEE')}
                 </Text>
-                <Text
-                  style={[
-                    styles.dayNumber,
-                    isSelected && styles.selectedDayText,
-                  ]}
-                >
+                <Text style={[styles.dayNumberPill, isSelected && styles.selectedDayNumberPill]}>
                   {format(date, 'd')}
                 </Text>
-
-                {workoutIndicator && (
-                  <View
-                    style={[
-                      styles.workoutIndicator,
-                      workoutIndicator === 'completed' &&
-                        styles.completedWorkout,
-                      workoutIndicator === 'planned' && styles.plannedWorkout,
-                      workoutIndicator === 'votingPending' &&
-                        styles.votingPendingWorkout,
-                    ]}
-                  >
-                    {energyPoints > 0 && (
-                      <Text style={styles.energyPoints}>{energyPoints}⚡</Text>
-                    )}
-                  </View>
+                {indicatorColor && (
+                  <View style={[styles.calendarDot, { backgroundColor: indicatorColor }]} />
                 )}
               </Pressable>
             );
@@ -550,93 +535,106 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.primary.dark,
   },
-  header: {
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 28,
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 32,
+    backgroundColor: colors.primary.dark,
   },
-  headerContent: {
-    padding: 20,
+  headerProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
   },
-  greeting: {
-    fontSize: typography.size['2xl'],
-    fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
-    marginTop: 20,
+  profileImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 16,
+    backgroundColor: colors.gray[700],
   },
-  subtitle: {
-    fontSize: typography.size.lg,
-    color: colors.primary.dark,
-    opacity: 0.8,
+  headerTextGroup: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    minWidth: 120,
     marginTop: 4,
   },
+  greeting: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold as any,
+    color: colors.gray[200],
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: typography.size.sm,
+    color: colors.gray[200],
+    opacity: 0.9,
+    marginTop: 4,
+    flexShrink: 1,
+  },
   calendarContainer: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.primary.dark,
     paddingVertical: spacing.md,
     marginTop: -spacing.xl,
     ...shadows.md,
   },
-  monthHeader: {
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.sm,
+  monthHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    paddingHorizontal: 16,
   },
-  monthText: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+  daysOfWeekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 2,
+  },
+  dayOfWeekText: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.gray[400],
+    fontSize: typography.size.xs,
+    fontWeight: '500',
   },
   calendar: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  calendarDay: {
-    width: 64,
-    height: 90,
+  calendarDayPill: {
+    width: 44,
+    height: 56,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.sm,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.gray[100],
+    marginHorizontal: 4,
+    backgroundColor: 'transparent',
+    paddingVertical: 2,
   },
-  selectedDay: {
-    backgroundColor: colors.primary.dark,
+  selectedDayPill: {
+    backgroundColor: colors.primary.light,
   },
-  today: {
-    borderWidth: 2,
-    borderColor: colors.primary.dark,
-  },
-  dayName: {
-    fontSize: typography.size.sm,
-    color: colors.gray[500],
-    marginBottom: spacing.xs,
-  },
-  dayNumber: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-  },
-  selectedDayText: {
-    color: colors.primary.light,
-  },
-  workoutIndicator: {
-    width: '80%',
-    height: 4,
-    borderRadius: 2,
-    marginTop: spacing.xs,
-  },
-  completedWorkout: {
-    backgroundColor: colors.semantic.success,
-  },
-  plannedWorkout: {
-    backgroundColor: colors.primary.dark,
-  },
-  votingPendingWorkout: {
-    backgroundColor: colors.semantic.warning,
-  },
-  energyPoints: {
+  dayOfWeekPill: {
+    color: colors.gray[300],
     fontSize: typography.size.xs,
-    color: colors.semantic.warning,
-    marginTop: 2,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  selectedDayOfWeekPill: {
+    color: colors.gray[900],
+  },
+  dayNumberPill: {
+    color: colors.gray[200],
+    fontSize: typography.size.sm,
+    fontWeight: '600',
+  },
+  selectedDayNumberPill: {
+    color: colors.gray[900],
   },
   content: {
     padding: spacing.md,
@@ -646,6 +644,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.md,
     ...shadows.md,
+    backgroundColor: colors.gray[800],
   },
   cardHeader: {
     flexDirection: 'row',
@@ -659,20 +658,20 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cardTitle: {
-    fontSize: typography.size.lg,
+    fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
   },
   cardBadge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.primary.dark + '20',
+    backgroundColor: colors.primary.light + '20',
   },
   cardBadgeText: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -682,24 +681,24 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.primary.dark + '20',
+    borderTopColor: colors.primary.light + '20',
   },
   cardFooterText: {
     fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    color: colors.primary.light,
   },
   workoutSummary: {
     marginBottom: spacing.md,
   },
   workoutTitle: {
-    fontSize: typography.size.xl,
+    fontSize: typography.size.lg,
     fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
     marginBottom: spacing.xs,
   },
   workoutTime: {
-    fontSize: typography.size.md,
-    color: colors.gray[500],
+    fontSize: typography.size.sm,
+    color: colors.gray[400],
     marginBottom: spacing.sm,
   },
   energyPointsContainer: {
@@ -713,7 +712,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   energyPointsText: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     color: colors.semantic.warning,
     fontWeight: typography.weight.medium as any,
   },
@@ -721,16 +720,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   exercisesTitle: {
-    fontSize: typography.size.md,
+    fontSize: typography.size.sm,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
     marginBottom: spacing.sm,
   },
   exerciseItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[600],
     padding: spacing.sm,
     borderRadius: borderRadius.md,
     marginBottom: spacing.xs,
@@ -739,14 +738,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exerciseName: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
     marginBottom: spacing.xs,
   },
   exerciseDetails: {
-    fontSize: typography.size.sm,
-    color: colors.gray[500],
+    fontSize: typography.size.xs,
+    color: colors.gray[400],
   },
   exercisePoints: {
     flexDirection: 'row',
@@ -754,7 +753,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   pointsText: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     color: colors.semantic.warning,
     fontWeight: typography.weight.medium as any,
   },
@@ -762,18 +761,18 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   votingTitle: {
-    fontSize: typography.size.lg,
+    fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
     marginBottom: spacing.sm,
   },
   votingCategory: {
     marginBottom: spacing.md,
   },
   votingCategoryTitle: {
-    fontSize: typography.size.md,
+    fontSize: typography.size.sm,
     fontWeight: typography.weight.medium as any,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginBottom: spacing.sm,
   },
   votingOptions: {
@@ -781,7 +780,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   participantCard: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[600],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     alignItems: 'center',
@@ -791,7 +790,7 @@ const styles = StyleSheet.create({
   },
   selectedVoteCard: {
     borderWidth: 2,
-    borderColor: colors.primary.dark,
+    borderColor: colors.accent.coral,
   },
   votedCard: {
     opacity: 0.7,
@@ -800,7 +799,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.gray[700],
     overflow: 'hidden',
   },
   avatarContainer: {
@@ -820,17 +819,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.gray[700],
   },
   participantInitials: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#64748B',
+    color: colors.gray[400],
   },
   participantName: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
@@ -838,18 +837,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
   },
   voteCountText: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
   },
   exerciseCard: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginRight: spacing.sm,
@@ -867,13 +866,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   statText: {
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     color: colors.semantic.error,
     fontWeight: typography.weight.medium as any,
   },
   difficultyText: {
-    fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    fontSize: typography.size.xs,
+    color: colors.primary.light,
     fontWeight: typography.weight.semibold as any,
   },
   votedBadge: {
@@ -894,14 +893,14 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.medium as any,
   },
   upcomingWorkout: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
   },
   upcomingTitle: {
-    fontSize: typography.size.md,
+    fontSize: typography.size.sm,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
     marginBottom: spacing.sm,
   },
   upcomingExercise: {
@@ -911,26 +910,26 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   upcomingExerciseName: {
-    fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    fontSize: typography.size.xs,
+    color: colors.primary.light,
   },
   upcomingExerciseDetails: {
-    fontSize: typography.size.sm,
-    color: colors.gray[500],
+    fontSize: typography.size.xs,
+    color: colors.gray[400],
   },
   noWorkout: {
     alignItems: 'center',
     padding: spacing.xl,
   },
   noWorkoutText: {
-    fontSize: typography.size.lg,
+    fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.primary.light,
     marginTop: spacing.sm,
   },
   noWorkoutSubtext: {
-    fontSize: typography.size.sm,
-    color: colors.gray[500],
+    fontSize: typography.size.xs,
+    color: colors.gray[400],
     textAlign: 'center',
     marginTop: spacing.xs,
   },
@@ -938,7 +937,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: 12,
     padding: 4,
     zIndex: 1,
@@ -947,5 +946,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
+  },
+  monthText: {
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.gray[200],
+  },
+  calendarDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginTop: 2,
   },
 });

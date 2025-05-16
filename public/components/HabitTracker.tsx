@@ -187,10 +187,10 @@ export default function HabitTracker({ preview = false }) {
             <Animated.View
               key={habit.id}
               entering={FadeInUp.delay(index * 100)}
-              style={styles.habitPreviewCard}
+              style={[styles.habitPreviewCard]}
             >
               <View style={styles.habitPreviewInfo}>
-              <Text style={styles.habitName}>{habit.title}</Text>
+                <Text style={styles.habitName}>{habit.title}</Text>
                 <View style={styles.streakContainer}>
                   <Ionicons name="flame" size={16} color={colors.accent.coral} />
                   <Text style={styles.streakText}>{habit.streak} days</Text>
@@ -218,38 +218,38 @@ export default function HabitTracker({ preview = false }) {
   return (
     <View style={styles.container}>
       <View style={styles.habitsContainer}>
-        {selectedHabits?.map((habit, index) => (
+        {Array.isArray(selectedHabits) && selectedHabits.map((habit, index) => (
           <Animated.View
             key={habit.id}
             entering={FadeInUp.delay(index * 100)}
-            style={styles.habitCard}
-            >
-              <View style={styles.habitInfo}>
-                <View style={styles.habitDetails}>
+            style={[styles.habitCard]}
+          >
+            <View style={styles.habitInfo}>
+              <View style={styles.habitDetails}>
                 <View style={styles.habitTitleRow}>
                   <Text style={[styles.habitName, { flex: 1, marginRight: spacing.md }]}>{habit.title}</Text>
                   <Pressable
-                      style={styles.deleteButton}
-                      onPress={() => removeHabit(habit.id)}
-                    >
+                    style={styles.deleteButton}
+                    onPress={() => removeHabit(habit.id)}
+                  >
                     <Ionicons name="trash-outline" size={16} color={colors.semantic.error} />
                   </Pressable>
-                  </View>
+                </View>
                 <Text style={styles.habitDescription}>{habit.description}</Text>
-                </View>
               </View>
-              <View style={styles.habitStatus}>
-                <View style={styles.streakContainer}>
-                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                  <Text style={styles.streakText}>{habit.streak} days</Text>
-                </View>
+            </View>
+            <View style={styles.habitStatus}>
+              <View style={styles.streakContainer}>
+                <Ionicons name="flame" size={16} color={colors.accent.coral} />
+                <Text style={styles.streakText}>{habit.streak} days</Text>
+              </View>
               <View style={styles.historyContainer}>
                 <HabitHistory 
                   history={habit.completionHistory || []} 
                   onToggleCompletion={(date) => toggleCompletion(habit.id, new Date(date), habit.completionHistory?.find(h => h.date === date)?.completed)}
-                  />
-                </View>
+                />
               </View>
+            </View>
           </Animated.View>
         ))}
 
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   habitCard: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[600],
     borderRadius: borderRadius.md,
     padding: spacing.sm,
     flexDirection: 'row',
@@ -504,15 +504,12 @@ const styles = StyleSheet.create({
   },
   habitPreviewCard: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[600],
     borderRadius: borderRadius.lg,
     padding: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    ...{
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    },
   },
   habitContent: {
     flexDirection: 'row',
@@ -639,9 +636,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     position: 'relative',
     zIndex: 100000,
-    ...{
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    },
   },
   modalScroll: {
     position: 'relative',
@@ -802,9 +796,6 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     backgroundColor: colors.primary.light,
     borderRadius: borderRadius.lg,
-    ...{
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    },
   },
   editForm: {
     padding: spacing.md,
@@ -875,5 +866,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cardFooterText: {
+    color: colors.gray[200],
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium as any,
   },
 });

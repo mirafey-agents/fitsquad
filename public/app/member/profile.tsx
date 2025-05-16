@@ -211,28 +211,28 @@ export default function Profile() {
       <View style={styles.statsContainer}>
         <Animated.View
           entering={FadeInUp.delay(100)}
-          style={[styles.statCard, { backgroundColor: '#FFE1E1' }]}
+          style={[styles.statCard]}
         >
           <Text style={styles.statValue}>{PROFILE_DATA.stats.workouts}</Text>
           <Text style={styles.statLabel}>Workouts</Text>
         </Animated.View>
         <Animated.View
           entering={FadeInUp.delay(200)}
-          style={[styles.statCard, { backgroundColor: '#E1F5FF' }]}
+          style={[styles.statCard]}
         >
           <Text style={styles.statValue}>{PROFILE_DATA.stats.attendance}%</Text>
           <Text style={styles.statLabel}>Attendance</Text>
         </Animated.View>
         <Animated.View
           entering={FadeInUp.delay(300)}
-          style={[styles.statCard, { backgroundColor: '#FFE8D9' }]}
+          style={[styles.statCard]}
         >
           <Text style={styles.statValue}>{PROFILE_DATA.stats.calories}</Text>
           <Text style={styles.statLabel}>Calories</Text>
         </Animated.View>
         <Animated.View
           entering={FadeInUp.delay(400)}
-          style={[styles.statCard, { backgroundColor: '#E8FFE1' }]}
+          style={[styles.statCard]}
         >
           <Text style={styles.statValue}>
             {PROFILE_DATA.stats.achievements}
@@ -334,31 +334,6 @@ export default function Profile() {
         ))}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Upcoming Workouts</Text>
-        {PROFILE_DATA.upcomingWorkouts.map((workout, index) => (
-          <Animated.View
-            key={workout.id}
-            entering={FadeInUp.delay(1200 + index * 100)}
-            style={styles.workoutCard}
-          >
-            <View style={styles.workoutHeader}>
-              <View>
-                <Text style={styles.workoutTitle}>{workout.title}</Text>
-                <Text style={styles.workoutTime}>{workout.time}</Text>
-              </View>
-              <BlurView intensity={80} style={styles.workoutTypeBadge}>
-                <Text style={styles.workoutTypeText}>{workout.type}</Text>
-              </BlurView>
-            </View>
-            <View style={styles.workoutTrainer}>
-              <Ionicons name="person" size={16} color={colors.gray[500]} />
-              <Text style={styles.trainerName}>{workout.trainer}</Text>
-            </View>
-          </Animated.View>
-        ))}
-      </View>
-
       <Pressable
         style={styles.editProfileButton}
         onPress={() => setShowOnboarding(true)}
@@ -385,7 +360,7 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.primary.dark,
   },
   header: {
     paddingTop: spacing.xl * 2,
@@ -413,7 +388,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: colors.primary.dark,
+    backgroundColor: colors.gray[800],
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -424,21 +399,21 @@ const styles = StyleSheet.create({
   name: {
     fontSize: typography.size['2xl'],
     fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.xs,
   },
   email: {
     fontSize: typography.size.md,
-    color: colors.primary.dark,
+    color: colors.gray[400],
     marginBottom: spacing.xs,
   },
   memberSince: {
     fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    color: colors.gray[400],
     opacity: 0.8,
   },
   onboardingBanner: {
-    backgroundColor: colors.semantic.info + '20',
+    backgroundColor: colors.gray[800],
     padding: spacing.md,
     marginHorizontal: spacing.md,
     marginTop: -spacing.xl,
@@ -465,7 +440,7 @@ const styles = StyleSheet.create({
   },
   bannerDescription: {
     fontSize: typography.size.sm,
-    color: colors.gray[600],
+    color: colors.gray[400],
   },
   completeButton: {
     backgroundColor: colors.semantic.info,
@@ -494,17 +469,18 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     alignItems: 'center',
+    backgroundColor: colors.gray[800],
     ...shadows.sm,
   },
   statValue: {
     fontSize: typography.size['2xl'],
     fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.xs,
   },
   statLabel: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
   section: {
     padding: spacing.md,
@@ -512,7 +488,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.md,
   },
   goalsContainer: {
@@ -532,7 +508,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.medium as any,
   },
   preferencesCard: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     ...shadows.sm,
@@ -548,12 +524,12 @@ const styles = StyleSheet.create({
   },
   preferenceLabel: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginBottom: spacing.xs,
   },
   preferenceValue: {
     fontSize: typography.size.md,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     fontWeight: typography.weight.medium as any,
   },
   preferenceChips: {
@@ -563,15 +539,15 @@ const styles = StyleSheet.create({
   },
   preferenceChip: {
     fontSize: typography.size.sm,
-    color: colors.primary.dark,
-    backgroundColor: colors.gray[100],
+    color: colors.gray[200],
+    backgroundColor: colors.gray[700],
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
   },
   achievementCard: {
     flexDirection: 'row',
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
@@ -581,7 +557,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[700],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -595,66 +571,23 @@ const styles = StyleSheet.create({
   achievementTitle: {
     fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: colors.gray[200],
     marginBottom: spacing.xs,
   },
   achievementDescription: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: colors.gray[400],
     marginBottom: spacing.xs,
   },
   achievementDate: {
     fontSize: typography.size.xs,
-    color: colors.gray[400],
-  },
-  workoutCard: {
-    backgroundColor: colors.primary.light,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
-  },
-  workoutHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  workoutTitle: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-    marginBottom: spacing.xs,
-  },
-  workoutTime: {
-    fontSize: typography.size.sm,
-    color: colors.gray[500],
-  },
-  workoutTypeBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.accent.mint + '20',
-  },
-  workoutTypeText: {
-    fontSize: typography.size.xs,
-    color: colors.accent.mint,
-    fontWeight: typography.weight.medium as any,
-  },
-  workoutTrainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  trainerName: {
-    fontSize: typography.size.sm,
     color: colors.gray[500],
   },
   editProfileButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary.dark,
+    backgroundColor: colors.gray[800],
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
     padding: spacing.md,
@@ -663,7 +596,7 @@ const styles = StyleSheet.create({
   },
   editProfileText: {
     fontSize: typography.size.md,
-    color: colors.primary.light,
+    color: colors.gray[200],
     fontWeight: typography.weight.medium as any,
   },
   logoutButton: {

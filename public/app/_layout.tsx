@@ -124,7 +124,7 @@ export default function RootLayout() {
         <Drawer.Screen name="onboarding" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="group-management" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="trainer" options={{ drawerItemStyle: { display: 'none' } }} />
-        <Drawer.Screen name="member" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="member" options={{ drawerItemStyle: { display: 'none' }, headerShown: false }} />
         <Drawer.Screen name="progress" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="challenges" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="context/SessionsContext" options={{ drawerItemStyle: { display: 'none' } }} />

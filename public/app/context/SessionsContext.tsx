@@ -9,8 +9,10 @@ interface Session {
   status: string;
   performance_score: number;
   trainer_comments: string;
-  media_ids: string[];
-  media_reviews: Array<any>;
+  session_media: Array<{
+    media_id: string;
+    review: string;
+  }>;
   session: {
     title: string;
     trainer: {

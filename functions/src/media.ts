@@ -136,13 +136,9 @@ export const processUploadedMedia = onCall(
       });
 
       if (category === "session") {
-        updateSessionUsersTable(userId, categoryId);
+        const review = await analyzeMedia(originalBuffer.toString("base64"));
+        updateSessionMedia(categoryId, userId, mediaId, review);
       }
-
-      await analyzeMedia(
-        userId, categoryId, mediaId,
-        originalBuffer.toString("base64")
-      );
 
       return {success: true};
     } catch (error: any) {
@@ -343,7 +339,7 @@ export const deleteMedia = onCall(
       await storageBucket.deleteFiles({prefix: key});
 
       if (category === "session") {
-        updateSessionUsersTable(userId, categoryId);
+        updateSessionMedia(categoryId, userId, objectId, "", true);
       }
 
       return {success: true};
@@ -356,14 +352,3 @@ export const deleteMedia = onCall(
     }
   }
 );
-
-const updateSessionUsersTable = async (userId: string, sessionId: string) => {
-  const prefix = makeKey(userId, "session", sessionId);
-  const [files] = await storageBucket.getFiles({prefix});
-  // console.log("files", prefix, files);
-  const mediaIds = files.map((file: any) => {
-    return file.name.split("/").pop();
-  }).filter((id: any) => !id.endsWith("thumbnail"));
-  // console.log("updating session users table", sessionId, userId, mediaIds);
-  updateSessionMedia(sessionId, userId, mediaIds);
-};

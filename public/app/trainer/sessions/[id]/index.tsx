@@ -31,7 +31,10 @@ interface Session {
     trainer_comments: string;
     bestExercise: string | null;
     needsImprovement: string | null;
-    media_ids: Array<string>;
+    session_media: Array<{
+      media_id: string;
+      review: string;
+    }>;
   }>;
   exercises: Array<{
     id: string;
@@ -368,18 +371,18 @@ export default function SessionDetails() {
                         showsHorizontalScrollIndicator={false}
                         style={styles.mediaScroll}
                       >
-                        {participant.media_ids?.length > 0 && participant.media_ids.map((mediaId, index) => (
+                        {participant.session_media?.length > 0 && participant.session_media.map((media, index) => (
                           <View key={index} style={styles.mediaPreview}>
                             <View style={styles.mediaPlaceholder}>
                               <Image 
-                                source={{ uri: getMediaThumbnailURL(participant.users.id, 'session', session.id, mediaId) }}
+                                source={{ uri: getMediaThumbnailURL(participant.users.id, 'session', session.id, media.media_id) }}
                                 style={{ width: 80, height: 80 }}
                               />
                             </View>
                             <Pressable 
                               style={styles.removeMediaButton}
                               onPress={() => {
-                                deleteMedia(participant.user_id, 'session', session.id, mediaId);
+                                deleteMedia(participant.user_id, 'session', session.id, media.media_id);
                                 fetchSession();
                               }}
                             >

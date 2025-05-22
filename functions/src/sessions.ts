@@ -35,9 +35,11 @@ export const getUserSessions = onCall(
 
       // Verify Supabase JWT and get user ID
       const {userId} = verifySupabaseToken(auTkn);
-      const {data, error: fetchError} = await getAdmin().from("session_users")
+      const {data, error: fetchError} = await getAdmin()
+        .from("session_users")
         .select("*,session:sessions(id, title, start_time, status,"+
-          "trainer:users!trainer_id(id, display_name))")
+          "trainer:users!trainer_id(id, display_name)),"+
+          "session_media(media_id, review)")
         .eq("user_id", userId)
         .gte("start_time", startDate.toISOString())
         .lte("start_time", endDate.toISOString())
@@ -119,7 +121,8 @@ export const getTrainerSessions = onCall(
 
       const queryStr = fetchUsers ?
         ("*, session_users!session_id(*, " +
-        "users!user_id(id, display_name, email))") :
+        "users!user_id(id, display_name, email),"+
+        "session_media(media_id, review))") :
         "*";
       let query = getAdmin().from("sessions")
         .select(queryStr).eq("trainer_id", userId);
@@ -499,16 +502,38 @@ export const deleteSession = onCall(
 export const updateSessionMedia = async function(
   sessionId: string,
   userId: string,
-  mediaIds: string[]
+  mediaId: string,
+  review: string,
+  isDelete = false
 ) {
-  const {error} = await getAdmin()
-    .from("session_users")
-    .update({media_ids: mediaIds})
-    .eq("session_id", sessionId)
-    .eq("user_id", userId)
-    .single();
+  if (isDelete) {
+    const {error} = await getAdmin()
+      .from("session_media")
+      .delete()
+      .eq("session_id", sessionId)
+      .eq("user_id", userId)
+      .eq("media_id", mediaId);
+    if (error) {
+      console.log("Error deleting session media",
+        sessionId, userId, mediaId, error);
+      throw error;
+    }
+    return {success: true};
+  } else {
+    const {error} = await getAdmin()
+      .from("session_media")
+      .insert({
+        session_id: sessionId,
+        user_id: userId,
+        media_id: mediaId,
+        review: review,
+      });
+    if (error) {
+      console.log("Error inserting session media",
+        sessionId, userId, mediaId, error);
+      throw error;
+    }
 
-  if (error) throw error;
-
-  return {success: true};
+    return {success: true};
+  }
 };

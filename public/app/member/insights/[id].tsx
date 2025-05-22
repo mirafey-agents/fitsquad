@@ -73,8 +73,7 @@ export default function WorkoutSessionDetails() {
         title: foundSession.session.title,
         performance_score: foundSession.performance_score,
         feedback: foundSession.trainer_comments,
-        media_ids: foundSession.media_ids,
-        media_reviews: [],
+        session_media: foundSession.session_media,
         session: {
           title: foundSession.session.title,
           time: foundSession.start_time,
@@ -82,17 +81,8 @@ export default function WorkoutSessionDetails() {
         }
       };
       
-      if (foundSession.media_ids) {
-        getSessionMediaReview(foundSession.user_id, foundSession.session_id).then((reviews)=>{
-          newSession.media_reviews = reviews;
-          console.log("media_reviews", newSession.media_reviews);
-          setSession(newSession);
-          setLoading(false);
-        });
-      } else {
-        setSession(newSession);
-        setLoading(false);
-      }
+      setSession(newSession);
+      setLoading(false);
       console.log("newSession", newSession);
     }
     
@@ -227,30 +217,28 @@ export default function WorkoutSessionDetails() {
           )}
         </View>
 
-        {session.media_ids && session.media_ids.length > 0 && (
+        {session.session_media && session.session_media.length > 0 && (
           <View style={styles.media}>
-            <Text style={styles.sectionTitle}>Media</Text>
+            <Text style={styles.sectionTitle}>Analysis</Text>
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.mediaScrollContent}
             >
-              {session.media_ids.map((mId, i) => (
-                <View key={i} style={styles.mediaItem}>
+              {session.session_media.map((media, i) => (
+                <View key={i} style={styles.mediaCard}>
                   <Image 
-                    source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_id, mId) }}
+                    source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_id, media.media_id) }}
                     style={styles.mediaImage}
                   />
+                  <View style={styles.reviewContainer}>
+                    {renderFormattedText(media?.review)}
+                  </View>
                 </View>
               ))}
             </ScrollView>
           </View>
         )}
-        {session.media_reviews.map((mReview, i) => (
-          <View key={i} style={styles.reviewContainer}>
-            {renderFormattedText(mReview?.review?.parts[0]?.text)}
-          </View>
-        ))}
       </ScrollView>
 
     </View>
@@ -266,15 +254,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.md,
-    paddingTop: 60,
+    padding: spacing.sm,
+    paddingTop: spacing.md,
     backgroundColor: colors.gray[800],
   },
   backButton: {
     padding: spacing.sm,
   },
   headerTitle: {
-    fontSize: typography.size.lg,
+    fontSize: typography.size.md,
     fontWeight: typography.weight.semibold as any,
     color: colors.gray[200],
   },
@@ -391,16 +379,18 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
     gap: spacing.md,
   },
-  mediaItem: {
-    width: 200,
-    height: 200,
+  mediaCard: {
+    width: 280,
+    backgroundColor: colors.gray[700],
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
     ...shadows.sm,
   },
   mediaImage: {
     width: '100%',
-    height: '100%',
+    height: 180,
+    resizeMode: 'contain',
+    backgroundColor: colors.gray[800],
   },
   session: {
     marginBottom: spacing.xl,
@@ -444,10 +434,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
   },
   reviewContainer: {
-    backgroundColor: colors.gray[700],
-    borderRadius: borderRadius.lg,
     padding: spacing.md,
-    marginBottom: spacing.md,
   },
   reviewText: {
     color: colors.gray[200],

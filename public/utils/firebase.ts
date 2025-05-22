@@ -342,3 +342,14 @@ export async function listMedia(
   })).data;
 }
 
+export async function getSessionMediaReview(
+  userId: string,
+  sessionId: string
+) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  return (await httpsCallable(functions, 'getSessionMediaReview')({
+    userId, sessionId, authToken: session.access_token
+  })).data;
+}

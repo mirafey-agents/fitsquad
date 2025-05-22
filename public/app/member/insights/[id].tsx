@@ -6,6 +6,49 @@ import { colors, typography, spacing, borderRadius, shadows } from '@/constants/
 import { useSessions } from '@/app/context/SessionsContext';
 import { useState, useEffect } from 'react';
 import { getMediaThumbnailURL } from '@/utils/mediaUtils';
+import { getSessionMediaReview } from '@/utils/firebase';
+
+const renderFormattedText = (text: string) => {
+  if (!text) return null;
+  
+  // Split by lines to handle bullet points
+  const lines = text.split('\n');
+  
+  return lines.map((line, lineIndex) => {
+    // Handle bullet points
+    if (line.trim().startsWith('* ')) {
+      return (
+        <View key={lineIndex} style={styles.bulletPointContainer}>
+          <Text style={styles.bulletPoint}>•</Text>
+          <Text style={styles.reviewText}>
+            {renderFormattedLine(line.slice(2))}
+          </Text>
+        </View>
+      );
+    }
+    
+    // Handle regular lines with bold formatting
+    return (
+      <Text key={lineIndex} style={styles.reviewText}>
+        {renderFormattedLine(line)}
+      </Text>
+    );
+  });
+};
+
+const renderFormattedLine = (text: string) => {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <Text key={index} style={[styles.reviewText, styles.boldText]}>
+          {part.slice(2, -2)}
+        </Text>
+      );
+    }
+    return <Text key={index}>{part}</Text>;
+  });
+};
 
 export default function WorkoutSessionDetails() {
   const { id } = useLocalSearchParams();
@@ -15,9 +58,8 @@ export default function WorkoutSessionDetails() {
 
   useEffect(() => {
     const foundSession = sessions.find(s => s.id === id);
-    console.log("foundSession", foundSession);
     if (foundSession) {
-      setSession({
+      const newSession = {
         id: foundSession.id,
         user_id: foundSession.user_id,
         session_id: foundSession.session_id,
@@ -32,14 +74,28 @@ export default function WorkoutSessionDetails() {
         performance_score: foundSession.performance_score,
         feedback: foundSession.trainer_comments,
         media_ids: foundSession.media_ids,
+        media_reviews: [],
         session: {
           title: foundSession.session.title,
           time: foundSession.start_time,
           exercises: foundSession.exercises
         }
-      });
+      };
+      
+      if (foundSession.media_ids) {
+        getSessionMediaReview(foundSession.user_id, foundSession.session_id).then((reviews)=>{
+          newSession.media_reviews = reviews;
+          console.log("media_reviews", newSession.media_reviews);
+          setSession(newSession);
+          setLoading(false);
+        });
+      } else {
+        setSession(newSession);
+        setLoading(false);
+      }
+      console.log("newSession", newSession);
     }
-    setLoading(false);
+    
   }, [id, sessions]);
 
   const renderStars = (score: number) => {
@@ -126,8 +182,23 @@ export default function WorkoutSessionDetails() {
           <Text style={styles.feedbackText}>{session.feedback}</Text>
         </View>
 
+        {session.session.exercises && session.session.exercises.length > 0 && (
+          <View style={styles.session}>
+            <Text style={styles.sectionTitle}>Exercises</Text>
+            <View style={styles.exerciseList}>
+              {session.session.exercises.map((exercise, i) => (
+                <View key={i} style={styles.exerciseItem}>
+                  <Text style={styles.exerciseItemName}>{exercise.name}</Text>
+                  <Text style={styles.exerciseItemDetails}>
+                    {exercise.sets} × {exercise.reps}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+  
         <View style={styles.exerciseFeedback}>
-          <Text style={styles.sectionTitle}>Exercise Analysis</Text>
           {session.best_exercise && (
             <View style={styles.exerciseHighlight}>
               <BlurView intensity={80} style={[styles.exerciseBadge, styles.bestExercise]}>
@@ -141,7 +212,6 @@ export default function WorkoutSessionDetails() {
               </BlurView>
             </View>
           )}
-          
           {session.needs_improvement && (
             <View style={styles.exerciseHighlight}>
               <BlurView intensity={80} style={[styles.exerciseBadge, styles.improvementExercise]}>
@@ -160,7 +230,11 @@ export default function WorkoutSessionDetails() {
         {session.media_ids && session.media_ids.length > 0 && (
           <View style={styles.media}>
             <Text style={styles.sectionTitle}>Media</Text>
-            <View style={styles.mediaGrid}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.mediaScrollContent}
+            >
               {session.media_ids.map((mId, i) => (
                 <View key={i} style={styles.mediaItem}>
                   <Image 
@@ -169,26 +243,16 @@ export default function WorkoutSessionDetails() {
                   />
                 </View>
               ))}
-            </View>
+            </ScrollView>
           </View>
         )}
-
-        {session.session.exercises && session.session.exercises.length > 0 && (
-          <View style={styles.session}>
-            <Text style={styles.sectionTitle}>Exercises</Text>
-            <View style={styles.exerciseList}>
-              {session.session.exercises.map((exercise, i) => (
-                <View key={i} style={styles.exerciseItem}>
-                  <Text style={styles.exerciseItemName}>{exercise.name}</Text>
-                  <Text style={styles.exerciseItemDetails}>
-                    {exercise.sets} × {exercise.reps}
-                  </Text>
-                </View>
-              ))}
-            </View>
+        {session.media_reviews.map((mReview, i) => (
+          <View key={i} style={styles.reviewContainer}>
+            {renderFormattedText(mReview?.review?.parts[0]?.text)}
           </View>
-        )}
+        ))}
       </ScrollView>
+
     </View>
   );
 }
@@ -323,16 +387,13 @@ const styles = StyleSheet.create({
   media: {
     marginBottom: spacing.xl,
   },
-  mediaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  mediaScrollContent: {
+    paddingRight: spacing.md,
     gap: spacing.md,
   },
   mediaItem: {
-    flex: 1,
-    minWidth: '45%',
-    maxWidth: '45%',
-    aspectRatio: 1,
+    width: 200,
+    height: 200,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
     ...shadows.sm,
@@ -381,5 +442,31 @@ const styles = StyleSheet.create({
     color: colors.semantic.error,
     textAlign: 'center',
     marginTop: spacing.xl,
+  },
+  reviewContainer: {
+    backgroundColor: colors.gray[700],
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  reviewText: {
+    color: colors.gray[200],
+    fontSize: typography.size.md,
+    lineHeight: 24,
+    fontWeight: typography.weight.regular as any,
+    letterSpacing: 0.3,
+  },
+  boldText: {
+    fontWeight: typography.weight.bold as any,
+  },
+  bulletPointContainer: {
+    flexDirection: 'row',
+    marginBottom: spacing.xs,
+    paddingLeft: spacing.sm,
+  },
+  bulletPoint: {
+    color: colors.gray[200],
+    fontSize: typography.size.md,
+    marginRight: spacing.sm,
   },
 }); 

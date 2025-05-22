@@ -63,7 +63,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="insights"
+        name="insights/index"
         options={{
           title: 'Insights',
           tabBarIcon: ({ color, size }) => (
@@ -84,6 +84,10 @@ export default function TabLayout() {
       <Tabs.Screen name="progress" options={{href: null}}/>
       <Tabs.Screen name="onboarding" options={{href: null}}/>
       <Tabs.Screen name="habits" options={{href: null}}/>
+      <Tabs.Screen name="_insights" options={{href: null}}/>
+      <Tabs.Screen name="insights/session" options={{href: null}}/>
+      <Tabs.Screen name="insights/squad" options={{href: null}}/>
+      <Tabs.Screen name="insights/[id]" options={{href: null}}/>
     </Tabs>
   );
 }

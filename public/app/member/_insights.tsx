@@ -362,48 +362,6 @@ export default function Analytics() {
           </Animated.View>
         ))
       )}
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.tabs}>
-          <Pressable
-            style={[styles.tab, activeTab === 'squad' && styles.activeTab]}
-            onPress={() => setActiveTab('squad')}
-          >
-            <Ionicons 
-              name="people" 
-              size={20} 
-              color={activeTab === 'squad' ? colors.primary.dark : colors.gray[500]} 
-            />
-            <Text style={[
-              styles.tabText,
-              activeTab === 'squad' && styles.activeTabText
-            ]}>Squad Insights</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.tab, activeTab === 'trainer' && styles.activeTab]}
-            onPress={() => setActiveTab('trainer')}
-          >
-            <Ionicons 
-              name="clipboard" 
-              size={20} 
-              color={activeTab === 'trainer' ? colors.primary.dark : colors.gray[500]} 
-            />
-            <Text style={[
-              styles.tabText,
-              activeTab === 'trainer' && styles.activeTabText
-            ]}>Trainer Input</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content}>
-        {activeTab === 'squad' ? renderSquadInsights() : renderTrainerInputs()}
-      </ScrollView>
-
       <Modal
         visible={!!selectedInput}
         transparent
@@ -534,6 +492,47 @@ export default function Analytics() {
           </View>
         )}
       </Modal>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.tabs}>
+          <Pressable
+            style={[styles.tab, activeTab === 'squad' && styles.activeTab]}
+            onPress={() => setActiveTab('squad')}
+          >
+            <Ionicons 
+              name="people" 
+              size={20} 
+              color={activeTab === 'squad' ? colors.primary.dark : colors.gray[500]} 
+            />
+            <Text style={[
+              styles.tabText,
+              activeTab === 'squad' && styles.activeTabText
+            ]}>Squad Insights</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === 'trainer' && styles.activeTab]}
+            onPress={() => setActiveTab('trainer')}
+          >
+            <Ionicons 
+              name="clipboard" 
+              size={20} 
+              color={activeTab === 'trainer' ? colors.primary.dark : colors.gray[500]} 
+            />
+            <Text style={[
+              styles.tabText,
+              activeTab === 'trainer' && styles.activeTabText
+            ]}>Trainer Input</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <ScrollView style={styles.content}>
+        {activeTab === 'squad' ? renderSquadInsights() : renderTrainerInputs()}
+      </ScrollView>
     </View>
   );
 }

@@ -3,6 +3,8 @@ import { getUserSessions } from '@/utils/firebase';
 
 interface Session {
   id: string;
+  user_id: string;
+  session_id: string;
   start_time: string;
   status: string;
   performance_score: number;

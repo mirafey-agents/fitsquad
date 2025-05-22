@@ -46,6 +46,8 @@ export {
   processUploadedMedia,
 } from "./media";
 
+export {getSessionMediaReview} from "./visionai";
+
 export const helloWorld = onRequest(
   {cors: true},
   (request, response) => {

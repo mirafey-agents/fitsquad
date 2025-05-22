@@ -5,6 +5,7 @@ import * as crypto from "crypto";
 import {getRole} from "./supabase";
 import * as sharp from "sharp";
 import {updateSessionMedia} from "./sessions";
+import {analyzeMedia} from "./visionai";
 
 const makeKey = (
   userId: string, category: string,
@@ -49,7 +50,7 @@ export const getUploadUrl = onCall(
 
       const prefix = makeKey(userId, category, categoryId);
       const [files] = await storageBucket.getFiles({prefix});
-      console.log(prefix, "files", files);
+      // console.log(prefix, "files", files);
       if (files.length >= 6) { // 3 media, 3 thumbnails
         throw new HttpsError(
           "invalid-argument",
@@ -137,6 +138,11 @@ export const processUploadedMedia = onCall(
       if (category === "session") {
         updateSessionUsersTable(userId, categoryId);
       }
+
+      await analyzeMedia(
+        userId, categoryId, mediaId,
+        originalBuffer.toString("base64")
+      );
 
       return {success: true};
     } catch (error: any) {
@@ -354,10 +360,10 @@ export const deleteMedia = onCall(
 const updateSessionUsersTable = async (userId: string, sessionId: string) => {
   const prefix = makeKey(userId, "session", sessionId);
   const [files] = await storageBucket.getFiles({prefix});
-  console.log("files", prefix, files);
+  // console.log("files", prefix, files);
   const mediaIds = files.map((file: any) => {
     return file.name.split("/").pop();
   }).filter((id: any) => !id.endsWith("thumbnail"));
-  console.log("updating session users table", sessionId, userId, mediaIds);
+  // console.log("updating session users table", sessionId, userId, mediaIds);
   updateSessionMedia(sessionId, userId, mediaIds);
 };

@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { deleteMedia, deleteSession, getTrainerSessions, listMedia, updateSession, uploadMedia } from '@/utils/firebase';
+import { deleteMedia, deleteSession, getTrainerSessions, updateSession, uploadMedia } from '@/utils/firebase';
 import ConfirmModal from '@/components/ConfirmModal';
 import { colors, spacing, borderRadius, typography } from '@/constants/theme';
+import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 
 const dateFormatOption = {
   weekday: 'short', month: 'short', day: '2-digit',
@@ -30,10 +31,7 @@ interface Session {
     trainer_comments: string;
     bestExercise: string | null;
     needsImprovement: string | null;
-    media: Array<{
-      mediaId: string;
-      thumbnail_url: string;
-    }>;
+    media_ids: Array<string>;
   }>;
   exercises: Array<{
     id: string;
@@ -101,16 +99,13 @@ export default function SessionDetails() {
   }, [id]);
 
   const fetchSession = async () => {
+    setLoading(true);
     const sessions = await getTrainerSessions(null, null, id as string, true);
     console.log('Fetched sessions:', sessions);
     const session = sessions[0];
     session.exercises = session.session_users[0].exercises;
-    // await setSession(session);
-    await Promise.all(session.session_users.map(async (participant) => {
-      const media = await listMedia(participant.user_id, 'session', session.id) as string[];
-      participant.media = media;
-    }));
-    await setSession(session);
+    setSession(session);
+    setLoading(false);
   }
 
   const handleSave = async () => {
@@ -159,15 +154,16 @@ export default function SessionDetails() {
         aspect: [4, 3],
         quality: 1,
       });
-
+      setLoading(true);
       if (!result.canceled && result.assets.length > 0) {
         await uploadMedia(result.assets[0], participantId, 'session', id as string);
         router.replace('./', {relativeToDirectory: true});
       }
-      
+      fetchSession();
+      setLoading(false);
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      console.error('Error picking/uploading image:', error);
+      alert('Failed to pick/upload image. Max 3 only.');
     }
   };
 
@@ -287,7 +283,7 @@ export default function SessionDetails() {
                     </View>
                     <View style={styles.avatarContainer}>
                       <Image 
-                        source={{ uri: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${participant.users.id}/profilepic/1/1-thumbnail` }}
+                        source={{ uri: getProfilePicThumbNailURL(participant.users.id) }}
                         style={styles.avatarImage}
                       />
                     </View>
@@ -372,19 +368,19 @@ export default function SessionDetails() {
                         showsHorizontalScrollIndicator={false}
                         style={styles.mediaScroll}
                       >
-                        {participant.media?.length > 0 && participant.media.map((mediaObj, index) => (
+                        {participant.media_ids?.length > 0 && participant.media_ids.map((mediaId, index) => (
                           <View key={index} style={styles.mediaPreview}>
                             <View style={styles.mediaPlaceholder}>
                               <Image 
-                                source={{ uri: mediaObj.thumbnail_url }}
+                                source={{ uri: getMediaThumbnailURL(participant.users.id, 'session', session.id, mediaId) }}
                                 style={{ width: 80, height: 80 }}
                               />
                             </View>
                             <Pressable 
                               style={styles.removeMediaButton}
                               onPress={() => {
-                                deleteMedia(participant.user_id, 'session', session.id, mediaObj.mediaId);
-                                router.replace('./', {relativeToDirectory: true});
+                                deleteMedia(participant.user_id, 'session', session.id, mediaId);
+                                fetchSession();
                               }}
                             >
                               <Ionicons name="close-circle" size={20} color="#EF4444" />

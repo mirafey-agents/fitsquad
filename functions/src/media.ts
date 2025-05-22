@@ -4,6 +4,7 @@ import {storageBucket} from "./fs";
 import * as crypto from "crypto";
 import {getRole} from "./supabase";
 import * as sharp from "sharp";
+import {updateSessionMedia} from "./sessions";
 
 const makeKey = (
   userId: string, category: string,
@@ -13,8 +14,6 @@ const makeKey = (
   if (!["profilepic", "session", "challenge", "habit"].includes(category)) {
     throw new HttpsError("invalid-argument", "Invalid category");
   }
-
-  objectId = objectId || crypto.randomUUID();
 
   if (category === "profilepic") {
     categoryId = "1";
@@ -48,8 +47,18 @@ export const getUploadUrl = onCall(
         );
       }
 
+      const prefix = makeKey(userId, category, categoryId);
+      const [files] = await storageBucket.getFiles({prefix});
+      console.log(prefix, "files", files);
+      if (files.length >= 6) { // 3 media, 3 thumbnails
+        throw new HttpsError(
+          "invalid-argument",
+          "Maximum 3 media files allowed"
+        );
+      }
+
       // Create a reference to the storage service
-      const key = makeKey(userId, category, categoryId);
+      const key = makeKey(userId, category, categoryId, crypto.randomUUID());
       const mediaId = key.split("/").pop();
       const file = storageBucket.file(key);
 
@@ -124,6 +133,10 @@ export const processUploadedMedia = onCall(
           cacheControl: "public, max-age=18000",
         },
       });
+
+      if (category === "session") {
+        updateSessionUsersTable(userId, categoryId);
+      }
 
       return {success: true};
     } catch (error: any) {
@@ -219,7 +232,7 @@ export const listMedia = onCall(
       }
 
       // Create a reference to the storage service
-      const prefix = `media/${userId}/${category}/${categoryId}/`;
+      const prefix = makeKey(userId, category, categoryId);
       const [files] = await storageBucket.getFiles({prefix});
 
       return files
@@ -323,6 +336,10 @@ export const deleteMedia = onCall(
       const key = makeKey(userId, category, categoryId, objectId);
       await storageBucket.deleteFiles({prefix: key});
 
+      if (category === "session") {
+        updateSessionUsersTable(userId, categoryId);
+      }
+
       return {success: true};
     } catch (error: any) {
       console.error("Function error:", error);
@@ -333,3 +350,14 @@ export const deleteMedia = onCall(
     }
   }
 );
+
+const updateSessionUsersTable = async (userId: string, sessionId: string) => {
+  const prefix = makeKey(userId, "session", sessionId);
+  const [files] = await storageBucket.getFiles({prefix});
+  console.log("files", prefix, files);
+  const mediaIds = files.map((file: any) => {
+    return file.name.split("/").pop();
+  }).filter((id: any) => !id.endsWith("thumbnail"));
+  console.log("updating session users table", sessionId, userId, mediaIds);
+  updateSessionMedia(sessionId, userId, mediaIds);
+};

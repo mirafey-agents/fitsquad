@@ -273,26 +273,28 @@ export async function uploadMedia(
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
 
-  const {url, mediaId} = (await httpsCallable(functions, 'getUploadUrl')({
-    authToken: session.access_token, userId, category, categoryId,
-    mimeType: asset.mimeType,
-  })).data as {url: string, mediaId: string};
-
-  console.log('postUrl', url);
   try {
+  
+    const {url, mediaId} = (await httpsCallable(functions, 'getUploadUrl')({
+      authToken: session.access_token, userId, category, categoryId,
+      mimeType: asset.mimeType,
+    })).data as {url: string, mediaId: string};
+
+    console.log('postUrl', url);
+
     const response = await fetch(url as string, {
       method: 'PUT',
       body: asset.file,
-    headers: {
-      "Content-Type": asset.mimeType,
-      "x-goog-content-length-range": "0,20000000",
-    },
-  });
-  const processResult = (await httpsCallable(functions, 'processUploadedMedia')({
-      authToken: session.access_token, userId, category, categoryId, mediaId
-    })).data;
+      headers: {
+        "Content-Type": asset.mimeType,
+        "x-goog-content-length-range": "0,20000000",
+      },
+    });
+    const processResult = (await httpsCallable(functions, 'processUploadedMedia')({
+        authToken: session.access_token, userId, category, categoryId, mediaId
+      })).data;
 
-  return response.status;
+    return response.status;
   } catch (error) {
     console.error('Error uploading media:', error);
     throw error;

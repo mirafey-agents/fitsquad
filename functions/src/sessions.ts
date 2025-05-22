@@ -495,3 +495,20 @@ export const deleteSession = onCall(
     }
   }
 );
+
+export const updateSessionMedia = async function(
+  sessionId: string,
+  userId: string,
+  mediaIds: string[]
+) {
+  const {error} = await getAdmin()
+    .from("session_users")
+    .update({media_ids: mediaIds})
+    .eq("session_id", sessionId)
+    .eq("user_id", userId)
+    .single();
+
+  if (error) throw error;
+
+  return {success: true};
+};

@@ -230,15 +230,10 @@ const renderWorkoutReview = ({
                     <TouchableOpacity
                       key={participant.id}
                       style={styles.participantCard}
-                      onPress={() => handleVote('mvp', selectedWorkout.session.id, participant.id)}
+                      disabled={true}
                     >
-                      {selectedWorkout.mvpUserId === participant.id && (
-                        <View style={styles.crownContainer}>
-                          <Ionicons name="trophy" size={20} color="#FFFFFF" />
-                        </View>
-                      )}
                       <View style={styles.participantAvatar}>
-                        <View style={styles.initialsContainer}>
+                        <View style={styles.avatarBackground}>
                           <Text style={styles.participantInitials}>
                             {participant.display_name
                               .split(' ')
@@ -254,27 +249,22 @@ const renderWorkoutReview = ({
                         </View>
                       </View>
                       <Text style={styles.participantName}>
-                        {participant.display_name}
+                        {participant.display_name.split(' ')[0]} {participant.display_name.split(' ')[1]?.[0]}
                       </Text>
-                      <View style={styles.voteCount}>
+                      <TouchableOpacity 
+                        style={styles.voteCount}
+                        onPress={() => selectedWorkout.vote_mvp_user_id !== participant.id && handleVote('mvp', selectedWorkout.session.id, participant.id)}
+                        disabled={selectedWorkout.vote_mvp_user_id === participant.id}
+                      >
                         <Ionicons
-                          name="bookmark"
+                          name={selectedWorkout.vote_mvp_user_id === participant.id ? "star" : "star-outline"}
                           size={16}
-                          color="#FFFFFF"
+                          color={selectedWorkout.vote_mvp_user_id === participant.id ? "#1CE90E" : "#FFFFFF"}
                         />
                         <Text style={styles.voteCountText}>
                           {participant.votesFor}
                         </Text>
-                      </View>
-                      {selectedWorkout.vote_mvp_user_id === participant.id && (
-                        <View style={styles.votedBadge}>
-                          <Ionicons
-                            name="bookmark"
-                            size={16}
-                            color="#1CE90E"
-                          />
-                        </View>
-                      )}
+                      </TouchableOpacity>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -737,34 +727,29 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#3C4148",
     overflow: 'hidden',
     marginBottom: 10,
+  },
+  avatarBackground: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#4A90E2',
   },
   avatarContainer: {
     width: '100%',
     height: '100%',
-    position: 'relative',
+    position: 'absolute',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
   },
-  initialsContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: "#3C4148",
-  },
   participantInitials: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginHorizontal: 18,
   },
   participantName: {
     color: "#FFFFFF",
@@ -780,28 +765,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     marginLeft: 4,
-  },
-  votedBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: "#24433E",
-    borderRadius: 12,
-    padding: 4,
-  },
-  crownContainer: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: "#3C4148",
-    borderRadius: 12,
-    padding: 4,
-    zIndex: 1,
-    shadowColor: "#060712",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   calendarDot: {
     width: 6,

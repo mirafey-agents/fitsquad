@@ -1,8 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, Text, Image } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, shadows, typography, spacing } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 
 export default function TabLayout() {
@@ -17,9 +15,9 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.gray[800],
-          borderTopColor: colors.gray[800],
-          borderTopWidth: 0.5,
+          backgroundColor: "#21262F",
+          borderTopColor: "#21262F",
+          borderTopWidth: 0,
           height: Platform.select({
             ios: 88,
             android: 68,
@@ -30,23 +28,22 @@ export default function TabLayout() {
             android: 10,
             default: 0,
           }),
-          ...shadows.md,
         },
         tabBarBackground: () => (
-          <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill}>
+          <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill}>
             <View
               style={[
                 StyleSheet.absoluteFill,
-                { backgroundColor: colors.gray[800], opacity: 0.95 },
+                { backgroundColor: "#21262F", opacity: 0.95 },
               ]}
             />
           </BlurView>
         ),
-        tabBarActiveTintColor: colors.gray[200],
-        tabBarInactiveTintColor: colors.gray[500],
+        tabBarActiveTintColor: "#FFFFFF",
+        tabBarInactiveTintColor: "#9BA9BD",
         tabBarLabelStyle: {
-          fontSize: typography.size.xs,
-          fontWeight: typography.weight.medium as any,
+          fontSize: 14,
+          fontWeight: "bold",
         },
       }}
       screenListeners={{
@@ -57,8 +54,11 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/cdmcrxxk_expires_30_days.png" }}
+              style={{ width: 36, height: 36 }}
+            />
           ),
         }}
       />
@@ -66,8 +66,11 @@ export default function TabLayout() {
         name="insights/index"
         options={{
           title: 'Insights',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pulse" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/xwgn8pyz_expires_30_days.png" }}
+              style={{ width: 36, height: 36 }}
+            />
           ),
         }}
       />
@@ -75,8 +78,11 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/4i7wkk3u_expires_30_days.png" }}
+              style={{ width: 36, height: 36 }}
+            />
           ),
         }}
       />
@@ -95,16 +101,15 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   headerLeft: {
     marginLeft: Platform.OS === 'ios' ? -8 : 0,
-    marginRight: spacing.sm,
+    marginRight: 8,
   },
   addButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.primary.dark,
+    backgroundColor: "#060712",
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -20,
-    ...shadows.md,
   },
 });

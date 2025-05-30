@@ -1,11 +1,9 @@
-import React, { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import React, { View, Text, StyleSheet, ScrollView, Pressable, Image, TouchableOpacity, ImageBackground } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRootNavigationState } from 'expo-router';
-import Logo from '@/components/Logo';
 import { getLoggedInUser } from '@/utils/supabase';
 import { voteSession } from '@/utils/firebase';
 import { Dimensions } from 'react-native';
@@ -14,10 +12,7 @@ import { useSessions } from '@/app/context/SessionsContext';
 
 import {
   colors,
-  shadows,
   spacing,
-  borderRadius,
-  typography,
 } from '@/constants/theme';
 import HabitTracker from '@/components/HabitTracker';
 import DailyChallenges from '@/components/DailyChallenges';
@@ -40,19 +35,84 @@ const dateFormatOption = {
 
 const renderDailyHabits = () => (
   <Animated.View entering={FadeInUp.delay(200)}>
-    <Pressable
-      style={[styles.card, { backgroundColor: colors.gray[800] }]}
-      onPress={() => router.push('./habits', {relativeToDirectory: true})}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleContainer}>
-          <Ionicons name="list" size={24} color={colors.primary.light} />
-          <Text style={styles.cardTitle}>Daily Habits</Text>
-        </View>
-      </View>
+    <View style={styles.habitsContainer}>
+      <Text style={styles.habitsTitle}>Daily Habits</Text>
+      <LinearGradient 
+        start={{x:0, y:0}}
+        end={{x:0, y:1}}
+        colors={["#21262F", "#353D45"]}
+        style={styles.habitsCard}
+      >
+        <View style={styles.habitsGrid}>
+          <View style={styles.habitItem}>
+            <Image
+              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/yrhxmq6c_expires_30_days.png" }}
+              style={styles.habitIcon}
+            />
+            <Text style={styles.habitName}>Hydration</Text>
+            <View style={styles.habitStreak}>
+              <Image
+                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/jk5qmujk_expires_30_days.png" }}
+                style={styles.streakIcon}
+              />
+              <Text style={styles.streakText}>8 days</Text>
+            </View>
+          </View>
 
-      <HabitTracker preview={true} />
-    </Pressable>
+          <View style={styles.habitItem}>
+            <Image
+              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/5fmj286v_expires_30_days.png" }}
+              style={styles.habitIcon}
+            />
+            <Text style={styles.habitName}>Sleep</Text>
+            <View style={styles.habitStreak}>
+              <Image
+                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/wpob5hjt_expires_30_days.png" }}
+                style={styles.streakIcon}
+              />
+              <Text style={styles.streakText}>4 days</Text>
+            </View>
+          </View>
+
+          <View style={styles.habitItem}>
+            <Image
+              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/5hz1rr96_expires_30_days.png" }}
+              style={styles.habitIcon}
+            />
+            <Text style={styles.habitName}>Food</Text>
+            <TouchableOpacity style={styles.habitStreak}>
+              <Image
+                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/dm0oqivb_expires_30_days.png" }}
+                style={styles.streakIcon}
+              />
+              <Text style={styles.streakText}>3 days</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.habitItem}>
+            <Image
+              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/hyl0dtnn_expires_30_days.png" }}
+              style={styles.habitIconVertical}
+            />
+            <Text style={styles.habitName}>Food</Text>
+            <View style={styles.habitStreak}>
+              <Image
+                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/fahpn6qq_expires_30_days.png" }}
+                style={styles.streakIcon}
+              />
+              <Text style={styles.streakText}>3 days</Text>
+            </View>
+          </View>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.logHabitsButton}
+          onPress={() => router.push('./habits', {relativeToDirectory: true})}
+        >
+          <Text style={styles.logHabitsText}>Log Your Habits</Text>
+        </TouchableOpacity>
+      </LinearGradient>
+    </View>
   </Animated.View>
 );
 
@@ -70,6 +130,38 @@ const renderChallenges = () => (
   </Animated.View>
 );
 
+const renderEnergyPoints = () => (
+  <Animated.View entering={FadeInUp.delay(200)}>
+    <View style={styles.energyContainer}>
+      <Text style={styles.energyTitle}>My Weekly Energy Goals</Text>
+      <LinearGradient 
+        start={{x:0, y:0}}
+        end={{x:0, y:1}}
+        colors={["#21262F", "#353D45"]}
+        style={styles.energyCard}
+      >
+        <ImageBackground 
+          source={{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/ssn4fqst_expires_30_days.png"}} 
+          resizeMode="stretch"
+          style={styles.energyBackground}
+        >
+          <View style={styles.energyPointsRow}>
+            <Text style={styles.energyPointsText}>345</Text>
+            <Image
+              source={{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/e3w1f9o8_expires_30_days.png"}}
+              resizeMode="stretch"
+              style={styles.energyIcon}
+            />
+          </View>
+        </ImageBackground>
+        <TouchableOpacity style={styles.energyDateButton}>
+          <Text style={styles.energyDateText}>5th - 11th May</Text>
+        </TouchableOpacity>
+      </LinearGradient>
+    </View>
+  </Animated.View>
+);
+
 const renderWorkoutReview = ({
   selectedWorkout,
   isFutureDate,
@@ -80,252 +172,125 @@ const renderWorkoutReview = ({
   handleVote: (type: 'mvp' | 'toughest', sessionId: string, id: string) => void;
 }) => (
   <Animated.View entering={FadeInUp.delay(300)}>
-    <View
-      style={[styles.card]}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleContainer}>
-          <Ionicons
-            name="fitness"
-            size={24}
-            color={colors.primary.dark}
-          />
-          <Text style={styles.cardTitle}>
-            {isFutureDate ? 'Upcoming Workout' : 'Workout Review'}
-          </Text>
-        </View>
-        {selectedWorkout?.status === 'completed' && (
-          <BlurView
-            intensity={80}
-            style={[
-              styles.cardBadge,
-              { backgroundColor: `${colors.semantic.success}20` },
-            ]}
-          >
-            <Text
-              style={[
-                styles.cardBadgeText,
-                { color: colors.semantic.success },
-              ]}
-            >
-              Completed
-            </Text>
-          </BlurView>
-        )}
-      </View>
-
-      {selectedWorkout ? (
-        <>
-          <View style={styles.workoutSummary}>
-            <Text style={styles.workoutTitle}>
-              {selectedWorkout?.session.title}
-            </Text>
-            <Text style={styles.workoutTime}>
-              {new Date(selectedWorkout.start_time).toLocaleString('en-US', dateFormatOption)} with {selectedWorkout?.session.trainer.display_name}
-            </Text>
-            {/* {selectedWorkout.status === 'completed' && (
-              <View style={styles.energyPointsContainer}>
-                <Ionicons
-                  name="flash"
-                  size={20}
-                  color={colors.semantic.warning}
-                />
-                <Text style={styles.energyPointsText}>
-                  {selectedWorkout?.energyPoints} Energy Points Earned
+    <View style={styles.workoutContainer}>
+      <Text style={styles.workoutTitle}>Workout Review</Text>
+      <LinearGradient 
+        start={{x:0, y:0}}
+        end={{x:0, y:1}}
+        colors={["#21262F", "#353D45"]}
+        style={styles.workoutCard}
+      >
+        {selectedWorkout ? (
+          <>
+            <View style={styles.workoutHeader}>
+              <View style={styles.workoutHeaderText}>
+                <Text style={styles.workoutName}>
+                  {selectedWorkout?.session.title} - Group
+                </Text>
+                <Text style={styles.workoutTime}>
+                  {new Date(selectedWorkout.start_time).toLocaleString('en-US', dateFormatOption)} with {selectedWorkout?.session.trainer.display_name}
                 </Text>
               </View>
-            )} */}
-          </View>
+            </View>
 
-          {selectedWorkout.session.status === 'completed' && (
-            <>
+            <View style={styles.workoutContent}>
+              <View style={styles.workoutSummaryHeader}>
+                <Text style={styles.workoutSummaryTitle}>Workout Summary</Text>
+                {selectedWorkout?.status === 'completed' && (
+                  <TouchableOpacity style={styles.completedBadge}>
+                    <Text style={styles.completedText}>Completed</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <View style={styles.exercisesList}>
-                <Text style={styles.exercisesTitle}>Workout Summary</Text>
                 {selectedWorkout?.exercises.map((exercise, index) => (
                   <View key={index} style={styles.exerciseItem}>
-                    <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseName}>
-                        {exercise.name}
-                      </Text>
-                      <Text style={styles.exerciseDetails}>
-                        {exercise.sets} × {exercise.reps}
-                      </Text>
-                    </View>
-                    <View style={styles.exercisePoints}>
-                      <Ionicons
-                        name="flash"
-                        size={16}
-                        color={colors.semantic.warning}
-                      />
-                      <Text style={styles.pointsText}>
-                        {exercise.energyPoints}
-                      </Text>
-                    </View>
+                    <Text style={styles.exerciseName}>
+                      {exercise.name}
+                    </Text>
+                    <Text style={styles.exerciseDetails}>
+                      {exercise.sets} × {exercise.reps}
+                    </Text>
                   </View>
                 ))}
               </View>
+            </View>
 
-              <View style={styles.votingSection}>
-                {/* MVP Voting */}
-                <View style={styles.votingCategory}>
-                  <Text style={styles.votingCategoryTitle}>
-                    MVP (Click to vote)
-                  </Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.votingOptions}
-                  >
-                    {selectedWorkout.participants.map((participant) => (
-                      <Pressable
-                        key={participant.id}
-                        style={[styles.participantCard]}
-                        onPress={() =>
-                          handleVote('mvp', selectedWorkout.session.id, participant.id)
-                        }
-                      >
-                        {selectedWorkout.mvpUserId === participant.id && (
-                            <View style={styles.crownContainer}>
-                              <Ionicons name="trophy" size={20} color={colors.accent.coral} />
-                            </View>
-                        )}
-                        <View style={styles.participantAvatar}>
-                            <View style={styles.initialsContainer}>
-                              <Text style={styles.participantInitials}>
-                                {participant.display_name
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')}
-                              </Text>
-                            </View>
-                          <View style={styles.avatarContainer}>
-                            <Image 
-                              source={{ uri: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${participant.id}/profilepic/1/1-thumbnail` }}
-                              style={styles.avatarImage}
-                            />
-                          </View>
+            {selectedWorkout?.status === 'completed' && (
+              <LinearGradient 
+                start={{x:0, y:0}}
+                end={{x:0, y:1}}
+                colors={["#21262F", "#353D45"]}
+                style={styles.mvpSection}
+              >
+                <Text style={styles.mvpTitle}>MVP - Click to Vote</Text>
+                <View style={styles.mvpGrid}>
+                  {selectedWorkout.participants.map((participant) => (
+                    <TouchableOpacity
+                      key={participant.id}
+                      style={styles.participantCard}
+                      onPress={() => handleVote('mvp', selectedWorkout.session.id, participant.id)}
+                    >
+                      {selectedWorkout.mvpUserId === participant.id && (
+                        <View style={styles.crownContainer}>
+                          <Ionicons name="trophy" size={20} color="#FFFFFF" />
                         </View>
-                        <Text style={styles.participantName}>
-                          {participant.display_name}
+                      )}
+                      <View style={styles.participantAvatar}>
+                        <View style={styles.initialsContainer}>
+                          <Text style={styles.participantInitials}>
+                            {participant.display_name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                          </Text>
+                        </View>
+                        <View style={styles.avatarContainer}>
+                          <Image 
+                            source={{ uri: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${participant.id}/profilepic/1/1-thumbnail` }}
+                            style={styles.avatarImage}
+                          />
+                        </View>
+                      </View>
+                      <Text style={styles.participantName}>
+                        {participant.display_name}
+                      </Text>
+                      <View style={styles.voteCount}>
+                        <Ionicons
+                          name="bookmark"
+                          size={16}
+                          color="#FFFFFF"
+                        />
+                        <Text style={styles.voteCountText}>
+                          {participant.votesFor}
                         </Text>
-                        <View style={styles.voteCount}>
+                      </View>
+                      {selectedWorkout.vote_mvp_user_id === participant.id && (
+                        <View style={styles.votedBadge}>
                           <Ionicons
                             name="bookmark"
                             size={16}
-                            color={colors.accent.coral}
+                            color="#1CE90E"
                           />
-                          <Text style={styles.voteCountText}>
-                            {participant.votesFor}
-                          </Text>
                         </View>
-                        {selectedWorkout.vote_mvp_user_id === participant.id && (
-                          <BlurView
-                            intensity={80}
-                            style={styles.votedBadge}
-                          >
-                            <Ionicons
-                              name="bookmark"
-                              size={16}
-                              color={colors.semantic.success}
-                            />
-                          </BlurView>
-                        )}
-                      </Pressable>
-                    ))}
-                  </ScrollView>
+                      )}
+                    </TouchableOpacity>
+                  ))}
                 </View>
-
-                {/* Toughest Exercise Voting */}
-                {/* <View style={styles.votingCategory}>
-                  <Text style={styles.votingCategoryTitle}>
-                    Toughest Exercise
-                  </Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.votingOptions}
-                  >
-                    {selectedWorkout.toughestExercises?.map((exercise) => (
-                      <Pressable
-                        key={exercise.id}
-                        style={[
-                          styles.exerciseCard,
-                          userVotes.toughest === exercise.id &&
-                            styles.selectedVoteCard,
-                          exercise.hasVoted && styles.votedCard,
-                        ]}
-                        onPress={() =>
-                          !exercise.hasVoted &&
-                          handleVote('toughest', selectedWorkout.id, exercise.id)
-                        }
-                        disabled={exercise.hasVoted}
-                      >
-                        <Text style={styles.exerciseName}>
-                          {exercise.name}
-                        </Text>
-                        <View style={styles.exerciseStats}>
-                          <View style={styles.statItem}>
-                            <Ionicons
-                              name="flame"
-                              size={16}
-                              color={colors.semantic.error}
-                            />
-                            <Text style={styles.statText}>
-                              {exercise.votes}
-                            </Text>
-                          </View>
-                          <View style={styles.statItem}>
-                            <Text style={styles.difficultyText}>
-                              {exercise.difficulty}
-                            </Text>
-                          </View>
-                        </View>
-                        {exercise.hasVoted && (
-                          <BlurView
-                            intensity={80}
-                            style={styles.votedBadge}
-                          >
-                            <Ionicons
-                              name="checkmark"
-                              size={16}
-                              color={colors.semantic.success}
-                            />
-                            <Text style={styles.votedText}>Voted</Text>
-                          </BlurView>
-                        )}
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                </View> */}
-              </View>
-            </>
-          )}
-
-          {selectedWorkout.status === "scheduled" && (
-            <View style={styles.upcomingWorkout}>
-              <Text style={styles.upcomingTitle}>Workout Plan</Text>
-              {selectedWorkout?.exercises.map((exercise, index) => (
-                <View key={index} style={styles.upcomingExercise}>
-                  <Text style={styles.upcomingExerciseName}>
-                    {exercise.name}
-                  </Text>
-                  <Text style={styles.upcomingExerciseDetails}>
-                    {exercise.sets} × {exercise.reps}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </>
-      ) : (
-        <View style={styles.noWorkout}>
-          <Ionicons name="calendar" size={48} color={colors.gray[300]} />
-          <Text style={styles.noWorkoutText}>No workout scheduled</Text>
-          <Text style={styles.noWorkoutSubtext}>
-            Take a rest day or join an available session
-          </Text>
-        </View>
-      )}
+              </LinearGradient>
+            )}
+          </>
+        ) : (
+          <View style={styles.noWorkout}>
+            <Ionicons name="calendar" size={48} color="#9BA9BD" />
+            <Text style={styles.noWorkoutText}>No workout scheduled</Text>
+            <Text style={styles.noWorkoutSubtext}>
+              Take a rest day or join an available session
+            </Text>
+          </View>
+        )}
+      </LinearGradient>
     </View>
   </Animated.View>
 );
@@ -361,7 +326,10 @@ export default function Home() {
 
   const CURRENT_DATE = new Date();
   const [selectedDate, setSelectedDate] = useState(CURRENT_DATE);
-  const [userData, setUserData] = useState({profile: {display_name: 'Guest'}});
+  const [userData, setUserData] = useState<{
+    user?: { id: string };
+    profile: { display_name: string };
+  }>({profile: {display_name: 'Guest'}});
   const [userVotes, setUserVotes] = useState<{
     mvp: string | null;
     toughest: string | null;
@@ -512,6 +480,7 @@ export default function Home() {
       </View>
 
       <View style={styles.content}>
+        {renderEnergyPoints()}
         {renderWorkoutReview({
           selectedWorkout,
           isFutureDate,
@@ -535,76 +504,65 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.dark,
+    backgroundColor: "#060712",
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: "#060712",
   },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingHorizontal: 28,
-    paddingTop: 60,
-    paddingBottom: 32,
-    backgroundColor: colors.primary.dark,
+    paddingHorizontal: 20,
+    paddingTop: 44,
+    paddingBottom: 40,
+    backgroundColor: "#060712",
   },
   headerProfileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 8,
   },
   profileImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 16,
-    backgroundColor: colors.gray[700],
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 8,
   },
   headerTextGroup: {
     flexDirection: 'column',
     justifyContent: 'center',
-    minWidth: 120,
-    marginTop: 4,
   },
   greeting: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.bold as any,
-    color: colors.gray[200],
-    marginBottom: 2,
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: typography.size.sm,
-    color: colors.gray[200],
-    opacity: 0.9,
-    marginTop: 4,
-    flexShrink: 1,
+    color: "#9AAABD",
+    fontSize: 18,
+    fontWeight: "bold",
   },
   calendarContainer: {
-    backgroundColor: colors.primary.dark,
-    paddingVertical: spacing.md,
-    marginTop: -spacing.xl,
-    ...shadows.md,
+    backgroundColor: "#060712",
+    paddingVertical: 0,
+    marginTop: 0,
+    marginBottom: 38,
   },
   monthHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    paddingHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 21,
   },
-  daysOfWeekRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 2,
-  },
-  dayOfWeekText: {
-    flex: 1,
-    textAlign: 'center',
-    color: colors.gray[400],
-    fontSize: typography.size.xs,
-    fontWeight: '500',
+  monthText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
   calendar: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 21,
+    paddingVertical: 0,
   },
   calendarDayPill: {
     width: 44,
@@ -617,190 +575,171 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   selectedDayPill: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: "#FFFFFF",
   },
   dayOfWeekPill: {
-    color: colors.gray[300],
-    fontSize: typography.size.xs,
-    fontWeight: '500',
+    color: "#9BA9BE",
+    fontSize: 18,
+    fontWeight: "bold",
     marginBottom: 2,
   },
   selectedDayOfWeekPill: {
-    color: colors.gray[900],
+    color: "#060712",
   },
   dayNumberPill: {
-    color: colors.gray[200],
-    fontSize: typography.size.sm,
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
   selectedDayNumberPill: {
-    color: colors.gray[900],
+    color: "#060712",
   },
   content: {
-    padding: spacing.md,
+    padding: 20,
   },
   card: {
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    ...shadows.md,
-    backgroundColor: colors.gray[800],
+    backgroundColor: "#21262F",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 40,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 20,
   },
   cardTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
   },
   cardTitle: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.gray[200],
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginLeft: 12,
   },
   cardBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.primary.light + '20',
+    backgroundColor: "#24433E",
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   cardBadgeText: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.light,
+    color: "#1CE90E",
+    fontSize: 14,
+    fontWeight: "bold",
   },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.primary.light + '20',
-  },
-  cardFooterText: {
-    fontSize: typography.size.sm,
-    color: colors.primary.light,
-  },
-  workoutSummary: {
-    marginBottom: spacing.md,
+  workoutContainer: {
+    marginBottom: 40,
   },
   workoutTitle: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.bold as any,
-    color: colors.primary.light,
-    marginBottom: spacing.xs,
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  workoutCard: {
+    borderRadius: 24,
+    paddingVertical: 30,
+  },
+  workoutHeader: {
+    marginBottom: 37,
+    marginLeft: 20,
+  },
+  workoutHeaderText: {
+    marginBottom: 2,
+  },
+  workoutName: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 2,
   },
   workoutTime: {
-    fontSize: typography.size.sm,
-    color: colors.gray[400],
-    marginBottom: spacing.sm,
+    color: "#959C9F",
+    fontSize: 14,
+    fontWeight: "bold",
   },
-  energyPointsContainer: {
+  workoutContent: {
+    marginHorizontal: 20,
+  },
+  workoutSummaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.semantic.warning + '20',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    alignSelf: 'flex-start',
+    marginBottom: 16,
   },
-  energyPointsText: {
-    fontSize: typography.size.xs,
-    color: colors.semantic.warning,
-    fontWeight: typography.weight.medium as any,
-  },
-  exercisesList: {
-    marginBottom: spacing.md,
-  },
-  exercisesTitle: {
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.light,
-    marginBottom: spacing.sm,
-  },
-  exerciseItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.gray[600],
-    padding: spacing.sm,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.xs,
-  },
-  exerciseInfo: {
+  workoutSummaryTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginRight: 12,
     flex: 1,
   },
+  completedBadge: {
+    backgroundColor: "#24433E",
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  completedText: {
+    color: "#1CE90E",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  exercisesList: {
+    gap: 10,
+  },
+  exerciseItem: {
+    backgroundColor: "#3C4148",
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+  },
   exerciseName: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.light,
-    marginBottom: spacing.xs,
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   exerciseDetails: {
-    fontSize: typography.size.xs,
-    color: colors.gray[400],
+    color: "#959C9F",
+    fontSize: 14,
+    fontWeight: "bold",
   },
-  exercisePoints: {
+  mvpSection: {
+    borderRadius: 24,
+    paddingVertical: 20,
+  },
+  mvpTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
+    marginLeft: 20,
+  },
+  mvpGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  pointsText: {
-    fontSize: typography.size.xs,
-    color: colors.semantic.warning,
-    fontWeight: typography.weight.medium as any,
-  },
-  votingSection: {
-    gap: spacing.md,
-  },
-  votingTitle: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.light,
-    marginBottom: spacing.sm,
-  },
-  votingCategory: {
-    marginBottom: spacing.md,
-  },
-  votingCategoryTitle: {
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.medium as any,
-    color: colors.gray[400],
-    marginBottom: spacing.sm,
-  },
-  votingOptions: {
-    marginHorizontal: -spacing.md,
-    paddingHorizontal: spacing.md,
+    alignItems: 'flex-start',
+    marginHorizontal: 20,
   },
   participantCard: {
-    backgroundColor: colors.gray[600],
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-    marginRight: spacing.sm,
-    width: 100,
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#3C4148",
+    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 25,
+    marginRight: 15,
     position: 'relative',
-  },
-  selectedVoteCard: {
-    borderWidth: 2,
-    borderColor: colors.accent.coral,
-  },
-  votedCard: {
-    opacity: 0.7,
   },
   participantAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.gray[700],
+    backgroundColor: "#3C4148",
     overflow: 'hidden',
+    marginBottom: 10,
   },
   avatarContainer: {
     width: '100%',
@@ -819,138 +758,50 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray[700],
+    backgroundColor: "#3C4148",
   },
   participantInitials: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray[400],
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginHorizontal: 18,
   },
   participantName: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.light,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
+    color: "#FFFFFF",
+    fontSize: 18,
+    marginBottom: 6,
   },
   voteCount: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.gray[700],
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
   },
   voteCountText: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.light,
-  },
-  exerciseCard: {
-    backgroundColor: colors.gray[800],
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginRight: spacing.sm,
-    width: 150,
-    position: 'relative',
-  },
-  exerciseStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  statText: {
-    fontSize: typography.size.xs,
-    color: colors.semantic.error,
-    fontWeight: typography.weight.medium as any,
-  },
-  difficultyText: {
-    fontSize: typography.size.xs,
-    color: colors.primary.light,
-    fontWeight: typography.weight.semibold as any,
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginLeft: 4,
   },
   votedBadge: {
     position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.semantic.success + '20',
-  },
-  votedText: {
-    fontSize: typography.size.xs,
-    color: colors.semantic.success,
-    fontWeight: typography.weight.medium as any,
-  },
-  upcomingWorkout: {
-    backgroundColor: colors.gray[800],
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-  },
-  upcomingTitle: {
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.light,
-    marginBottom: spacing.sm,
-  },
-  upcomingExercise: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  upcomingExerciseName: {
-    fontSize: typography.size.xs,
-    color: colors.primary.light,
-  },
-  upcomingExerciseDetails: {
-    fontSize: typography.size.xs,
-    color: colors.gray[400],
-  },
-  noWorkout: {
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  noWorkoutText: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.light,
-    marginTop: spacing.sm,
-  },
-  noWorkoutSubtext: {
-    fontSize: typography.size.xs,
-    color: colors.gray[400],
-    textAlign: 'center',
-    marginTop: spacing.xs,
+    top: 10,
+    right: 10,
+    backgroundColor: "#24433E",
+    borderRadius: 12,
+    padding: 4,
   },
   crownContainer: {
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: colors.gray[800],
+    backgroundColor: "#3C4148",
     borderRadius: 12,
     padding: 4,
     zIndex: 1,
-    shadowColor: colors.primary.dark,
+    shadowColor: "#060712",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
-  },
-  monthText: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.gray[200],
   },
   calendarDot: {
     width: 6,
@@ -958,5 +809,144 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     alignSelf: 'center',
     marginTop: 2,
+  },
+  habitsContainer: {
+    marginBottom: 40,
+  },
+  habitsTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  habitsCard: {
+    borderRadius: 24,
+    paddingVertical: 20,
+  },
+  habitsGrid: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 30,
+    marginLeft: 21,
+  },
+  habitItem: {
+    alignItems: 'center',
+    marginRight: 35,
+  },
+  habitIcon: {
+    width: 80,
+    height: 80,
+    marginBottom: 12,
+  },
+  habitIconVertical: {
+    width: 33,
+    height: 80,
+    marginBottom: 12,
+  },
+  habitName: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  habitStreak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: "#432424",
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingLeft: 7,
+    paddingRight: 9,
+  },
+  streakIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 5,
+  },
+  streakText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  logHabitsButton: {
+    alignItems: "center",
+    borderColor: "#FFFFFF",
+    borderRadius: 100,
+    borderWidth: 1,
+    paddingVertical: 8,
+    marginHorizontal: 21,
+  },
+  logHabitsText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  noWorkout: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  noWorkoutText: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 12,
+  },
+  noWorkoutSubtext: {
+    color: "#9AAABD",
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  energyContainer: {
+    marginBottom: 40,
+  },
+  energyTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  energyCard: {
+    alignItems: "center",
+    borderRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 114,
+  },
+  energyBackground: {
+    alignItems: "flex-start",
+    paddingVertical: 73,
+    paddingHorizontal: 51,
+    marginBottom: 20,
+  },
+  energyPointsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#003E85",
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingLeft: 12,
+    paddingRight: 7,
+  },
+  energyPointsText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginRight: 8,
+  },
+  energyIcon: {
+    borderRadius: 12,
+    width: 18,
+    height: 18,
+  },
+  energyDateButton: {
+    backgroundColor: "#4D545D",
+    borderRadius: 100,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  energyDateText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 });

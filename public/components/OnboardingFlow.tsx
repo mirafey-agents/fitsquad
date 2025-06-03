@@ -349,9 +349,9 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[colors.accent.coral, colors.accent.mint]}
+        colors={["#21262F", "#353D45"]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={styles.header}
       >
         <View style={styles.headerActions}>
@@ -398,7 +398,7 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
       <View style={styles.footer}>
         {currentStep !== 'basics' && (
           <Pressable style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={20} color={colors.primary.dark} />
+            <Ionicons name="arrow-back" size={20} color={colors.primary.light} />
             <Text style={styles.backButtonText}>Back</Text>
           </Pressable>
         )}
@@ -424,7 +424,7 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: colors.primary.dark,
   },
   header: {
     paddingTop: 60,
@@ -441,19 +441,19 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: typography.size['3xl'],
-    fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginTop: 20,
   },
   subtitle: {
-    fontSize: typography.size.lg,
-    color: colors.primary.dark,
+    fontSize: 16,
+    color: '#FFFFFF',
     marginTop: 8,
     opacity: 0.8,
   },
@@ -462,13 +462,13 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.primary.light,
+    backgroundColor: '#FFFFFF',
     borderRadius: 4,
   },
   stepsIndicator: {
@@ -476,48 +476,49 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   stepIndicator: {
-    fontSize: typography.size.sm,
-    color: colors.primary.dark,
-    fontWeight: typography.weight.medium as any,
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
   content: {
     flex: 1,
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 120, // Increased bottom padding to prevent content from being hidden behind buttons
+    paddingBottom: 120,
   },
   stepContainer: {
     marginBottom: 20,
   },
   stepTitle: {
-    fontSize: typography.size.xl,
-    fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   stepDescription: {
-    fontSize: typography.size.md,
-    color: colors.gray[500],
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.7,
     marginBottom: 24,
   },
   inputGroup: {
     marginBottom: 24,
   },
   label: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
     padding: 16,
-    fontSize: typography.size.md,
-    color: colors.primary.dark,
+    fontSize: 16,
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   textArea: {
     height: 120,
@@ -531,23 +532,23 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   selectedOption: {
-    backgroundColor: colors.primary.dark,
-    borderColor: colors.primary.dark,
+    backgroundColor: '#432424',
+    borderColor: '#432424',
   },
   optionText: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
   selectedOptionText: {
-    color: colors.primary.light,
+    color: '#FFFFFF',
   },
   optionsGrid: {
     flexDirection: 'row',
@@ -557,68 +558,68 @@ const styles = StyleSheet.create({
   optionChip: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     marginBottom: 8,
   },
   selectedChip: {
-    backgroundColor: colors.primary.dark,
-    borderColor: colors.primary.dark,
+    backgroundColor: '#432424',
+    borderColor: '#432424',
   },
   chipText: {
-    fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    fontSize: 14,
+    color: '#FFFFFF',
   },
   selectedChipText: {
-    color: colors.primary.light,
+    color: '#FFFFFF',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: spacing.md,
-    paddingBottom: Platform.select({ ios: 34, android: 20, default: spacing.md }), // Safe area padding
-    backgroundColor: colors.primary.light,
+    padding: 20,
+    paddingBottom: Platform.select({ ios: 34, android: 20, default: 20 }),
+    backgroundColor: colors.primary.dark,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     ...shadows.lg,
-    zIndex: 100, // Ensure buttons are always on top
+    zIndex: 100,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg, // Increased padding
-    paddingVertical: spacing.md, // Increased padding
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.gray[100],
-    ...shadows.md, // Added stronger shadow
-    minWidth: 100, // Ensure minimum width
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    ...shadows.md,
+    minWidth: 100,
   },
   backButtonText: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-    marginLeft: spacing.sm,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
   nextButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary.dark,
-    paddingHorizontal: spacing.lg, // Increased padding
-    paddingVertical: spacing.md, // Increased padding
-    borderRadius: borderRadius.full,
-    ...shadows.md, // Added stronger shadow
-    minWidth: 100, // Ensure minimum width
+    backgroundColor: '#432424',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    ...shadows.md,
+    minWidth: 100,
   },
   nextButtonText: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.light,
-    marginRight: spacing.sm,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginRight: 8,
   },
 });

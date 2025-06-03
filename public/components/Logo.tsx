@@ -8,14 +8,8 @@ export default function Logo({ size = 'medium' }: { size?: 'small' | 'medium' | 
   
   return (
     <View style={styles.container}>
-      <BlurView intensity={80} style={styles.logoContainer}>
-        <Image source={require('@/assets/images/icon.png')}
-        style={{ width: 40, height: 40 }} />
-      </BlurView>
-      <Text style={[styles.text, { fontSize }]}>
-        <Text style={styles.fit}>MyFitWave</Text>
-
-      </Text>
+      <Image source={require('@/assets/images/logo_with_text_1024.svg')}
+      style={{ width: 240, height: 80 }} />
     </View>
   );
 }

@@ -3,7 +3,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import Logo from '../../components/Logo';
+import Logo from '@/components/Logo';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -48,26 +48,6 @@ const QUICK_ACTIONS = [
   },
 ];
 
-const UPCOMING_SESSIONS = [
-  {
-    id: '1',
-    time: '06:30 AM',
-    title: 'Morning HIIT',
-    participants: 8,
-    maxParticipants: 12,
-    squad: 'Morning Warriors',
-    type: 'Group Training',
-  },
-  {
-    id: '2',
-    time: '09:00 AM',
-    title: 'Strength Training',
-    participants: 1,
-    maxParticipants: 1,
-    squad: 'Personal Session',
-    type: 'Personal Training',
-  },
-];
 
 export default function TrainerDashboard() {
   const [sessions, setSessions] = useState([]);
@@ -88,7 +68,7 @@ export default function TrainerDashboard() {
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
-        colors={['#4F46E5', '#818CF8']}
+        colors={['#21262F', '#353D45']}
         style={styles.header}
       >
         <View style={styles.headerContent}>
@@ -102,7 +82,7 @@ export default function TrainerDashboard() {
               <Text style={styles.editProfileText}>Edit Profile</Text>
             </Pressable>
           </View>
-          <Text style={styles.greeting}>Welcome back, Trainer!</Text>
+          <Text style={styles.greeting}>Welcome!</Text>
           <Text style={styles.subtitle}>You have {sessions.length} sessions today</Text>
         </View>
       </LinearGradient>
@@ -187,7 +167,11 @@ export default function TrainerDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#181C23',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#181C23',
   },
   header: {
     paddingTop: 60,
@@ -244,15 +228,15 @@ const styles = StyleSheet.create({
     minWidth: '45%',
   },
   actionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   actionIcon: {
     width: 48,
@@ -265,7 +249,7 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   section: {
     marginTop: 32,
@@ -273,19 +257,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   sessionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sessionHeader: {
     flexDirection: 'row',
@@ -295,17 +279,17 @@ const styles = StyleSheet.create({
   },
   sessionTime: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
   },
   sessionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginTop: 4,
   },
   squadName: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
     marginTop: 4,
   },
   sessionBadges: {
@@ -316,12 +300,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   typeText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#4F46E5',
+    color: '#FFFFFF',
   },
   participantsBadge: {
     flexDirection: 'row',
@@ -330,11 +314,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   participantsText: {
     fontSize: 14,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   startSessionButton: {
     flexDirection: 'row',

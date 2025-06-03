@@ -6,6 +6,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '@/constants/
 import { useSessions } from '@/app/context/SessionsContext';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface TrainerInputsProps {
   loading: boolean;
@@ -98,89 +99,91 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
           entering={FadeInUp.delay(index * 100)}
         >
           <Pressable 
-            style={styles.inputCard}
+            style={{ marginBottom: spacing.md, borderRadius: borderRadius.lg, ...shadows.sm }}
             onPress={() => router.push(`./${input.id}`, {relativeToDirectory: true})}
           >
-            <View style={styles.inputHeader}>
-              <View style={styles.trainerInfo}>
-                <Image 
-                  source={{ uri: input.trainer.image }}
-                  style={styles.trainerImage}
-                />
-                <View>
-                  <View style={styles.trainerNameRow}>
-                    <Text style={styles.trainerName}>{input.trainer.name}</Text>
-                    {input.trainer.verified && (
-                      <BlurView intensity={80} style={styles.verifiedBadge}>
-                        <Ionicons name="checkmark-circle" size={14} color={colors.semantic.success} />
-                      </BlurView>
-                    )}
-                  </View>
-                  <Text style={styles.inputDate}>
-                    {new Date(input.date).toLocaleDateString()}
-                  </Text>
-                </View>
-              </View>
-              <BlurView intensity={80} style={styles.typeBadge}>
-                <Text style={styles.typeText}>{input.type}</Text>
-              </BlurView>
-            </View>
-
-            <Text style={styles.inputTitle}>{input.title}</Text>
-
-            <View style={styles.performanceSection}>
-              <Text style={styles.sectionLabel}>Performance Score</Text>
-              <View style={styles.performanceContent}>
-                <View style={styles.starsContainer}>
-                  {renderStars(input.performance_score)}
-                </View>
-                <Text style={styles.performanceScore}>{input.performance_score}/5</Text>
-              </View>
-            </View>
-
-            <View style={styles.exerciseFeedback}>
-              {input.best_exercise && (
-                <View style={styles.exerciseHighlight}>
-                  <BlurView intensity={80} style={[styles.exerciseBadge, styles.bestExercise]}>
-                    <Ionicons name="star" size={16} color={colors.semantic.success} />
-                    <Text style={[styles.exerciseBadgeText, styles.bestExerciseText]}>
-                      Best: {input.best_exercise}
-                    </Text>
-                  </BlurView>
-                </View>
-              )}
-              
-              {input.needs_improvement && (
-                <View style={styles.exerciseHighlight}>
-                  <BlurView intensity={80} style={[styles.exerciseBadge, styles.improvementExercise]}>
-                    <Ionicons name="fitness" size={16} color={colors.semantic.warning} />
-                    <Text style={[styles.exerciseBadgeText, styles.improvementExerciseText]}>
-                      Focus on: {input.needs_improvement}
-                    </Text>
-                  </BlurView>
-                </View>
-              )}
-            </View>
-
-            {input.media && input.media.length > 0 && (
-              <View style={styles.mediaSection}>
-                <Text style={styles.sectionLabel}>Media</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.mediaScroll}
-                >
-                  {input.media.map((url, i) => (
-                    <View key={i} style={styles.mediaItem}>
-                      <Image 
-                        source={{ uri: url }}
-                        style={styles.mediaImage}
-                      />
+            <LinearGradient colors={["#21262F", "#353D45"]} style={styles.inputCard}>
+              <View style={styles.inputHeader}>
+                <View style={styles.trainerInfo}>
+                  <Image 
+                    source={{ uri: input.trainer.image }}
+                    style={styles.trainerImage}
+                  />
+                  <View>
+                    <View style={styles.trainerNameRow}>
+                      <Text style={styles.trainerName}>{input.trainer.name}</Text>
+                      {input.trainer.verified && (
+                        <BlurView intensity={80} style={styles.verifiedBadge}>
+                          <Ionicons name="checkmark-circle" size={14} color={colors.semantic.success} />
+                        </BlurView>
+                      )}
                     </View>
-                  ))}
-                </ScrollView>
+                    <Text style={styles.inputDate}>
+                      {new Date(input.date).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                <BlurView intensity={80} style={styles.typeBadge}>
+                  <Text style={styles.typeText}>{input.type}</Text>
+                </BlurView>
               </View>
-            )}
+
+              <Text style={styles.inputTitle}>{input.title}</Text>
+
+              <View style={styles.performanceSection}>
+                <Text style={styles.sectionLabel}>Performance Score</Text>
+                <View style={styles.performanceContent}>
+                  <View style={styles.starsContainer}>
+                    {renderStars(input.performance_score)}
+                  </View>
+                  <Text style={styles.performanceScore}>{input.performance_score}/5</Text>
+                </View>
+              </View>
+
+              <View style={styles.exerciseFeedback}>
+                {input.best_exercise && (
+                  <View style={styles.exerciseHighlight}>
+                    <BlurView intensity={80} style={[styles.exerciseBadge, styles.bestExercise]}>
+                      <Ionicons name="star" size={16} color={colors.semantic.success} />
+                      <Text style={[styles.exerciseBadgeText, styles.bestExerciseText]}>
+                        Best: {input.best_exercise}
+                      </Text>
+                    </BlurView>
+                  </View>
+                )}
+                
+                {input.needs_improvement && (
+                  <View style={styles.exerciseHighlight}>
+                    <BlurView intensity={80} style={[styles.exerciseBadge, styles.improvementExercise]}>
+                      <Ionicons name="fitness" size={16} color={colors.semantic.warning} />
+                      <Text style={[styles.exerciseBadgeText, styles.improvementExerciseText]}>
+                        Focus on: {input.needs_improvement}
+                      </Text>
+                    </BlurView>
+                  </View>
+                )}
+              </View>
+
+              {input.media && input.media.length > 0 && (
+                <View style={styles.mediaSection}>
+                  <Text style={styles.sectionLabel}>Media</Text>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.mediaScroll}
+                  >
+                    {input.media.map((url, i) => (
+                      <View key={i} style={styles.mediaItem}>
+                        <Image 
+                          source={{ uri: url }}
+                          style={styles.mediaImage}
+                        />
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </LinearGradient>
           </Pressable>
         </Animated.View>
       ))}
@@ -193,11 +196,8 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   inputCard: {
-    backgroundColor: colors.gray[800],
     borderRadius: borderRadius.lg,
     padding: spacing.md,
-    marginBottom: spacing.md,
-    ...shadows.sm,
   },
   inputHeader: {
     flexDirection: 'row',

@@ -1,6 +1,6 @@
 {
-  "name": "FitSquad",
-  "short_name": "FitSquad",
+  "name": "MyFitWave",
+  "short_name": "MyFitWave",
   "description": "Your personal fitness companion",
   "start_url": "/",
   "scope": "/",

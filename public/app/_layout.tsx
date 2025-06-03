@@ -4,6 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { SessionsProvider } from '@/app/context/SessionsContext';
+import { HabitsProvider } from '@/app/context/HabitsContext';
 
 import { Drawer } from 'expo-router/drawer';
 import { getLoggedInUser } from '../utils/supabase';
@@ -58,6 +59,7 @@ export default function RootLayout() {
   }, []);
 
   return (
+    <HabitsProvider>
     <SessionsProvider>
       <StatusBar style="light" />
       <Drawer
@@ -132,5 +134,6 @@ export default function RootLayout() {
 
       </Drawer>
     </SessionsProvider>
+    </HabitsProvider>
   );
 }

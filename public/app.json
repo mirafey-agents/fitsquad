@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Fit Squad Club",
+    "name": "MyFitWave",
     "slug": "bolt-expo-nativewind",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,8 +19,8 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "name": "FitSquad",
-      "shortName": "FitSquad",
+      "name": "MyFitWave",
+      "shortName": "MyFitWave",
       "lang": "en",
       "scope": "/",
       "display": "standalone",
@@ -39,8 +39,8 @@
         }
       },
       "pwa": {
-        "name": "Fit Squad Club",
-        "shortName": "FitSquad",
+        "name": "MyFitWave",
+        "shortName": "MyFitWave",
         "description": "Your personal fitness companion",
         "startUrl": "/",
         "display": "standalone",

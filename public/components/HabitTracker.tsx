@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, borderRadius } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -47,13 +48,6 @@ const HabitHistory = ({ history, onToggleCompletion }: { history: Array<{ date: 
 export default function HabitTracker({ preview = false }) {
   const router = useRouter();
   const { habits, loading, toggleHabitCompletion, removeHabit } = useHabits();
-  const [showHabitPicker, setShowHabitPicker] = useState(false);
-  const [showCustomHabit, setShowCustomHabit] = useState(false);
-  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
-  const [customHabit, setCustomHabit] = useState({
-    title: '',
-    description: ''
-  });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
 
@@ -80,46 +74,57 @@ export default function HabitTracker({ preview = false }) {
     setHabitToDelete(null);
   };
 
-  if (preview) {
-    if(loading) {
+  if (loading) {
     return (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary.dark} />
-        </View>
-      );
-    }
-    return (
-      <>
-        <View style={styles.habitsPreview}>
-          {habits.slice(0, 2).map((habit, index) => (
-            <Animated.View
-              key={habit.id}
-              entering={FadeInUp.delay(index * 100)}
-              style={[styles.habitPreviewCard]}
-            >
-              <View style={styles.habitPreviewInfo}>
-                <Text style={styles.habitName}>{habit.title}</Text>
-                <View style={styles.streakContainer}>
-                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                  <Text style={styles.streakText}>{habit.streak} days</Text>
-                </View>
-              </View>
-            </Animated.View>
-          ))}
-        </View>
-      <View style={styles.cardFooter}>
-        <Text style={styles.cardFooterText}>View more</Text>
-        <Ionicons name="arrow-forward" size={20} color={colors.primary.dark}/>
-      </View>
-      </>
-    );
-  }
-
-  if(loading) {
-  return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary.dark} />
       </View>
+    );
+  }
+
+  if (preview) {
+    return (
+      <Animated.View entering={FadeInUp.delay(200)}>
+        <View style={styles.habitsContainer}>
+          <Text style={styles.habitsTitle}>Daily Habits</Text>
+          <LinearGradient 
+            start={{x:0, y:0}}
+            end={{x:0, y:1}}
+            colors={["#21262F", "#353D45"]}
+            style={styles.habitsCard}
+          >
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.habitsGrid}
+            >
+              {habits && habits.map((habit, index) => (
+                <View key={habit.id} style={styles.habitItem}>
+                  <Image
+                    source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/yrhxmq6c_expires_30_days.png" }}
+                    style={styles.habitIcon}
+                  />
+                  <Text style={styles.habitName}>{habit.title}</Text>
+                  <View style={styles.habitStreak}>
+                    <Image
+                      source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/jk5qmujk_expires_30_days.png" }}
+                      style={styles.streakIcon}
+                    />
+                    <Text style={styles.streakText}>{habit.streak || 0} days</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={styles.logHabitsButton}
+              onPress={() => router.push('./habits', {relativeToDirectory: true})}
+            >
+              <Text style={styles.logHabitsText}>Log Your Habits</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+      </Animated.View>
     );
   }
 
@@ -189,53 +194,77 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.light,
     padding: spacing.md,
   },
-  header: {
+  habitsContainer: {
+    marginBottom: 40,
+  },
+  habitsTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  habitsCard: {
+    borderRadius: 24,
+    paddingVertical: 20,
+  },
+  habitsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: spacing.md,
-    backgroundColor: colors.gray[100],
+    gap: spacing.md,
   },
-  title: {
-    fontSize: typography.size.lg,
-    fontWeight: 'bold',
-    color: colors.gray[900],
-  },
-  viewAllButton: {
-    flexDirection: 'row',
+  habitItem: {
     alignItems: 'center',
-    gap: spacing.xs,
+    width: 120,
+    marginRight: spacing.md,
   },
-  viewAllText: {
-    fontSize: typography.size.sm,
-    color: colors.primary.dark,
+  habitIcon: {
+    width: 48,
+    height: 48,
+    marginBottom: 8,
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.full,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    width: '100%',
-  },
-  addButtonText: {
-    fontSize: typography.size.sm,
-    color: colors.primary.dark,
-    fontWeight: typography.weight.medium as any,
+  habitName: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 12,
     textAlign: 'center',
   },
-  habitsContainer: {
-    padding: spacing.sm,
-    gap: spacing.sm,
-  },
-  habitsPreview: {
+  habitStreak: {
     flexDirection: 'row',
-    gap: spacing.md,
+    alignItems: 'center',
+    backgroundColor: "#432424",
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingLeft: 7,
+    paddingRight: 9,
+  },
+  streakIcon: {
+    width: 16,
+    height: 16,
+    marginRight: 4,
+  },
+  streakText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  logHabitsButton: {
+    backgroundColor: colors.primary.dark,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+  },
+  logHabitsText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  loadingContainer: {
+    padding: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   habitCard: {
     backgroundColor: colors.gray[600],
@@ -244,67 +273,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  habitPreviewCard: {
-    flex: 1,
-    backgroundColor: colors.gray[600],
-    borderRadius: borderRadius.lg,
-    padding: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  habitContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   habitInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  habitIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  completedHabitIcon: {
-    backgroundColor: colors.primary.dark,
-  },
   habitDetails: {
     flex: 1,
     marginLeft: spacing.xs,
   },
-  habitPreviewInfo: {
-    flex: 1,
-  },
-  habitName: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium,
-    color: colors.primary.dark,
-    flexShrink: 1,
+  habitTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+    width: '100%',
   },
   habitDescription: {
     fontSize: typography.size.xs,
     color: colors.gray[500],
     marginTop: 2,
   },
-  habitActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  editButton: {
-    padding: spacing.xs,
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.sm,
-  },
   deleteButton: {
     padding: spacing.xs,
     marginLeft: spacing.xs,
+  },
+  habitStatus: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   historyContainer: {
     flexDirection: 'row',
@@ -319,25 +322,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.gray[100],
     borderRadius: borderRadius.full,
-  },
-  habitStatus: {
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
-  streakContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  streakText: {
-    fontSize: typography.size.xs,
-    color: colors.gray[700],
-  },
-  checkContainer: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
@@ -356,263 +340,5 @@ const styles = StyleSheet.create({
     fontSize: typography.size.md,
     color: colors.gray[500],
     textAlign: 'center',
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 99999,
-    height: '100%',
-    width: '100%',
-    pointerEvents: 'auto',
-  },
-  modalContent: {
-    width: '90%',
-    maxWidth: 400,
-    maxHeight: '85%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: borderRadius.lg,
-    position: 'relative',
-    zIndex: 100000,
-  },
-  modalScroll: {
-    position: 'relative',
-    zIndex: 100001,
-    overflow: 'scroll',
-    WebkitOverflowScrolling: 'touch',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
-    backgroundColor: '#FFFFFF',
-    position: 'relative',
-    zIndex: 100002,
-  },
-  modalTitle: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-  },
-  closeButton: {
-    padding: spacing.sm,
-  },
-  categoryTabs: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  categoryTab: {
-    flex: 1,
-    minWidth: '30%',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.full,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-  },
-  selectedCategoryTab: {
-    backgroundColor: colors.primary,
-  },
-  categoryTabText: {
-    fontSize: typography.size.sm,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  selectedCategoryTabText: {
-    color: colors.primary.light,
-  },
-  habitsList: {
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  habitOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-    backgroundColor: '#F8FAFC',
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  habitOptionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  habitOptionInfo: {
-    flex: 1,
-  },
-  habitOptionName: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
-    marginBottom: spacing.xs,
-  },
-  habitOptionDescription: {
-    fontSize: typography.size.sm,
-    color: colors.gray[500],
-  },
-  customHabitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-  },
-  customHabitButtonText: {
-    fontSize: typography.size.md,
-    color: colors.primary.dark,
-    fontWeight: typography.weight.medium as any,
-  },
-  customHabitForm: {
-    padding: spacing.md,
-    paddingBottom: spacing.xl * 2,
-    minHeight: 'auto',
-    backgroundColor: '#FFFFFF',
-  },
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
-  inputLabel: {
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.medium as any,
-    color: colors.gray[600],
-    marginBottom: spacing.xs,
-  },
-  input: {
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    fontSize: typography.size.md,
-    color: colors.primary.dark,
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  iconPicker: {
-    flexDirection: 'row',
-    marginBottom: spacing.md,
-  },
-  iconOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.gray[100],
-    marginRight: spacing.sm,
-  },
-  selectedIcon: {
-    backgroundColor: colors.primary,
-  },
-  createHabitButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  createHabitButtonText: {
-    fontSize: typography.size.md,
-    fontWeight: '600',
-    color: colors.primary.light,
-  },
-  editModalContent: {
-    width: '90%',
-    maxWidth: 400,
-    backgroundColor: colors.primary.light,
-    borderRadius: borderRadius.lg,
-  },
-  editForm: {
-    padding: spacing.md,
-  },
-  saveEditButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  saveEditButtonText: {
-    fontSize: typography.size.md,
-    fontWeight: '600',
-    color: colors.primary.light,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  deleteModalContent: {
-    padding: spacing.md,
-  },
-  deleteModalText: {
-    fontSize: typography.size.md,
-    color: colors.gray[700],
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  deleteModalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  deleteModalButton: {
-    flex: 1,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  deleteModalButtonCancel: {
-    backgroundColor: colors.gray[100],
-  },
-  deleteModalButtonConfirm: {
-    backgroundColor: colors.semantic.error,
-  },
-  deleteModalButtonText: {
-    fontSize: typography.size.md,
-    fontWeight: '600',
-    color: colors.gray[700],
-  },
-  deleteModalButtonTextConfirm: {
-    color: colors.primary.light,
-  },
-  habitTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-    width: '100%',
-  },
-  cardFooter: {
-    padding: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardFooterText: {
-    color: colors.gray[200],
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.medium as any,
   },
 });

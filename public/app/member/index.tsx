@@ -33,89 +33,6 @@ const dateFormatOption = {
   hour12: true
 };
 
-const renderDailyHabits = () => (
-  <Animated.View entering={FadeInUp.delay(200)}>
-    <View style={styles.habitsContainer}>
-      <Text style={styles.habitsTitle}>Daily Habits</Text>
-      <LinearGradient 
-        start={{x:0, y:0}}
-        end={{x:0, y:1}}
-        colors={["#21262F", "#353D45"]}
-        style={styles.habitsCard}
-      >
-        <View style={styles.habitsGrid}>
-          <View style={styles.habitItem}>
-            <Image
-              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/yrhxmq6c_expires_30_days.png" }}
-              style={styles.habitIcon}
-            />
-            <Text style={styles.habitName}>Hydration</Text>
-            <View style={styles.habitStreak}>
-              <Image
-                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/jk5qmujk_expires_30_days.png" }}
-                style={styles.streakIcon}
-              />
-              <Text style={styles.streakText}>8 days</Text>
-            </View>
-          </View>
-
-          <View style={styles.habitItem}>
-            <Image
-              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/5fmj286v_expires_30_days.png" }}
-              style={styles.habitIcon}
-            />
-            <Text style={styles.habitName}>Sleep</Text>
-            <View style={styles.habitStreak}>
-              <Image
-                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/wpob5hjt_expires_30_days.png" }}
-                style={styles.streakIcon}
-              />
-              <Text style={styles.streakText}>4 days</Text>
-            </View>
-          </View>
-
-          <View style={styles.habitItem}>
-            <Image
-              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/5hz1rr96_expires_30_days.png" }}
-              style={styles.habitIcon}
-            />
-            <Text style={styles.habitName}>Food</Text>
-            <TouchableOpacity style={styles.habitStreak}>
-              <Image
-                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/dm0oqivb_expires_30_days.png" }}
-                style={styles.streakIcon}
-              />
-              <Text style={styles.streakText}>3 days</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.habitItem}>
-            <Image
-              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/hyl0dtnn_expires_30_days.png" }}
-              style={styles.habitIconVertical}
-            />
-            <Text style={styles.habitName}>Food</Text>
-            <View style={styles.habitStreak}>
-              <Image
-                source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/fahpn6qq_expires_30_days.png" }}
-                style={styles.streakIcon}
-              />
-              <Text style={styles.streakText}>3 days</Text>
-            </View>
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.logHabitsButton}
-          onPress={() => router.push('./habits', {relativeToDirectory: true})}
-        >
-          <Text style={styles.logHabitsText}>Log Your Habits</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-    </View>
-  </Animated.View>
-);
-
 const renderChallenges = () => (
   <Animated.View entering={FadeInUp.delay(200)}>
     <View style={[styles.card]}>
@@ -363,31 +280,6 @@ export default function Home() {
     return eachDayOfInterval({ start, end });
   };
 
-  const getWorkoutIndicator = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const workout = sessions.find((session: any) => 
-      new Date(session.start_time).toDateString() === date.toDateString());
-    if (workout) {
-      return workout.status;
-    }
-    return null;
-    // if (
-    //   isBefore(date, new Date()) &&
-    //   workout.completed &&
-    //   workout.votingPending
-    // ) {
-    //   return 'votingPending';
-    // } else if (workout.completed) {
-    //   return 'completed';
-    // } else {
-    //   return 'planned';
-    // }
-  };
-
-  const getEnergyPoints = (date: Date) => {
-    return 0;
-  };
-
   const scrollToSelectedDate = (date: Date) => {
     if (scrollViewRef.current) {
       const dayWidth = 64 + spacing.sm; // width of each day + margin
@@ -476,7 +368,7 @@ export default function Home() {
           isFutureDate,
           handleVote
         })}
-        {renderDailyHabits()}
+        <HabitTracker preview={true}/>
         {renderChallenges()}
       </View>
 

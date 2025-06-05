@@ -195,14 +195,14 @@ export default function Schedule() {
           style={styles.dateNavButton}
           onPress={() => navigateDate('prev')}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.primary.dark} />
+          <Ionicons name="chevron-back" size={24} color={colors.primary.light} />
         </Pressable>
         <Text style={styles.dateText}>{dateText}</Text>
         <Pressable 
           style={styles.dateNavButton}
           onPress={() => navigateDate('next')}
         >
-          <Ionicons name="chevron-forward" size={24} color={colors.primary.dark} />
+          <Ionicons name="chevron-forward" size={24} color={colors.primary.light} />
         </Pressable>
       </View>
     );
@@ -255,11 +255,7 @@ export default function Schedule() {
                   >
                     <View style={styles.sessionHeader}>
                       <View style={styles.sessionType}>
-                        <Ionicons 
-                          name={SESSION_TYPES[session.type].icon as any} 
-                          size={16} 
-                          color={SESSION_TYPES[session.type].color} 
-                        />
+                        
                         <Text style={[
                           styles.sessionTypeText,
                           { color: SESSION_TYPES[session.type].color }
@@ -368,11 +364,7 @@ export default function Schedule() {
                     >
                       <View style={styles.weekSessionHeader}>
                         <View style={styles.sessionType}>
-                          <Ionicons 
-                            name={SESSION_TYPES[session.type].icon as any} 
-                            size={14} 
-                            color={SESSION_TYPES[session.type].color} 
-                          />
+                          
                           <Text style={styles.weekSessionTime}>
                             {format(new Date(session.startTime), 'h:mm a')}
                           </Text>
@@ -543,7 +535,7 @@ export default function Schedule() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: "#060712",
   },
   header: {
     flexDirection: 'row',
@@ -551,9 +543,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.md,
     paddingTop: Platform.OS === 'ios' ? spacing.xl * 2 : spacing.xl,
-    backgroundColor: colors.primary.light,
+    backgroundColor: "#060712",
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: "#21262F",
   },
   backButton: {
     padding: spacing.sm,
@@ -561,7 +553,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: typography.size.xl,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: "#FFFFFF",
   },
   headerActions: {
     flexDirection: 'row',
@@ -572,20 +564,20 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   createButton: {
-    backgroundColor: colors.primary.dark,
+    backgroundColor: "#4F46E5",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
   },
   createButtonText: {
-    color: colors.primary.light,
+    color: "#FFFFFF",
     fontSize: typography.size.sm,
     fontWeight: typography.weight.medium as any,
   },
   viewSelector: {
     flexDirection: 'row',
     padding: spacing.sm,
-    backgroundColor: colors.gray[100],
+    backgroundColor: "#21262F",
     margin: spacing.md,
     borderRadius: borderRadius.full,
   },
@@ -596,16 +588,16 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   activeViewOption: {
-    backgroundColor: colors.primary.light,
+    backgroundColor: "#4F46E5",
     ...shadows.sm,
   },
   viewOptionText: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: "#9AAABD",
     fontWeight: typography.weight.medium as any,
   },
   activeViewOptionText: {
-    color: colors.primary.dark,
+    color: "#FFFFFF",
   },
   dateHeader: {
     flexDirection: 'row',
@@ -620,7 +612,7 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: "#FFFFFF",
   },
   dayView: {
     flex: 1,
@@ -629,10 +621,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     minHeight: 60,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: "#21262F",
   },
   primeTimeSlot: {
-    backgroundColor: colors.semantic.warning + '08',
+    backgroundColor: "rgba(255, 193, 7, 0.08)",
   },
   timeLabel: {
     width: 80,
@@ -642,7 +634,7 @@ const styles = StyleSheet.create({
   },
   timeLabelText: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   slotContent: {
     flex: 1,
@@ -675,17 +667,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.semantic.warning + '20',
+    backgroundColor: "rgba(255, 193, 7, 0.2)",
   },
   primeTimeText: {
     fontSize: typography.size.xs,
-    color: colors.semantic.warning,
+    color: "#FFC107",
     fontWeight: typography.weight.medium as any,
   },
   sessionTitle: {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    color: "#FFFFFF",
     marginBottom: spacing.xs,
   },
   sessionDetails: {
@@ -698,7 +690,7 @@ const styles = StyleSheet.create({
   },
   sessionTimeText: {
     fontSize: typography.size.xs,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   sessionLocation: {
     flexDirection: 'row',
@@ -707,7 +699,7 @@ const styles = StyleSheet.create({
   },
   sessionLocationText: {
     fontSize: typography.size.xs,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   clientInfo: {
     flexDirection: 'row',
@@ -716,7 +708,7 @@ const styles = StyleSheet.create({
   },
   clientName: {
     fontSize: typography.size.xs,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   squadInfo: {
     flexDirection: 'row',
@@ -725,7 +717,7 @@ const styles = StyleSheet.create({
   },
   squadText: {
     fontSize: typography.size.xs,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   sessionPrice: {
     flexDirection: 'row',
@@ -734,7 +726,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     fontSize: typography.size.xs,
-    color: colors.semantic.success,
+    color: "#22C55E",
     fontWeight: typography.weight.medium as any,
   },
   weekView: {
@@ -751,16 +743,16 @@ const styles = StyleSheet.create({
   },
   weekDayName: {
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: "#9AAABD",
     marginBottom: spacing.xs,
   },
   weekDayNumber: {
     fontSize: typography.size.md,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: "#FFFFFF",
   },
   currentDay: {
-    color: colors.semantic.success,
+    color: "#22C55E",
   },
   weekSessions: {
     flexDirection: 'row',
@@ -782,18 +774,18 @@ const styles = StyleSheet.create({
   },
   weekSessionTime: {
     fontSize: typography.size.xs,
-    color: colors.primary.dark,
+    color: "#FFFFFF",
     marginLeft: spacing.xs,
   },
   weekSessionTitle: {
     fontSize: typography.size.xs,
     fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
+    color: "#FFFFFF",
     marginBottom: spacing.xs,
   },
   weekSessionLocation: {
     fontSize: typography.size.xs,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   monthView: {
     flex: 1,
@@ -807,7 +799,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: typography.size.sm,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   monthGrid: {
     flexDirection: 'row',
@@ -818,17 +810,17 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     padding: spacing.xs,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: "#21262F",
   },
   currentMonthDay: {
-    backgroundColor: colors.primary.dark,
+    backgroundColor: "#4F46E5",
   },
   monthDayNumber: {
     fontSize: typography.size.sm,
-    color: colors.primary.dark,
+    color: "#FFFFFF",
   },
   currentMonthDayText: {
-    color: colors.primary.light,
+    color: "#FFFFFF",
   },
   monthDaySessions: {
     flexDirection: 'row',
@@ -843,7 +835,7 @@ const styles = StyleSheet.create({
   },
   monthMoreSessions: {
     fontSize: typography.size.xs,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   loadingContainer: {
     flex: 1,
@@ -852,7 +844,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: typography.size.md,
-    color: colors.gray[500],
+    color: "#9AAABD",
   },
   errorContainer: {
     flex: 1,
@@ -862,7 +854,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: typography.size.md,
-    color: colors.semantic.error,
+    color: "#EF4444",
     textAlign: 'center',
   },
 });

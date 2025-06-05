@@ -118,7 +118,7 @@ export default function ManageSquads() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: "#060712",
   },
   header: {
     flexDirection: 'row',
@@ -126,9 +126,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#060712",
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: "#21262F",
   },
   backButton: {
     padding: 8,
@@ -136,26 +136,26 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: "#FFFFFF",
   },
   createButton: {
     paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: '#6366F1',
+    backgroundColor: "#4F46E5",
     borderRadius: 6,
     marginLeft: 8,
   },
   disabledButton: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#21262F",
   },
   searchContainer: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#060712",
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#21262F",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -164,31 +164,31 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
-    color: '#1E293B',
+    color: "#FFFFFF",
   },
   content: {
     padding: 20,
   },
   loadingText: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#9AAABD",
     textAlign: 'center',
     marginTop: 20,
   },
   errorText: {
     fontSize: 14,
-    color: '#EF4444',
+    color: "#EF4444",
     textAlign: 'center',
     marginTop: 20,
   },
   emptyText: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#9AAABD",
     textAlign: 'center',
     marginTop: 20,
   },
   squadCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#21262F",
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -210,12 +210,12 @@ const styles = StyleSheet.create({
   squadName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   squadDescription: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#9AAABD",
     maxWidth: '80%',
   },
   memberCount: {
@@ -225,17 +225,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   memberCountText: {
     fontSize: 14,
-    color: '#000000',
+    color: "#FFFFFF",
   },
   squadActions: {
     flexDirection: 'row',
     gap: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: "#21262F",
     paddingTop: 12,
   },
   actionButton: {
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 14,
-    color: '#4F46E5',
+    color: "#4F46E5",
     fontWeight: '500',
   },
 });

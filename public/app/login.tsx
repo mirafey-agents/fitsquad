@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   View,
@@ -122,7 +123,7 @@ export default function Login() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
-          <Pressable onPress={() => router.push('/signup')}>
+          <Pressable onPress={() => router.push({ pathname: '/signup' })}>
             <Text style={styles.footerLink}>Sign Up</Text>
           </Pressable>
         </View>
@@ -134,7 +135,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.light,
+    backgroundColor: '#060712',
     padding: spacing.xl,
   },
   header: {
@@ -144,39 +145,44 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.size['3xl'],
-    fontWeight: typography.weight.bold as any,
-    color: colors.primary.dark,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginTop: spacing.xl,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: typography.size.lg,
-    color: colors.gray[500],
+    color: '#9AAABD',
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   form: {
-    backgroundColor: colors.primary.light,
-    borderRadius: borderRadius.xl,
+    backgroundColor: '#21262F',
+    borderRadius: 24,
     padding: spacing.xl,
-    ...shadows.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   inputGroup: {
     marginBottom: spacing.lg,
   },
   label: {
     fontSize: typography.size.sm,
-    fontWeight: typography.weight.medium as any,
-    color: colors.gray[700],
+    fontWeight: 'bold',
+    color: '#9AAABD',
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.gray[100],
-    borderRadius: borderRadius.lg,
+    backgroundColor: '#3C4148',
+    borderRadius: 12,
     padding: spacing.md,
     fontSize: typography.size.md,
-    color: colors.primary.dark,
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: '#21262F',
   },
   passwordContainer: {
     position: 'relative',
@@ -191,8 +197,8 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -12 }],
   },
   loginButton: {
-    backgroundColor: colors.primary.dark,
-    borderRadius: borderRadius.lg,
+    backgroundColor: '#4A90E2',
+    borderRadius: 24,
     padding: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -204,9 +210,9 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   loginButtonText: {
-    color: colors.primary.light,
+    color: '#FFFFFF',
     fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
+    fontWeight: 'bold',
   },
   footer: {
     flexDirection: 'row',
@@ -217,11 +223,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: typography.size.md,
-    color: colors.gray[500],
+    color: '#9AAABD',
   },
   footerLink: {
     fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.primary.dark,
+    fontWeight: 'bold',
+    color: '#4A90E2',
   },
 });

@@ -23,9 +23,9 @@ const viewStyles = StyleSheet.create({
   },
   modalContent: {
     width: '80%',
-    backgroundColor: colors.gray[800],
-    borderRadius: 12,
-    padding: spacing.md,
+    backgroundColor: '#21262F',
+    borderRadius: 24,
+    padding: spacing.xl,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -43,19 +43,20 @@ const viewStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    marginTop: spacing.lg,
   },
   modalButton: {
     flex: 1,
-    padding: spacing.sm,
-    borderRadius: 6,
+    padding: spacing.md,
+    borderRadius: 24,
     alignItems: 'center',
-    marginHorizontal: spacing.xs,
+    marginHorizontal: spacing.sm,
   },
   modalButtonCancel: {
-    backgroundColor: colors.gray[200],
+    backgroundColor: '#3C4148',
   },
   modalButtonConfirm: {
-    backgroundColor: colors.semantic.error,
+    backgroundColor: '#4A90E2',
   },
   disabledButton: {
     opacity: 0.5,
@@ -64,23 +65,24 @@ const viewStyles = StyleSheet.create({
 
 const textStyles = StyleSheet.create({
   modalTitle: {
-    fontSize: typography.size.lg,
+    fontSize: typography.size.xl,
     fontWeight: 'bold',
-    color: colors.gray[200],
+    color: '#FFFFFF',
   },
   modalText: {
     fontSize: typography.size.md,
-    color: colors.gray[300],
+    color: '#9AAABD',
     textAlign: 'center',
     marginBottom: spacing.lg,
+    fontWeight: 'bold',
   },
   modalButtonText: {
-    fontSize: typography.size.sm,
-    fontWeight: '500',
-    color: colors.gray[200],
+    fontSize: typography.size.md,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   modalButtonTextConfirm: {
-    color: colors.primary.light,
+    color: '#FFFFFF',
   },
 });
 

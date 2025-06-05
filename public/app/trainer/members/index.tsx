@@ -342,7 +342,7 @@ export default function MemberManagement() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: "#060712",
   },
   header: {
     flexDirection: 'row',
@@ -350,9 +350,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#060712",
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: "#21262F",
   },
   backButton: {
     padding: 8,
@@ -360,13 +360,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: "#FFFFFF",
   },
   addButton: {
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#4F46E5',
+    backgroundColor: "#4F46E5",
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -20,
@@ -374,12 +374,12 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#060712",
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#21262F",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
-    color: '#1E293B',
+    color: "#FFFFFF",
   },
   filterSection: {
     backgroundColor: '#FFFFFF',
@@ -443,13 +443,13 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#9AAABD",
     textAlign: 'center',
     marginTop: 20,
   },
   errorText: {
     fontSize: 14,
-    color: '#EF4444',
+    color: "#EF4444",
     textAlign: 'center',
     marginTop: 20,
   },
@@ -461,13 +461,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: "#FFFFFF",
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#9AAABD",
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -475,18 +475,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#4F46E5',
+    backgroundColor: "#4F46E5",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
   },
   addFirstMemberText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: '600',
   },
   memberCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#21262F",
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -508,17 +508,17 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1E293B',
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   memberEmail: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#9AAABD",
     marginBottom: 2,
   },
   memberPhone: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#9AAABD",
   },
   memberBadges: {
     alignItems: 'flex-end',
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   typeText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#4F46E5',
+    color: "#4F46E5",
   },
   memberDetails: {
     flexDirection: 'row',

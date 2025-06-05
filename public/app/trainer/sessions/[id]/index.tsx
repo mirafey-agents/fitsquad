@@ -1,3 +1,4 @@
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, Alert, Switch } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
@@ -10,8 +11,12 @@ import { colors, spacing, borderRadius, typography } from '@/constants/theme';
 import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 
 const dateFormatOption = {
-  weekday: 'short', month: 'short', day: '2-digit',
-  hour: '2-digit', minute: '2-digit', hour12: true
+  weekday: 'short' as const,
+  month: 'short' as const,
+  day: '2-digit' as const,
+  hour: '2-digit' as const,
+  minute: '2-digit' as const,
+  hour12: true as const,
 };
 
 interface Session {
@@ -136,7 +141,7 @@ export default function SessionDetails() {
       setError(null);
 
       const {data} = await deleteSession(id as string);
-      if (!data?.success) {
+      if (!data || typeof data !== 'object' || !('success' in data) || !data.success) {
         throw new Error('Failed to delete session');
       }
       alert('Session deleted.');
@@ -413,7 +418,7 @@ export default function SessionDetails() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#060712',
   },
   header: {
     flexDirection: 'row',
@@ -421,9 +426,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#060712',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#21262F',
   },
   backButton: {
     padding: 8,
@@ -435,11 +440,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   headerTime: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#9AAABD',
     marginTop: 4,
   },
   headerButtons: {
@@ -449,12 +454,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   saveButton: {
     paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: '#6366F1',
+    backgroundColor: '#4F46E5',
     borderRadius: 6,
     marginLeft: 8,
   },
@@ -467,7 +472,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#2D1A1A',
     padding: 12,
     margin: 20,
     borderRadius: 8,
@@ -488,7 +493,7 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#9AAABD',
     marginBottom: 8,
   },
   statusOptions: {
@@ -500,22 +505,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#21262F',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#3C4148',
   },
   statusOptionActive: {
     backgroundColor: '#4F46E5',
     borderColor: '#4F46E5',
   },
   statusOptionCancelled: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: '#21262F',
+    borderColor: '#3C4148',
   },
   statusOptionText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#9AAABD',
   },
   statusOptionTextActive: {
     color: '#FFFFFF',
@@ -530,48 +535,36 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   exerciseCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#3C4148',
   },
   exerciseName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   exerciseDetails: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#9AAABD',
   },
   participantCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#3C4148',
   },
   participantHeader: {
     flexDirection: 'row',
@@ -588,7 +581,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#3C4148',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -610,17 +603,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#3C4148',
   },
   participantInitials: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#9AAABD',
   },
   participantName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   attendanceContainer: {
     flexDirection: 'row',
@@ -630,7 +623,7 @@ const styles = StyleSheet.create({
   attendanceText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#9AAABD',
   },
   performanceSection: {
     marginBottom: 16,
@@ -638,17 +631,17 @@ const styles = StyleSheet.create({
   performanceLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#9AAABD',
     marginBottom: 8,
   },
   performanceInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#3C4148',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#3C4148',
   },
   feedbackSection: {
     marginBottom: 16,
@@ -656,17 +649,17 @@ const styles = StyleSheet.create({
   feedbackLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#9AAABD',
     marginBottom: 8,
   },
   feedbackInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#3C4148',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#3C4148',
     height: 100,
     textAlignVertical: 'top',
   },
@@ -679,17 +672,17 @@ const styles = StyleSheet.create({
   exerciseFieldLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#9AAABD',
     marginBottom: 8,
   },
   exerciseInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#3C4148',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#3C4148',
   },
   mediaSection: {
     marginTop: 16,
@@ -703,7 +696,7 @@ const styles = StyleSheet.create({
   mediaLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#9AAABD',
   },
   addMediaButton: {
     flexDirection: 'row',
@@ -711,8 +704,10 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#F0F0FF',
+    backgroundColor: '#21262F',
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#4F46E5',
   },
   addMediaText: {
     fontSize: 14,
@@ -729,7 +724,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     width: 80,
     height: 80,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#3C4148',
     borderRadius: 8,
     overflow: 'visible',
   },
@@ -742,7 +737,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -8,
     right: -8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 12,
     padding: 2,
     zIndex: 1,
@@ -751,23 +746,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.gray[100],
-    padding: spacing.sm,
-    borderRadius: borderRadius.md,
-    marginTop: spacing.xs,
+    backgroundColor: '#21262F',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 4,
   },
   starsContainer: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 4,
   },
   starButton: {
-    padding: spacing.xs,
+    padding: 4,
   },
   ratingValue: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium as any,
-    color: colors.primary.dark,
-    marginLeft: spacing.md,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    marginLeft: 12,
   },
   starIcon: {
     width: 24,
@@ -782,7 +777,7 @@ const styles = StyleSheet.create({
   },
   mediaPlaceholderText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#9AAABD',
     marginTop: 4,
   },
 });

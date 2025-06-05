@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, subDays, addDays } from 'date-fns';
 import { getTrainerSessions } from '@/utils/firebase';
 type ViewMode = 'day' | 'week' | 'month';
 type Session = {
@@ -72,27 +72,13 @@ export default function Schedule() {
       setError(null);
 
       let startDate, endDate;
-
-      switch (viewMode) {
-        case 'day':
-          startDate = selectedDate;
-          endDate = selectedDate;
-          break;
-        case 'week':
-          startDate = startOfWeek(selectedDate, { weekStartsOn: 1 });
-          endDate = endOfWeek(selectedDate, { weekStartsOn: 1 });
-          break;
-        case 'month':
-          startDate = startOfMonth(selectedDate);
-          endDate = endOfMonth(selectedDate);
-          break;
-      }
-
+      startDate = subDays(selectedDate, 31);
+      endDate = addDays(selectedDate, 31);
       const data = await getTrainerSessions(startDate, endDate);
       console.log('Fetched sessions:', data);
 
       // Transform data
-      const formattedSessions = data?.map(session => ({
+      const formattedSessions = data?.map((session: any) => ({
         id: session.id,
         title: session.title,
         type: session.squad ? 'group' : session.client ? 'personal' : 'online',
@@ -239,7 +225,7 @@ export default function Schedule() {
               <View style={styles.timeLabel}>
                 {time.getMinutes() === 0 && (
                   <Text style={styles.timeLabelText}>
-                    {format(time, 'h:mm a')}
+                    {format(time, 'HH:mm')}
                   </Text>
                 )}
               </View>
@@ -277,7 +263,7 @@ export default function Schedule() {
                       <View style={styles.sessionTime}>
                         <Ionicons name="time" size={14} color={colors.gray[500]} />
                         <Text style={styles.sessionTimeText}>
-                          {format(new Date(session.startTime), 'h:mm a')} - {format(new Date(session.endTime), 'h:mm a')}
+                          {format(new Date(session?.startTime || ''), 'HH:mm')}
                         </Text>
                       </View>
 
@@ -345,7 +331,7 @@ export default function Schedule() {
         <View style={styles.weekSessions}>
           {weekDays.map((day, index) => {
             const daySessions = sessions.filter(session => 
-              isSameDay(new Date(session.startTime), day)
+              isSameDay(new Date(session?.startTime || '00:00'), day)
             );
 
             return (
@@ -366,7 +352,7 @@ export default function Schedule() {
                         <View style={styles.sessionType}>
                           
                           <Text style={styles.weekSessionTime}>
-                            {format(new Date(session.startTime), 'h:mm a')}
+                            {format(new Date(session.startTime), 'HH:mm')}
                           </Text>
                         </View>
                         {session.isPrimeTime && (

@@ -1,22 +1,29 @@
 {
-  "hosting": {
-    "public": "public/dist",
-    "rewrites": [
-      {
-        "source": "/assets/**",
-        "destination": "/assets/**"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "node_modules/**"
-    ]
-  },
+  "hosting": [
+    {
+      "target": "app",
+      "public": "public/dist",
+      "rewrites": [
+        {
+          "source": "/assets/**",
+          "destination": "/assets/**"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "node_modules/**"
+      ]
+    },
+    {
+      "target": "www",
+      "public": "public-www"
+    }
+  ],
   "functions": [
     {
       "source": "functions",

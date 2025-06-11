@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - MyFitWave</title>
+    <style>
+        :root {
+            --primary-bg: #060712;
+            --secondary-bg: #21262F;
+            --primary-text: #FFFFFF;
+            --secondary-text: #9AAABD;
+            --accent: #4F46E5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--secondary-bg);
+            padding: 1rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+            transform: scale(3);
+            transform-origin: left center;
+            margin: -10px;
+            padding: 0;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--primary-text);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+        
+        main {
+            margin-top: 80px;
+            padding: 2rem;
+        }
+        
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .about-section {
+            background-color: var(--secondary-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .about-section h2 {
+            color: var(--primary-text);
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+        
+        .about-section p {
+            color: var(--secondary-text);
+            margin-bottom: 1rem;
+        }
+        
+        .team-section {
+            margin-top: 4rem;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .team-member {
+            background-color: var(--secondary-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .team-member h3 {
+            color: var(--primary-text);
+            margin: 1rem 0;
+        }
+        
+        .team-member p {
+            color: var(--secondary-text);
+        }
+        
+        footer {
+            background-color: var(--secondary-bg);
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .footer-links a {
+            color: var(--secondary-text);
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-text);
+        }
+        
+        .copyright {
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .about-content {
+                padding: 1rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <img src="assets/images/logo_with_text_1024.svg" alt="MyFitWave Logo" class="logo">
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="about-us.html">About Us</a>
+                <a href="privacy-policy.html">Privacy Policy</a>
+                <a href="terms-and-conditions.html">Terms & Conditions</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="about-content">
+            <section class="about-section">
+                <h2>Our Mission</h2>
+                <p>At MyFitWave, we're dedicated to revolutionizing the fitness industry by making personalized training accessible to everyone. We believe that everyone deserves access to expert guidance and support in their fitness journey.</p>
+            </section>
+
+            <section class="about-section">
+                <h2>Our Story</h2>
+                <p>Founded by a team of fitness enthusiasts and technology experts, MyFitWave was born from a simple idea: to create a platform that connects people with expert trainers and provides them with the tools they need to achieve their fitness goals.</p>
+                <p>We understand that every fitness journey is unique, which is why we've built a platform that adapts to your needs, preferences, and goals.</p>
+            </section>
+
+            <section class="about-section team-section">
+                <h2>Our Team</h2>
+                <p>MyFitWave is powered by a dedicated team of fitness enthusiasts with a passion for technology and all things fitness. Our diverse team brings together expertise in fitness training, technology, and user experience to create a platform that truly makes a difference in people's lives.</p>
+                <p>We're united by our mission to make fitness accessible and enjoyable for everyone, leveraging technology to create personalized experiences that help our users achieve their fitness goals.</p>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <img src="assets/images/logo_with_text_1024.svg" alt="MyFitWave Logo" class="logo">
+            <div class="footer-links">
+                <a href="privacy-policy.html">Privacy Policy</a>
+                <a href="terms-and-conditions.html">Terms & Conditions</a>
+                <a href="about-us.html">About Us</a>
+            </div>
+        </div>
+        <div class="copyright">
+            © 2025 MyFitWave. All rights reserved.
+        </div>
+    </footer>
+</body>
+</html> 

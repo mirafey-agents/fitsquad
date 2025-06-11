@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "fit-squad-club"
-  }
+  },
+  "targets": {
+    "fit-squad-club": {
+      "hosting": {
+        "app": [
+          "fit-squad-club"
+        ],
+        "www": [
+          "myfitwave"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

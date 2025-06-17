@@ -20,6 +20,9 @@ import { checkOnboardingStatus } from '@/utils/supabase';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadMedia } from '@/utils/firebase';
+import SubscriptionModal from '@/app/components/SubscriptionModal';
+
+declare let Razorpay: any;
 
 const PROFILE_DATA = {
   stats: {
@@ -48,7 +51,7 @@ const PROFILE_DATA = {
       title: 'Squad Leader',
       description: 'Completed 5 morning workouts',
       date: '2024-02-15',
-      icon: '👑',
+      icon: '��',
     },
   ],
 };
@@ -56,9 +59,10 @@ const PROFILE_DATA = {
 export default function Profile() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   useEffect(() => {
-    checkOnboardingStatus().then(({ isComplete, userData }) => {
+    checkOnboardingStatus().then(({ userData, isComplete }) => {
       setUserData(userData);
     });
   }, []);
@@ -126,6 +130,50 @@ export default function Profile() {
           <Text style={styles.memberSince}>
             member since {userData?.created_at.split('T')[0] || 'NA'}
           </Text>
+
+          {userData?.subscription_plan && new Date(userData.subscription_valid_until) > new Date() ? (
+            <View style={styles.subscriptionInfo}>
+              <LinearGradient
+                start={{x:0, y:0}}
+                end={{x:0, y:1}}
+                colors={["#4F46E5", "#7C3AED"]}
+                style={styles.premiumBadge}
+              >
+                <Ionicons name="star" size={16} color="#FFF" />
+                <Text style={styles.premiumText}>Premium Member</Text>
+              </LinearGradient>
+              <Text style={styles.expiryText}>
+                Valid until {new Date(userData.subscription_valid_until).toLocaleDateString()}
+              </Text>
+              <Text style={styles.benefitHighlight}>
+                <Ionicons name="infinite" size={14} color="#4F46E5" /> Unlimited workout history
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.subscriptionInfo}>
+              <View style={styles.freePlanBadge}>
+                <Ionicons name="time-outline" size={16} color="#64748B" />
+                <Text style={styles.freePlanText}>Free Plan</Text>
+              </View>
+              <Text style={styles.limitationText}>
+                Limited to 2 weeks of workout history
+              </Text>
+              <TouchableOpacity 
+                style={styles.getPremiumButton}
+                onPress={() => setShowSubscriptionModal(true)}
+              >
+                <LinearGradient
+                  start={{x:0, y:0}}
+                  end={{x:0, y:1}}
+                  colors={["#4F46E5", "#7C3AED"]}
+                  style={styles.getPremiumGradient}
+                >
+                  <Ionicons name="star-outline" size={20} color="#FFF" />
+                  <Text style={styles.getPremiumText}>Unlock Unlimited History</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={styles.row}>
             <LinearGradient 
@@ -211,6 +259,13 @@ export default function Profile() {
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </View>
+
+      <SubscriptionModal 
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        userId={userData?.id || ''}
+        role="member"
+      />
     </ScrollView>
   );
 }
@@ -383,5 +438,132 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  subscriptionInfo: {
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 4,
+  },
+  premiumText: {
+    color: '#FFF',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  expiryText: {
+    color: '#64748B',
+    fontSize: 12,
+  },
+  getPremiumButton: {
+    marginVertical: 12,
+  },
+  getPremiumGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 8,
+  },
+  getPremiumText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+  },
+  modalContent: {
+    backgroundColor: '#0F172A',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#F8FAFC',
+  },
+  plansList: {
+    marginBottom: 20,
+  },
+  planCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  planInfo: {
+    flex: 1,
+  },
+  planName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#F8FAFC',
+    marginBottom: 4,
+  },
+  planPrice: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#818CF8',
+    marginBottom: 4,
+  },
+  planValidity: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  purchaseButton: {
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  purchaseButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  freePlanBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 4,
+  },
+  freePlanText: {
+    color: '#64748B',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  limitationText: {
+    color: '#EF4444',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  benefitHighlight: {
+    color: '#4F46E5',
+    fontSize: 14,
+    marginTop: 4,
+    fontWeight: '500',
   },
 });

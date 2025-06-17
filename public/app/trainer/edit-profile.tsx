@@ -123,9 +123,12 @@ export default function EditTrainerProfile() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </Pressable>
         <Text style={styles.title}>Edit Profile</Text>
+        <Pressable style={styles.saveButton} onPress={()=>{router.push('/logout')}}>
+          <Text style={styles.saveButtonText}>Logout</Text>
+        </Pressable>
         <Pressable style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Save</Text>
         </Pressable>
@@ -181,7 +184,7 @@ export default function EditTrainerProfile() {
                 }}
               >
                 <Text style={styles.dropdownText}>{selectedCert}</Text>
-                <Ionicons name="chevron-down" size={20} color="#64748B" />
+                <Ionicons name="chevron-down" size={20} color="#94A3B8" />
               </Pressable>
               {showCertDropdown && (
                 <ScrollView 
@@ -216,7 +219,7 @@ export default function EditTrainerProfile() {
                 }}
               >
                 <Text style={styles.dropdownText}>{selectedExp}</Text>
-                <Ionicons name="chevron-down" size={20} color="#64748B" />
+                <Ionicons name="chevron-down" size={20} color="#94A3B8" />
               </Pressable>
               {showExpDropdown && (
                 <ScrollView 
@@ -287,7 +290,7 @@ export default function EditTrainerProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#181C23',
   },
   scrollView: {
     flex: 1,
@@ -301,17 +304,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#353D45',
   },
   backButton: {
     padding: 8,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   saveButton: {
     paddingHorizontal: 16,
@@ -333,12 +336,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
     marginBottom: 8,
   },
   imageUpload: {
@@ -346,7 +349,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     overflow: 'hidden',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#21262F',
     alignSelf: 'center',
     marginBottom: 20,
   },
@@ -365,13 +368,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#353D45',
   },
   textArea: {
     height: 120,
@@ -383,18 +386,18 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   dropdown: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#353D45',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   dropdownText: {
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   dropdownOverlay: {
     position: 'absolute',
@@ -408,11 +411,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   dropdownList: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 12,
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#353D45',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -425,12 +428,12 @@ const styles = StyleSheet.create({
   dropdownItem: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: '#353D45',
+    backgroundColor: '#21262F',
   },
   dropdownItemText: {
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   specializationsGrid: {
     flexDirection: 'row',
@@ -439,12 +442,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   specializationChip: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: '#353D45',
   },
   selectedChip: {
     backgroundColor: '#4F46E5',
@@ -452,7 +455,7 @@ const styles = StyleSheet.create({
   },
   specializationText: {
     fontSize: 14,
-    color: '#1E293B',
+    color: '#FFFFFF',
     fontWeight: '500',
   },
   selectedChipText: {
@@ -460,6 +463,6 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });

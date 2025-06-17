@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,6 +22,7 @@ interface Habit {
   completionHistory?: Array<{ date: string; completed: boolean }>;
   streak?: number;
   completed?: boolean;
+  icon?: string;
 }
 
 const HabitHistory = ({ history, onToggleCompletion }: { history: Array<{ date: string; completed: boolean }>, onToggleCompletion: (date: string) => void }) => {
@@ -100,10 +100,7 @@ export default function HabitTracker({ preview = false }) {
             >
               {habits && habits.map((habit, index) => (
                 <View key={habit.id} style={styles.habitItem}>
-                  <Image
-                    source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/yrhxmq6c_expires_30_days.png" }}
-                    style={styles.habitIcon}
-                  />
+                  <Ionicons name={habit.icon || "help-circle"} size={48} color="#fff" />
                   <Text style={styles.habitName}>{habit.title}</Text>
                   <View style={styles.habitStreak}>
                     <Image

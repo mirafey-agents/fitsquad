@@ -33,20 +33,6 @@ const dateFormatOption = {
   hour12: true
 };
 
-const renderChallenges = () => (
-  <Animated.View entering={FadeInUp.delay(200)}>
-    <View style={[styles.card]}>
-      <View style={styles.cardHeader}>
-          <View style={styles.cardTitleContainer}>
-            <Ionicons name="trophy" size={24} color={colors.primary.light} />
-            <Text style={styles.cardTitle}>Challenges</Text>
-          </View>
-      </View>
-      <DailyChallenges preview={true} />
-    </View>
-  </Animated.View>
-);
-
 const renderEnergyPoints = () => (
   <Animated.View entering={FadeInUp.delay(200)}>
     <View style={styles.energyContainer}>
@@ -369,7 +355,6 @@ export default function Home() {
           handleVote
         })}
         <HabitTracker preview={true}/>
-        {renderChallenges()}
       </View>
 
       {showConfirmModal && pendingVote && (

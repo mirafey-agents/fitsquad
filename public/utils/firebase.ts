@@ -353,3 +353,43 @@ export async function getSessionMediaReview(
     userId, sessionId, authToken: session.access_token
   })).data;
 }
+
+export async function rzpCreateOrder(data: { userId: string; billingPlan: string }) {
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    
+    if (!session?.access_token) {
+      throw new Error('No active session');
+    }
+    
+    const result = await httpsCallable(functions, 'rzpCreateOrder')({
+      ...data,
+      authToken: session.access_token
+    });
+    return result.data;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+}
+
+export async function getSubscriptionPlans(data: { role: string }) {
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    
+    if (!session?.access_token) {
+      throw new Error('No active session');
+    }
+    
+    const result = await httpsCallable(functions, 'getSubscriptionPlans')({
+      ...data,
+      authToken: session.access_token
+    });
+    return result.data;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+}

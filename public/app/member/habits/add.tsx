@@ -1,265 +1,169 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { colors, typography, spacing, borderRadius } from '@/constants/theme';
-import { FadeInUp } from 'react-native-reanimated';
-import Animated from 'react-native-reanimated';
-import { addHabit, getHabitIdeas } from '@/utils/firebase';
+import { Ionicons } from '@expo/vector-icons';
 
-interface Habit {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-}
+const habitIcons = {
+  // 'dashicons_food.svg': require('@/assets/images/habits/dashicons_food.svg'),
+  // 'mdi_cup-water.svg': require('@/assets/images/habits/mdi_cup-water.svg'),
+  // 'tabler_run.svg': require('@/assets/images/habits/tabler_run.svg'),
+  // 'icon-park-solid_sleep.svg': require('@/assets/images/habits/icon-park-solid_sleep.svg'),
+  // 'fxemoji_fire.svg': require('@/assets/images/habits/fxemoji_fire.svg'),
+  // 'tabler_stretching.svg': require('@/assets/images/habits/tabler_stretching.svg'),
+  // 'mdi_heart.svg': require('@/assets/images/habits/mdi_heart.svg'),
+  // 'ri_time-line.svg': require('@/assets/images/habits/ri_time-line.svg'),
+};
 
-export default function AddHabit() {
-  const [habitIdeas, setHabitIdeas] = useState<Habit[]>([]);
-  const [showCustomHabit, setShowCustomHabit] = useState(false);
-  const [customHabit, setCustomHabit] = useState({
-    title: '',
-    description: '',
-    icon: 'star',
-  });
+export default function AddHabitPage() {
+  const [habitName, setHabitName] = useState('');
 
-  useEffect(() => {
-    const fetchHabitIdeas = async () => {
-      const ideas = await getHabitIdeas();
-      console.log("ideas", ideas)
-      setHabitIdeas(ideas as Habit[]);
-    }
-    fetchHabitIdeas();
-  }, []);
-
-  const addNewHabit = async (title, description) => {
-    const newHabit = await addHabit(title, description);
-    console.log("Add habit", newHabit);
-    router.push('/member/habits');
-  };
+  const predefinedHabits = [
+    // { icon: 'dashicons_food.svg', name: 'Eat a healthy meal' },
+    // { icon: 'mdi_cup-water.svg', name: 'Drink water' },
+    // { icon: 'tabler_run.svg', name: 'Exercise' },
+    // { icon: 'icon-park-solid_sleep.svg', name: 'Sleep early' },
+    // { icon: 'fxemoji_fire.svg', name: 'Meditate' },
+    // { icon: 'tabler_stretching.svg', name: 'Stretch' },
+    // { icon: 'mdi_heart.svg', name: 'Take vitamins' },
+    // { icon: 'ri_time-line.svg', name: 'Read' },
+  ];
 
   return (
-    <View style={styles.container}>
-      {!showCustomHabit ? (
-        <ScrollView style={styles.modalScroll}>
-          <Pressable
-            style={styles.customHabitButton}
-            onPress={() => setShowCustomHabit(true)}
-          >
-            <Ionicons name="add-circle" size={20} color={colors.primary.dark} />
-            <Text style={styles.customHabitButtonText}>Create Custom Habit</Text>
-          </Pressable>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Add habit</Text>
+          </View>
 
-          <View style={styles.habitsList}>
-            {habitIdeas.map((habit, index) => (
-              <Animated.View
-                key={habit.id}
-                entering={FadeInUp.delay(index * 100)}
-              >
-                <Pressable
-                  style={styles.habitOption}
-                  onPress={() => addNewHabit(habit.title, habit.description)}
-                >
-                  <BlurView intensity={80} style={styles.habitOptionIcon}>
-                    <Ionicons
-                      name={habit.icon as any}
-                      size={24}
-                      color={colors.primary.dark}
-                    />
-                  </BlurView>
-                  <View style={styles.habitOptionInfo}>
-                    <Text style={styles.habitOptionName}>{habit.title}</Text>
-                    <Text style={styles.habitOptionDescription}>
-                      {habit.description}
-                    </Text>
-                  </View>
-                </Pressable>
-              </Animated.View>
+          <View style={styles.iconGrid}>
+            {predefinedHabits.map((habit, index) => (
+              <TouchableOpacity key={index} style={styles.iconContainer}>
+                <Image
+                  source={habitIcons[habit.icon]}
+                  style={styles.habitIcon}
+                  resizeMode="stretch"
+                />
+              </TouchableOpacity>
             ))}
           </View>
-        </ScrollView>
-      ) : (
-        <ScrollView style={styles.modalScroll}>
-          <View style={styles.customHabitForm}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Habit Title</Text>
-              <TextInput
-                style={styles.input}
-                value={customHabit.title}
-                onChangeText={(text) => setCustomHabit(prev => ({ ...prev, title: text }))}
-                placeholder="Enter habit title"
-              />
-            </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Description</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={customHabit.description}
-                onChangeText={(text) => setCustomHabit(prev => ({ ...prev, description: text }))}
-                placeholder="Enter habit description"
-                multiline
-                numberOfLines={4}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Icon</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.iconPicker}
-              >
-                {['star', 'heart', 'trophy', 'ribbon', 'flash', 'bulb', 'flag'].map((icon) => (
-                  <Pressable
-                    key={icon}
-                    style={[
-                      styles.iconOption,
-                      customHabit.icon === icon && styles.selectedIcon
-                    ]}
-                    onPress={() => setCustomHabit(prev => ({ ...prev, icon }))}
-                  >
-                    <Ionicons
-                      name={icon as any}
-                      size={24}
-                      color={customHabit.icon === icon ? colors.primary.light : colors.primary.dark}
-                    />
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            <Pressable
-              style={styles.createHabitButton}
-              onPress={()=> {addNewHabit(customHabit.title, customHabit.description);}}
-            >
-              <Text style={styles.createHabitButtonText}>Create Habit</Text>
-            </Pressable>
+          <View style={styles.inputSection}>
+            <Text style={styles.sectionTitle}>Create your own</Text>
+            <TextInput
+              placeholder="Enter task title..."
+              value={habitName}
+              onChangeText={setHabitName}
+              style={styles.input}
+              placeholderTextColor="#666"
+            />
           </View>
-        </ScrollView>
-      )}
-    </View>
+
+          <View style={styles.predefinedSection}>
+            <Text style={styles.sectionTitle}>Or choose one of our tasks</Text>
+            {predefinedHabits.map((habit, index) => (
+              <View key={index} style={styles.habitRow}>
+                <Image
+                  source={habitIcons[habit.icon]}
+                  style={styles.habitIcon}
+                  resizeMode="stretch"
+                />
+                <Text style={styles.habitName}>{habit.name}</Text>
+                <Ionicons name="add" size={24} color="#FFFFFF"/>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[100],
-    padding: spacing.md,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#060712',
+  },
+  headerImage: {
+    height: 24,
+    marginTop: 20,
+    marginBottom: 20,
+    marginHorizontal: 21,
+  },
+  content: {
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  backButton: {
-    marginRight: spacing.md,
+    marginBottom: 20,
   },
   title: {
-    fontSize: typography.size.lg,
-    fontWeight: '600',
-    color: colors.gray[900],
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
-  modalScroll: {
-    flex: 1,
+  closeIcon: {
+    width: 24,
+    height: 24,
   },
-  habitsList: {
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  habitOption: {
+  iconGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.gray[200],
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 30,
   },
-  habitOptionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
+  iconContainer: {
+    width: '18%',
+    aspectRatio: 1,
+    marginBottom: 15,
   },
-  habitOptionInfo: {
-    flex: 1,
+  habitIcon: {
+    width: '100%',
+    height: '100%',
   },
-  habitOptionName: {
-    fontSize: typography.size.md,
-    fontWeight: '600',
-    color: colors.gray[900],
-    marginBottom: spacing.xs,
+  inputSection: {
+    marginBottom: 30,
   },
-  habitOptionDescription: {
-    fontSize: typography.size.sm,
-    color: colors.gray[600],
-  },
-  customHabitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.gray[200],
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.lg,
-  },
-  customHabitButtonText: {
-    fontSize: typography.size.md,
-    fontWeight: '600',
-    color: colors.gray[900],
-    marginLeft: spacing.sm,
-  },
-  customHabitForm: {
-    gap: spacing.lg,
-  },
-  inputGroup: {
-    gap: spacing.xs,
-  },
-  inputLabel: {
-    fontSize: typography.size.sm,
-    fontWeight: '600',
-    color: colors.gray[900],
+  sectionTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    marginBottom: 15,
   },
   input: {
-    backgroundColor: colors.gray[200],
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    fontSize: typography.size.md,
-    color: colors.gray[900],
+    backgroundColor: '#1A1A1A',
+    borderRadius: 8,
+    padding: 15,
+    color: '#FFFFFF',
+    fontSize: 16,
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
+  predefinedSection: {
+    marginBottom: 30,
   },
-  iconPicker: {
+  habitRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  iconOption: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.gray[200],
+    backgroundColor: '#1A1A1A',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
   },
-  selectedIcon: {
-    backgroundColor: colors.primary.dark,
+  habitName: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    flex: 1,
+    marginLeft: 15,
   },
-  createHabitButton: {
-    backgroundColor: colors.primary.dark,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  createHabitButtonText: {
-    fontSize: typography.size.md,
-    fontWeight: '600',
-    color: colors.primary.light,
+  addIcon: {
+    width: 24,
+    height: 24,
   },
 }); 

@@ -3,36 +3,78 @@ import {updateMemberPlan} from "./members";
 import * as notifs from "./notifications";
 import * as admin from "firebase-admin";
 
-const subcriptionPlans: any = {
-  "member_1m": {
+const subscriptionPlans: any = {
+  "member_free": {
+    "id": "member_free",
+    "name": "Free Membership",
     "role": "member",
-    "amount": 10,
+    "amount": 0,
+    "validityDays": 0,
+    "description": "2 weeks of history.",
+  },
+  "member_1m": {
+    "id": "member_1m",
+    "name": "Premium Membership",
+    "role": "member",
+    "amount": 249,
     "validityDays": 31,
+    "description": "Unlimited history!!",
   },
   "member_3m": {
+    "id": "member_3m",
+    "name": "Premium Membership",
     "role": "member",
-    "amount": 30,
+    "amount": 675,
     "validityDays": 93,
+    "description": "10% off over monthly plan.",
   },
   "member_12m": {
+    "id": "member_12m",
+    "name": "Premium Membership",
     "role": "member",
-    "amount": 120,
-    "validityDays": 365,
+    "amount": 2540,
+    "validityDays": 366,
+    "description": "15% off over monthly plan.",
   },
-  "trainer_1m": {
+  "trainer_free": {
+    "id": "trainer_free",
+    "name": "Trainer Basic",
     "role": "trainer",
-    "amount": 10,
+    "amount": 0,
+    "validityDays": 0,
+    "description": "Upto 3 clients.",
+  },
+  "trainer_plus_1m": {
+    "id": "trainer_plus_1m",
+    "name": "Trainer Plus",
+    "role": "trainer",
+    "amount": 999,
     "validityDays": 31,
+    "description": "Upto 10 clients!",
   },
-  "trainer_3m": {
+  "trainer_plus_6m": {
+    "id": "trainer_plus_6m",
+    "name": "Trainer Plus",
     "role": "trainer",
-    "amount": 30,
-    "validityDays": 93,
+    "amount": 5399,
+    "validityDays": 186,
+    "description": "10% off over monthly Trainer Plus plan.",
   },
-  "trainer_12m": {
+  "trainer_pro_1m": {
+    "id": "trainer_pro_1m",
+    "name": "Trainer Pro",
     "role": "trainer",
-    "amount": 120,
-    "validityDays": 365,
+    "amount": 4999,
+    "validityDays": 31,
+    "description": "Unlimited clients!!",
+  },
+  "trainer_pro_6m": {
+    "id": "trainer_pro_6m",
+    "name": "Trainer Pro",
+    "role": "trainer",
+    "amount": 26999,
+    "validityDays": 366,
+    "description": "10% off over monthly Trainer Pro plan.",
   },
 };
 
@@ -53,7 +95,7 @@ const markPayment = async function(
 
 const calculateValidUntil = function(
   startDate: Date, billingPlan: string): Date {
-  const days = subcriptionPlans[billingPlan].validityDays;
+  const days = subscriptionPlans[billingPlan].validityDays;
   const validUntil = new Date(startDate);
   validUntil.setDate(validUntil.getDate() + days);
   return validUntil;
@@ -68,9 +110,11 @@ export const rzpOrderApproved = onRequest(
       resp.send("");
       return;
     }
-    console.log(req.body);
+    console.log(JSON.stringify(req.headers), JSON.stringify(req.body));
     const body = req.body;
     const payment = body.payload.payment.entity;
+    const date = new Date(body.created_at * 1000);
+    const bp = payment.notes.billingPlan || "";
 
     if (payment.notes.userId) {
       await markPayment(
@@ -78,25 +122,19 @@ export const rzpOrderApproved = onRequest(
         payment.notes.userId,
         payment.id,
         "RazorPay",
-        body.created_at,
-        payment.notes.billingPlan || ""
+        date,
+        bp
       );
 
-      const startDate = new Date(body.created_at);
-      const validUntil = calculateValidUntil(
-        startDate, payment.notes.billingPlan
-      );
-      await updateMemberPlan(
-        payment.notes.userId,
-        payment.notes.billingPlan,
-        validUntil
-      );
-      const emailBody = `userId: ${payment.notes.userId}\n`+
-      `plan: ${payment.notes.billingPlan}\n`+
-      `validUntil: ${validUntil.toLocaleString()}`;
+      const validUntil = calculateValidUntil(date, bp);
+      await updateMemberPlan(payment.notes.userId, bp, validUntil);
+
+      const emailBody = `userId: ${payment.notes.userId}\n` +
+      `plan: ${bp}\n` +
+      `validUntil: ${validUntil.toISOString()}`;
 
       await notifs.sendEmail({
-        to: "rahul.sekar@gmail.com",
+        to: "support@myfitwave.com",
         subject: "Payment Successful",
         body: emailBody,
       });
@@ -121,7 +159,7 @@ export const rzpCreateOrder = onCall(
     const rpHeader = {
       Authorization: "Basic " + Buffer.from(rzpKey).toString("base64"),
     };
-    const amount = subcriptionPlans[billingPlan].amount;
+    const amount = subscriptionPlans[billingPlan].amount;
     const payload = {
       amount: amount * 100,
       currency: "INR",
@@ -138,4 +176,11 @@ export const rzpCreateOrder = onCall(
       body: JSON.stringify(payload),
     });
     return response.json();
+  });
+
+export const getSubscriptionPlans = onCall(
+  {cors: true},
+  async (request: any) => {
+    return Object.values(subscriptionPlans).filter(
+      (plan: any) => plan.role === request.data.role);
   });

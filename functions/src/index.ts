@@ -55,6 +55,7 @@ export {
 export {
   rzpOrderApproved,
   rzpCreateOrder,
+  getSubscriptionPlans,
 } from "./payments";
 
 export const helloWorld = onRequest(

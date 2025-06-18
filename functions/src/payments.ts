@@ -126,19 +126,23 @@ export const rzpOrderApproved = onRequest(
         bp
       );
 
+      resp.send("OK");
+
       const validUntil = calculateValidUntil(date, bp);
       await updateMemberPlan(payment.notes.userId, bp, validUntil);
 
-      const emailBody = `userId: ${payment.notes.userId}\n` +
-      `plan: ${bp}\n` +
-      `validUntil: ${validUntil.toISOString()}`;
+      const emailBody = `<html>userId: ${payment.notes.userId}<br>` +
+      `plan: ${bp}<br>` +
+      `validUntil: ${validUntil.toISOString()}<br>` +
+      `paymentId: ${payment.id}<br>` +
+      `amount: ${payment.amount/100}<br>` +
+      "<html>";
 
       await notifs.sendEmail({
         to: "support@myfitwave.com",
         subject: "Payment Successful",
         body: emailBody,
       });
-      resp.send("OK");
     } else {
       await notifs.sendEmail({
         to: "support@myfitwave.com",

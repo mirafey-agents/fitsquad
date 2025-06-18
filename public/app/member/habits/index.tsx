@@ -1,7 +1,7 @@
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHabits } from '@/app/context/HabitsContext';
-import { useEffect, useState, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { colors } from '@/constants/theme';
@@ -12,10 +12,15 @@ import Animated, {
   withTiming,
   withSpring,
   useSharedValue,
+  useAnimatedProps,
+  interpolate,
+  FadeInUp,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle } from 'react-native-svg';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function HabitsPage() {
   const { habits, loading, refreshHabits, removeHabit, toggleHabitCompletion } = useHabits();
@@ -53,39 +58,49 @@ export default function HabitsPage() {
     setIsEditMode(false);
   };
 
-  const CircularProgress = ({ progress, size = 112, strokeWidth = 4, children }) => {
+  const CircularProgress = ({ progress, size = 112, strokeWidth = 4, children, isCompleted }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
-    const strokeDashoffset = circumference - (progress * circumference);
+    
+    const animatedProps = useAnimatedProps(() => {
+      'worklet';
+      const progressValue = interpolate(
+        progress.value,
+        [0, 1],
+        [circumference, 0]
+      );
+      return {
+        strokeDashoffset: progressValue,
+      };
+    });
 
     return (
       <View style={{ width: size, height: size, position: 'relative' }}>
-        {/* Background Circle */}
         <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
           <Circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="#353D45"
+            stroke={isCompleted ? colors.semantic.success : "#353D45"}
             strokeWidth={strokeWidth}
             fill="transparent"
           />
         </Svg>
-        {/* Progress Circle */}
-        <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
-          <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke={colors.semantic.success}
-            strokeWidth={strokeWidth}
-            fill="transparent"
-            strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-          />
-        </Svg>
-        {/* Content */}
+        {!isCompleted && (
+          <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
+            <AnimatedCircle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke={colors.semantic.success}
+              strokeWidth={strokeWidth}
+              fill="transparent"
+              strokeDasharray={[circumference, circumference]}
+              animatedProps={animatedProps}
+              strokeLinecap="round"
+            />
+          </Svg>
+        )}
         <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
           {children}
         </View>
@@ -96,26 +111,32 @@ export default function HabitsPage() {
   const HabitCard = ({ habit, idx }) => {
     const scale = useSharedValue(1);
     const progress = useSharedValue(0);
+    const [showCheckmark, setShowCheckmark] = useState(false);
     const pressTimeout = useRef(null);
-    const progressInterval = useRef(null);
-    const startTime = useRef(0);
     
     useEffect(() => {
       return () => {
         if (pressTimeout.current) {
           clearTimeout(pressTimeout.current);
         }
-        if (progressInterval.current) {
-          clearInterval(progressInterval.current);
-        }
       };
     }, []);
 
     const handleComplete = async () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      // Only show checkmark if habit is getting completed (not uncompleted)
+      if (!habit.completed) {
+        // Show checkmark
+        setShowCheckmark(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        
+        // Wait for 1.5 seconds before completing
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      
       const today = new Date();
       console.log('Habit Toggle', habit.id, today, habit.completed);
       await toggleHabitCompletion(habit.id, today, habit.completed);
+      setShowCheckmark(false);
       refreshHabits();
     };
 
@@ -124,23 +145,14 @@ export default function HabitsPage() {
       
       // Visual feedback
       scale.value = withSpring(0.95);
-      progress.value = 0;
-      startTime.current = Date.now();
-      
-      // Animate progress
-      progressInterval.current = setInterval(() => {
-        const elapsed = Date.now() - startTime.current;
-        const newProgress = Math.min(elapsed / 1500, 1);
-        progress.value = newProgress;
-      }, 16); // ~60fps
+      progress.value = withTiming(1, { 
+        duration: 1500,
+      });
       
       // Start timer for completion
       pressTimeout.current = setTimeout(() => {
         handleComplete();
         scale.value = withSpring(1);
-        if (progressInterval.current) {
-          clearInterval(progressInterval.current);
-        }
       }, 1500);
     };
 
@@ -149,16 +161,14 @@ export default function HabitsPage() {
       
       // Reset visual feedback
       scale.value = withSpring(1);
-      progress.value = withTiming(0, { duration: 150 });
+      progress.value = withTiming(0, { 
+        duration: 150,
+      });
       
-      // Clear timers
+      // Clear timer
       if (pressTimeout.current) {
         clearTimeout(pressTimeout.current);
         pressTimeout.current = null;
-      }
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-        progressInterval.current = null;
       }
     };
 
@@ -198,21 +208,33 @@ export default function HabitsPage() {
         <Pressable 
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
+          onLongPress={() => {}} 
           style={styles.iconWrapper}
         >
           <Animated.View style={animatedStyle}>
-            <CircularProgress progress={habit.completed ? 1 : progress.value}>
+            <CircularProgress progress={progress} isCompleted={habit.completed}>
               <View style={[styles.iconCircle, habit.completed && styles.completedIconCircle]}>
-                {getHabitIcon(habit)}
-                <View style={styles.streakBadge}>
-                  <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                  <Text style={styles.streakText}>{habit.streak || 0}</Text>
-                </View>
+                {showCheckmark ? (
+                  <Animated.View
+                    entering={FadeInUp.duration(300)}
+                    style={styles.checkmarkContainer}
+                  >
+                    <Ionicons name="checkmark" size={64} color="#fff" />
+                  </Animated.View>
+                ) : (
+                  <>
+                    {getHabitIcon(habit)}
+                    <View style={styles.streakBadge}>
+                      <Ionicons name="flame" size={16} color={colors.accent.coral} />
+                      <Text style={styles.streakText} selectable={false}>{habit.streak || 0}</Text>
+                    </View>
+                  </>
+                )}
               </View>
             </CircularProgress>
           </Animated.View>
-          <Text style={styles.habitName}>{habit.title}</Text>
-          <Text style={styles.habitDesc}>{habit.description}</Text>
+          <Text style={styles.habitName} selectable={false}>{habit.title}</Text>
+          <Text style={styles.habitDesc} selectable={false}>{habit.description}</Text>
         </Pressable>
       </Animated.View>
     );
@@ -241,7 +263,7 @@ export default function HabitsPage() {
           <View style={styles.iconCircle}>
             <Ionicons name="add" size={64} color="#fff" />
           </View>
-          <Text style={styles.habitName}>Add Habit</Text>
+          <Text style={styles.habitName} selectable={false}>Add Habit</Text>
         </Pressable>
       </ScrollView>
 
@@ -351,5 +373,14 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.8,
+  },
+  checkmarkContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.semantic.success,
+    width: '100%',
+    height: '100%',
+    borderRadius: 52,
   },
 });

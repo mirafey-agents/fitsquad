@@ -246,12 +246,12 @@ export async function setHabitCompletion(habitId: string, date: Date, completed:
   })).data;
 }
 
-export async function addHabit(title: string, description: string) {
+export async function addHabit(title: string, description: string, icon: string) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   
   return (await httpsCallable(functions, 'addHabit')({
-    title, description, authToken: session.access_token,
+    title, description, icon, authToken: session.access_token,
   })).data;
 }
 

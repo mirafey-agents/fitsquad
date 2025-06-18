@@ -79,7 +79,7 @@ export const addHabit = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {authToken, title, description} = request.data;
+      const {authToken, title, description, icon} = request.data;
       const {userId, error: tokenError} = verifySupabaseToken(authToken);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
@@ -91,6 +91,7 @@ export const addHabit = onCall(
           user_id: userId,
           title,
           description,
+          icon,
         });
 
       if (dbError) throw dbError;

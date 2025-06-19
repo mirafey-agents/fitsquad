@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHabits } from '@/app/context/HabitsContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +17,6 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import Svg, { Circle } from 'react-native-svg';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -47,7 +46,7 @@ export default function HabitsPage() {
   const handleDeleteConfirm = async () => {
     if (habitToDelete) {
       await removeHabit(habitToDelete);
-      router.push('./', {relativeToDirectory: true});
+      await refreshHabits();
       setHabitToDelete(null);
       setIsEditMode(false);
     }
@@ -123,19 +122,15 @@ export default function HabitsPage() {
     }, []);
 
     const handleComplete = async () => {
-      // Only show checkmark if habit is getting completed (not uncompleted)
-      if (!habit.completed) {
-        // Show checkmark
+      if (!habit.currentCompleted) {
         setShowCheckmark(true);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        
-        // Wait for 1.5 seconds before completing
-        await new Promise(resolve => setTimeout(resolve, 1500));
       }
       
       const today = new Date();
-      console.log('Habit Toggle', habit.id, today, habit.completed);
-      await toggleHabitCompletion(habit.id, today, habit.completed);
+      console.log('Habit Toggle', habit.id, today, habit.currentCompleted, habit.currentCompletionId);
+      const p1 =  new Promise(resolve => setTimeout(resolve, 1000));
+      const p2 = await toggleHabitCompletion(habit.id, today, habit.currentCompleted, habit.currentCompletionId);
+      await Promise.all([p1, p2]);
       setShowCheckmark(false);
       refreshHabits();
     };
@@ -212,8 +207,8 @@ export default function HabitsPage() {
           style={styles.iconWrapper}
         >
           <Animated.View style={animatedStyle}>
-            <CircularProgress progress={progress} isCompleted={habit.completed}>
-              <View style={[styles.iconCircle, habit.completed && styles.completedIconCircle]}>
+            <CircularProgress progress={progress} isCompleted={habit.currentCompleted}>
+              <View style={[styles.iconCircle, habit.currentCompleted && styles.completedIconCircle]}>
                 {showCheckmark ? (
                   <Animated.View
                     entering={FadeInUp.duration(300)}
@@ -240,6 +235,14 @@ export default function HabitsPage() {
     );
   };
 
+  // if (loading) {
+  //   return (
+  //     <View style={styles.loadingContainer}>
+  //       <ActivityIndicator size="large" color={colors.primary.dark} />
+  //     </View>
+  //   );
+  // }
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -382,5 +385,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 52,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

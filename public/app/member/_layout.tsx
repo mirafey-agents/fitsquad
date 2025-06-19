@@ -96,6 +96,7 @@ export default function TabLayout() {
       <Tabs.Screen name="insights/[id]" options={{href: null}}/>
       <Tabs.Screen name="habits/add" options={{href: null}}/>
       <Tabs.Screen name="habits/index" options={{href: null}}/>
+      <Tabs.Screen name="components/HabitsPreview" options={{href: null}}/>
     </Tabs>
   );
 }

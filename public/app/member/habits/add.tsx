@@ -5,8 +5,8 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, ActivityIndic
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/theme';
-import { addHabit } from '@/utils/firebase';
 import { router } from 'expo-router';
+import { useHabits } from '@/app/context/HabitsContext';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -33,6 +33,7 @@ const predefinedHabits: Array<{ icon: IconName; title: string; description: stri
 const uniqueIcons: IconName[] = Array.from(new Set(predefinedHabits.map(h => h.icon)));
 
 export default function AddHabitPage() {
+  const { addHabit } = useHabits();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedIcon, setSelectedIcon] = useState<IconName>('add-circle');

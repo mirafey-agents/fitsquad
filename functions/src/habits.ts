@@ -21,11 +21,10 @@ const authenticate = (request: any) => {
     }
 
     return aUId;
-
   } catch (error: any) {
     throw new HttpsError("internal", error.message);
   }
-}
+};
 
 const col = (c: string) => {
   return admin.firestore().collection(c);
@@ -89,12 +88,12 @@ const setCompletion = async (data: any, authUserId: string) => {
   return {success: true};
 };
 
-const getHistory = async(userId: string) => {
+const getHistory = async (userId: string) => {
   const habits = await col("habits").where("userId", "==", userId).get();
   const habitsWithHistory = habits.docs.map(async (doc) => {
     const habit = await doc.data();
     habit.completions = (await col(`habits/${habit.id}/completions/`).get())
-    .docs.map((doc) => ({completionId: doc.id, ...doc.data()}));
+      .docs.map((doc) => ({completionId: doc.id, ...doc.data()}));
     return habit;
   });
   return await Promise.all(habitsWithHistory);

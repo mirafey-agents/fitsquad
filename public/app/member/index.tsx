@@ -9,13 +9,13 @@ import { voteSession } from '@/utils/firebase';
 import { Dimensions } from 'react-native';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useSessions } from '@/app/context/SessionsContext';
+import { HabitsPreview } from './components/HabitsPreview';
 
 import {
   colors,
   spacing,
 } from '@/constants/theme';
-import HabitTracker from '@/components/HabitTracker';
-import DailyChallenges from '@/components/DailyChallenges';
+
 import {
   format,
   isSameDay,
@@ -354,7 +354,7 @@ export default function Home() {
           isFutureDate,
           handleVote
         })}
-        <HabitTracker preview={true}/>
+        <HabitsPreview />
       </View>
 
       {showConfirmModal && pendingVote && (

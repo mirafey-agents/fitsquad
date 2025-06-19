@@ -237,12 +237,15 @@ export async function getHabitsHistory() {
   })).data;
 }
 
-export async function setHabitCompletion(habitId: string, date: Date, completed: boolean) {
+export async function setHabitCompletion(
+  habitId: string, date: Date,
+  completed: boolean, completionId: string
+) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   
   return (await httpsCallable(functions, 'setHabitCompletion')({
-    habitId, date, completed, authToken: session.access_token
+    habitId, date, completed, completionId, authToken: session.access_token
   })).data;
 }
 

@@ -1,19 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getHabitsHistory, setHabitCompletion, deleteHabit } from '@/utils/firebase';
+import { getHabitsHistory, setHabitCompletion, deleteHabit, addHabit as addHabitFirebase } from '@/utils/firebase';
 
 interface HabitCompletion {
   habitId: string;
   date: string;
+  completionId?: string;
 }
 
-interface Habit {
+export interface Habit {
   id: string;
   title: string;
   description: string;
+  icon?: string;
   completions: Array<HabitCompletion>;
   completionHistory?: Array<{ date: string; completed: boolean }>;
   streak?: number;
   completed?: boolean;
+  currentCompleted?: boolean;
+  currentCompletionId?: string;
 }
 
 interface HabitsContextType {
@@ -21,11 +25,20 @@ interface HabitsContextType {
   loading: boolean;
   error: Error | null;
   refreshHabits: () => Promise<void>;
-  toggleHabitCompletion: (habitId: string, date: Date, completed: boolean) => Promise<void>;
+  toggleHabitCompletion: (habitId: string, date: Date, completed: boolean, completionId: string) => Promise<void>;
   removeHabit: (habitId: string) => Promise<void>;
+  addHabit: (title: string, description: string, selectedIcon: string) => Promise<void>;
 }
 
 const HabitsContext = createContext<HabitsContextType | undefined>(undefined);
+const MAX_HISTORY = 30;
+
+// Helper function to get start of day in local timezone
+const getStartOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
 
 export function HabitsProvider({ children }: { children: React.ReactNode }) {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -35,36 +48,43 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   const fetchHabits = async () => {
     setLoading(true);
     try {
-      const habitsData = await getHabitsHistory();
-      
+      const habitsData = await getHabitsHistory() as Habit[];
       const habitsWithHistory = habitsData?.map(habit => {
-        const history = Array(30).fill(false).map((_, index) => {
-          const date = new Date();
-          date.setDate(date.getDate() - index);
-          const dateStr = date.toISOString().split('T')[0];
-          return {
-            date: dateStr,
-            completed: habit.completions.some(c => c.date === dateStr)
-          };
+        // Get start of today in local timezone
+        const today = getStartOfDay(new Date());
+        const history = Array(MAX_HISTORY).fill({
+          completedDate: null,
+          completed: false,
+          completionId: null
         });
 
-        let streak = 0;
-        for (let i = 0; i < history.length; i++) {
-          if (history[i].completed) {
-            streak++;
-          } else {
-            break;
+        for (const c of habit.completions) {
+          // Convert completion date to local timezone start of day
+          const completionDate = getStartOfDay(new Date(c.date));
+          const offsetDays = Math.floor((today.getTime() - completionDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (offsetDays >= 0 && offsetDays < MAX_HISTORY) {
+            history[offsetDays] = {
+              completedDate: c.date,
+              completed: true,
+              completionId: c.completionId
+            }
           }
         }
-          
+
+        let streak = 0;
+        while (history[streak]?.completed && streak < MAX_HISTORY) {
+          streak++;
+        }
+        
         return {
           ...habit,
           completionHistory: history,
           streak,
-          completed: history[0].completed
+          currentCompleted: history[0]?.completionId ? true : false,
+          currentCompletionId: history[0]?.completionId
         };
       });
-
       setHabits(habitsWithHistory);
       setError(null);
     } catch (err) {
@@ -74,23 +94,27 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    fetchHabits();
-  }, []);
-
-  const toggleHabitCompletion = async (habitId: string, date: Date, completed: boolean) => {
+  const toggleHabitCompletion = async (habitId: string, date: Date,
+    completed: boolean, completionId: string) => {
     try {
-      await setHabitCompletion(habitId, date, !completed);
-      await fetchHabits();
+      await setHabitCompletion(habitId, date, !completed, completionId);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to toggle habit completion'));
+    }
+  };
+
+  const addHabit = async (title: string, description: string, selectedIcon: string) => {
+    try {
+      await addHabitFirebase(title, description, selectedIcon);
+      await fetchHabits();
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to add habit'));
     }
   };
 
   const removeHabit = async (habitId: string) => {
     try {
       await deleteHabit(habitId);
-      await fetchHabits();
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to delete habit'));
     }
@@ -103,6 +127,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     refreshHabits: fetchHabits,
     toggleHabitCompletion,
     removeHabit,
+    addHabit
   };
 
   return (

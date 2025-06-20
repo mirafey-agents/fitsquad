@@ -7,7 +7,7 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { deleteMedia, deleteSession, getTrainerSessions, updateSession, uploadMedia } from '@/utils/firebase';
 import ConfirmModal from '@/components/ConfirmModal';
-import { colors, spacing, borderRadius, typography } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 
 const dateFormatOption = {
@@ -157,10 +157,12 @@ export default function SessionDetails() {
   const pickUploadMedia = async (participantId: string) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,
+        videoQuality: 0,
+        videoExportPreset: ImagePicker.VideoExportPreset.H264_640x480,
       });
       setLoading(true);
       if (!result.canceled && result.assets.length > 0) {

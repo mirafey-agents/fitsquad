@@ -1,6 +1,7 @@
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
 import { supabase } from '@/utils/supabase';
+import {generateVideoThumbnail} from './mediaUtils';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -15,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, 'asia-south1');
 // console.log(functions);
 
-// connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 
 export async function getUserSessions(startDate: Date, endDate: Date) {
     try {
@@ -293,8 +294,25 @@ export async function uploadMedia(
         "x-goog-content-length-range": "0,20000000",
       },
     });
+
+    // Generate thumbnail for videos
+    let thumbnailBufferB64: string | undefined;
+    if (asset.mimeType?.startsWith('video/')) {
+      try {
+        thumbnailBufferB64 = await generateVideoThumbnail(asset.file);
+      } catch (error) {
+        console.warn('Failed to generate video thumbnail:', error);
+        // Continue without thumbnail if generation fails
+      }
+    }
+
     const processResult = (await httpsCallable(functions, 'processUploadedMedia')({
-        authToken: session.access_token, userId, category, categoryId, mediaId
+        authToken: session.access_token, 
+        userId, 
+        category, 
+        categoryId, 
+        mediaId,
+        thumbnailBufferB64
       })).data;
 
     return response.status;
@@ -342,6 +360,30 @@ export async function listMedia(
 
   return (await httpsCallable(functions, 'listMedia')({
     userId, category, categoryId, authToken: session.access_token
+  })).data;
+}
+
+export async function getMediaFetchURL(
+  userId: string,
+  category: string,
+  categoryId: string,
+  objectId: string,
+  isThumbnail: boolean = false
+) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  if (!session?.access_token) {
+    throw new Error('No active session');
+  }
+
+  return (await httpsCallable(functions, 'getMediaFetchUrl')({
+    userId,
+    category,
+    categoryId,
+    objectId,
+    isThumbnail,
+    authToken: session.access_token,
   })).data;
 }
 

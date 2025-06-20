@@ -2,11 +2,10 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-nati
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
+import { colors, typography, spacing, borderRadius } from '@/constants/theme';
 import { useSessions } from '@/app/context/SessionsContext';
 import { useState, useEffect } from 'react';
-import { getMediaThumbnailURL } from '@/utils/mediaUtils';
-import { getSessionMediaReview } from '@/utils/firebase';
+import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 
 const renderFormattedText = (text: string) => {
   if (!text) return null;
@@ -53,7 +52,7 @@ const renderFormattedLine = (text: string) => {
 export default function WorkoutSessionDetails() {
   const { id } = useLocalSearchParams();
   const { sessions } = useSessions();
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,7 +65,7 @@ export default function WorkoutSessionDetails() {
         date: foundSession.start_time,
         trainer: {
           name: foundSession.session.trainer.display_name,
-          image: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${foundSession.session.trainer.id}/profilepic/1/1-thumbnail`,
+          image: getProfilePicThumbNailURL(foundSession.session.trainer.id),
           verified: true
         },
         type: 'workout',
@@ -227,10 +226,17 @@ export default function WorkoutSessionDetails() {
             >
               {session.session_media.map((media, i) => (
                 <View key={i} style={styles.mediaCard}>
-                  <Image 
-                    source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_id, media.media_id) }}
-                    style={styles.mediaImage}
-                  />
+                  <View style={styles.mediaImageContainer}>
+                    <Image 
+                      source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_id, media.media_id) }}
+                      style={styles.mediaImage}
+                    />
+                    {media.content_type?.startsWith('video/') && (
+                      <View style={styles.videoIconOverlay}>
+                        <Ionicons name="play-circle" size={32} color="white" />
+                      </View>
+                    )}
+                  </View>
                   <View style={styles.reviewContainer}>
                     {renderFormattedText(media?.review)}
                   </View>
@@ -380,17 +386,18 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   mediaCard: {
-    width: 280,
-    backgroundColor: colors.gray[700],
-    borderRadius: borderRadius.lg,
+    marginBottom: 20,
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
     overflow: 'hidden',
-    ...shadows.sm,
+  },
+  mediaImageContainer: {
+    position: 'relative',
   },
   mediaImage: {
     width: '100%',
-    height: 180,
-    resizeMode: 'contain',
-    backgroundColor: colors.gray[800],
+    height: 200,
+    backgroundColor: '#334155',
   },
   session: {
     marginBottom: spacing.xl,
@@ -455,5 +462,16 @@ const styles = StyleSheet.create({
     color: colors.gray[200],
     fontSize: typography.size.md,
     marginRight: spacing.sm,
+  },
+  playButtonOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoIconOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
 }); 

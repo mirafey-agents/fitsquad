@@ -128,8 +128,8 @@ export const processUploadedMedia = onCall(
       if (!isVideo) {
         // Generate thumbnail for the image
         thumbnailBuffer = await sharp(mediaBuffer)
-          .resize(150, 150, { fit: "cover", position: "center" })
-          .jpeg({ quality: 80 })
+          .resize(150, 150, {fit: "cover", position: "center"})
+          .jpeg({quality: 80})
           .toBuffer();
       } else if (thumbnailBufferB64) {
         // It's a video and a thumbnail was provided.
@@ -138,11 +138,13 @@ export const processUploadedMedia = onCall(
 
       // Save thumbnail if we have one
       if (thumbnailBuffer) {
-        const thumbnailKey = makeKey(userId, category, categoryId, mediaId, true);
+        const thumbnailKey = makeKey(
+          userId, category, categoryId, mediaId, true
+        );
         await storageBucket.file(thumbnailKey).save(thumbnailBuffer, {
           contentType: "image/jpeg",
           public: true,
-          metadata: { cacheControl: "public, max-age=18000" },
+          metadata: {cacheControl: "public, max-age=18000"},
         });
       }
       const contentType = metadata.contentType || "application/octet-stream";

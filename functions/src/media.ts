@@ -91,7 +91,14 @@ export const processUploadedMedia = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {authToken, userId, category, categoryId, mediaId} = request.data;
+      const {
+        authToken,
+        userId,
+        category,
+        categoryId,
+        mediaId,
+        thumbnailBufferB64,
+      } = request.data;
 
       if (!authToken || !userId) {
         throw new HttpsError("invalid-argument", "Missing required parameters");
@@ -110,34 +117,41 @@ export const processUploadedMedia = onCall(
         );
       }
 
-      // Get the original file
       const originalKey = makeKey(userId, category, categoryId, mediaId);
       const originalFile = storageBucket.file(originalKey);
-      const [originalBuffer] = await originalFile.download();
+      const [metadata] = await originalFile.getMetadata();
+      const [mediaBuffer] = await originalFile.download();
 
-      // Generate thumbnail
-      const thumbnailBuffer = await sharp(originalBuffer)
-        .resize(150, 150, {
-          fit: "cover",
-          position: "center",
-        })
-        .jpeg({quality: 80})
-        .toBuffer();
+      const isVideo = metadata.contentType?.startsWith("video/");
+      let thumbnailBuffer: Buffer | null = null;
 
-      // Upload thumbnail
-      const thumbnailKey = makeKey(userId, category, categoryId, mediaId, true);
-      const thumbnailFile = storageBucket.file(thumbnailKey);
-      await thumbnailFile.save(thumbnailBuffer, {
-        contentType: "image/jpeg",
-        public: true,
-        metadata: {
-          cacheControl: "public, max-age=18000",
-        },
-      });
+      if (!isVideo) {
+        // Generate thumbnail for the image
+        thumbnailBuffer = await sharp(mediaBuffer)
+          .resize(150, 150, { fit: "cover", position: "center" })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+      } else if (thumbnailBufferB64) {
+        // It's a video and a thumbnail was provided.
+        thumbnailBuffer = Buffer.from(thumbnailBufferB64, "base64");
+      }
 
+      // Save thumbnail if we have one
+      if (thumbnailBuffer) {
+        const thumbnailKey = makeKey(userId, category, categoryId, mediaId, true);
+        await storageBucket.file(thumbnailKey).save(thumbnailBuffer, {
+          contentType: "image/jpeg",
+          public: true,
+          metadata: { cacheControl: "public, max-age=18000" },
+        });
+      }
+      const contentType = metadata.contentType || "application/octet-stream";
       if (category === "session") {
-        const review = await analyzeMedia(originalBuffer.toString("base64"));
-        updateSessionMedia(categoryId, userId, mediaId, review);
+        const review = await analyzeMedia(
+          mediaBuffer.toString("base64"),
+          contentType
+        );
+        updateSessionMedia(categoryId, userId, mediaId, review, contentType);
       }
 
       return {success: true};
@@ -339,7 +353,7 @@ export const deleteMedia = onCall(
       await storageBucket.deleteFiles({prefix: key});
 
       if (category === "session") {
-        updateSessionMedia(categoryId, userId, objectId, "", true);
+        updateSessionMedia(categoryId, userId, objectId, "", "", true);
       }
 
       return {success: true};

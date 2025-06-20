@@ -1,22 +1,28 @@
 import {GoogleGenAI} from "@google/genai";
 
-export const analyzeMedia = async (imageData: string) => {
+export const analyzeMedia = async (mediaData: string, mimeType: string) => {
   const ai = new GoogleGenAI({
     vertexai: true,
     project: "fit-squad-club",
     location: "us-central1",
   });
+
+  const prompt = 'Analyze the workout media and provide a feedback under 300 words \
+  in the following format while sounding confident & professional. \
+  Directly provide the feedback without acknowledgement. \
+  One line description, 3 positive points, 3 required improvements, rating on 5.';
+
   const contents = [
     {
       role: "user",
       parts: [
-        {text: "Evaluate this workout in under 300 words and rate it on 1-5."},
         {
           inlineData: {
-            mimeType: "image/jpeg",
-            data: imageData,
+            mimeType,
+            data: mediaData,
           },
         },
+        {text: prompt},
       ],
     },
   ];
@@ -26,7 +32,6 @@ export const analyzeMedia = async (imageData: string) => {
       model: "gemini-2.0-flash-lite-001",
       contents: contents,
     });
-    // console.log(response.candidates?.[0]?.content);
 
     return response.candidates?.[0]?.content?.parts?.[0]?.text ?? "N/A";
   } catch (error) {

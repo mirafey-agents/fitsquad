@@ -504,6 +504,7 @@ export const updateSessionMedia = async function(
   userId: string,
   mediaId: string,
   review: string,
+  contentType: string,
   isDelete = false
 ) {
   if (isDelete) {
@@ -527,6 +528,7 @@ export const updateSessionMedia = async function(
         user_id: userId,
         media_id: mediaId,
         review: review,
+        content_type: contentType,
       });
     if (error) {
       console.log("Error inserting session media",

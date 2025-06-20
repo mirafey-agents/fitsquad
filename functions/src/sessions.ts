@@ -39,7 +39,7 @@ export const getUserSessions = onCall(
         .from("session_users")
         .select("*,session:sessions(id, title, start_time, status,"+
           "trainer:users!trainer_id(id, display_name)),"+
-          "session_media(media_id, review)")
+          "session_media(media_id, review, content_type)")
         .eq("user_id", userId)
         .gte("start_time", startDate.toISOString())
         .lte("start_time", endDate.toISOString())
@@ -122,7 +122,7 @@ export const getTrainerSessions = onCall(
       const queryStr = fetchUsers ?
         ("*, session_users!session_id(*, " +
         "users!user_id(id, display_name, email),"+
-        "session_media(media_id, review))") :
+        "session_media(media_id, review, content_type))") :
         "*";
       let query = getAdmin().from("sessions")
         .select(queryStr).eq("trainer_id", userId);

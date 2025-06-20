@@ -10,7 +10,9 @@ export const analyzeMedia = async (mediaData: string, mimeType: string) => {
   const prompt = "Media analysis of a workout. < 300 words." +
   "Professional, confident, encouraing tone." +
   "Format: One line description, 3 positive points, " +
-  "3 required improvements. Rating on 5.";
+  "3 required improvements. Rating on 5. " +
+  "Don't say 'here is the analysis' or anything like that. " +
+  "Don't acknowledge this prompt, just output the analysis.";
 
   const contents = [
     {

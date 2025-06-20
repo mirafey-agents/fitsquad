@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Platform, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInUp } from 'react-native-reanimated';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-// import "react-datepicker/dist/react-datepicker.css";
+import { TabView, TabBar } from 'react-native-tab-view';
 import { supabase } from '@/utils/supabase';
-import { getExercises, getMembers, getSquads, createSession } from '@/utils/firebase';
+import { getSquads, getMembers, getExercises, createSession } from '@/utils/firebase';
+import FilterableList from './components/FilterableList';
 
 interface Squad {
   id: string;
@@ -38,11 +36,9 @@ export default function CreateSession() {
     selectedUsers: [] as User[],
     selectedExercises: [] as Exercise[],
   });
-  const [searchQuery, setSearchQuery] = useState('');
   const [squads, setSquads] = useState<Squad[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  // const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
@@ -56,18 +52,17 @@ export default function CreateSession() {
     fetchSquads();
     fetchUsers();
     fetchExercises();
-    setLoading(false);
   }, []);
 
   const fetchSquads = async () => {
     try {
       setLoading(true);
       const { data } = await getSquads(null);
-      console.log("Fetched squads:", data);
       setSquads(data as Squad[]);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching squads:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,12 +70,11 @@ export default function CreateSession() {
     try {
       setLoading(true);
       const {data} = await getMembers(null);
-      console.log("Fetched members:", data);
-      await setUsers(data as User[] || []);
-      console.log("Users:", users);
-      setLoading(false);
+      setUsers(data as User[] || []);
     } catch (error) {
       console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,12 +82,11 @@ export default function CreateSession() {
     try {
       setLoading(true);
       const {data} = await getExercises();
-      console.log("Fetched exercises:", data);
-      await setExercises(data as Exercise[] || []);
-      console.log("Exercises:", exercises);
-      setLoading(false);
+      setExercises(data as Exercise[] || []);
     } catch (error) {
       console.error('Error fetching exercises:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -130,7 +123,7 @@ export default function CreateSession() {
         formData.selectedUsers.map(u => u.id),
         formData.selectedExercises
       );
-      if (!result.data?.success) {
+      if (!result.data || !(result.data as any).success) {
         throw new Error('Failed to create session');
       }
       
@@ -140,40 +133,12 @@ export default function CreateSession() {
       console.log('Error creating session:', error);
       setError('Failed to create session');
       alert('Some error occurred while creating the session');
-    
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleSquad = (squad: Squad) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedSquads: prev.selectedSquads.some(s => s.id === squad.id)
-        ? prev.selectedSquads.filter(s => s.id !== squad.id)
-        : [...prev.selectedSquads, squad]
-    }));
-  };
-
-  const toggleUser = (user: User) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedUsers: prev.selectedUsers.some(u => u.id === user.id)
-        ? prev.selectedUsers.filter(u => u.id !== user.id)
-        : [...prev.selectedUsers, user]
-    }));
-  };
-
-  const toggleExercise = (exercise: Exercise) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedExercises: prev.selectedExercises.some(e => e.id === exercise.id)
-        ? prev.selectedExercises.filter(e => e.id !== exercise.id)
-        : [...prev.selectedExercises, exercise]
-    }));
-  };
-
-  const handleExerciseUpdate = (exerciseId: string, field: 'sets' | 'reps', value: string) => {
+  const handleExerciseUpdate = useCallback((exerciseId: string, field: 'sets' | 'reps', value: string) => {
     setFormData(prev => ({
       ...prev,
       selectedExercises: prev.selectedExercises.map(ex => 
@@ -182,153 +147,55 @@ export default function CreateSession() {
           : ex
       )
     }));
-  };
+  }, []);
 
-  const filteredSquads = squads.filter(squad => 
-    squad.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const renderScene = useCallback(({ route }: { route: { key: string } }) => {
+    switch (route.key) {
+      case 'squads':
+        return (
+          <FilterableList
+            tabKey="squads"
+            placeholder="Search squads"
+            items={squads}
+            selectedItems={formData.selectedSquads}
+            onSelectionChange={(selectedSquads) => setFormData(prev => ({ ...prev, selectedSquads }))}
+            getItemId={(squad) => squad.id}
+            getItemName={(squad) => squad.name}
+            getItemDescription={(squad) => squad.description}
+          />
+        );
+      case 'members':
+        return (
+          <FilterableList
+            tabKey="members"
+            placeholder="Search members"
+            items={users}
+            selectedItems={formData.selectedUsers}
+            onSelectionChange={(selectedUsers) => setFormData(prev => ({ ...prev, selectedUsers }))}
+            getItemId={(user) => user.id}
+            getItemName={(user) => user.display_name}
+            getItemDescription={(user) => user.email}
+          />
+        );
+      case 'exercises':
+        return (
+          <FilterableList
+            tabKey="exercises"
+            placeholder="Search exercises"
+            items={exercises}
+            selectedItems={formData.selectedExercises}
+            onSelectionChange={(selectedExercises) => setFormData(prev => ({ ...prev, selectedExercises }))}
+            getItemId={(exercise) => exercise.id}
+            getItemName={(exercise) => exercise.name}
+            getItemDescription={(exercise) => exercise.module_type}
+          />
+        );
+      default:
+        return null;
+    }
+  }, [squads, users, exercises, formData.selectedSquads, formData.selectedUsers, formData.selectedExercises]);
 
-  const filteredUsers = users.filter(user => 
-    user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredExercises = exercises.filter(exercise => 
-    exercise.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    exercise.module_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    exercise.level?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const renderSquadsTab = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="#64748B" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search squads"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#64748B"
-        />
-      </View>
-      <ScrollView style={styles.selectionList}>
-        {filteredSquads.map((squad, index) => (
-          <Animated.View
-            key={squad.id}
-            entering={FadeInUp.delay(index * 100)}
-          >
-            <Pressable
-              style={[
-                styles.selectionCard,
-                formData.selectedSquads.some(s => s.id === squad.id) && styles.selectedCard
-              ]}
-              onPress={() => toggleSquad(squad)}
-            >
-              <View style={styles.selectionInfo}>
-                <Text style={styles.selectionName}>{squad.name}</Text>
-                <Text style={styles.selectionDescription}>{squad.description}</Text>
-              </View>
-              {formData.selectedSquads.some(s => s.id === squad.id) && (
-                <View style={styles.selectedIndicator}>
-                  <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
-                </View>
-              )}
-            </Pressable>
-          </Animated.View>
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  const renderMembersTab = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="#64748B" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search members"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#64748B"
-        />
-      </View>
-      <ScrollView style={styles.selectionList}>
-        {filteredUsers.map((user, index) => (
-          <Animated.View
-            key={user.id}
-            entering={FadeInUp.delay(index * 100)}
-          >
-            <Pressable
-              style={[
-                styles.selectionCard,
-                formData.selectedUsers.some(u => u.id === user.id) && styles.selectedCard
-              ]}
-              onPress={() => toggleUser(user)}
-            >
-              <View style={styles.selectionInfo}>
-                <Text style={styles.selectionName}>{user.display_name}</Text>
-                <Text style={styles.selectionDescription}>{user.email}</Text>
-              </View>
-              {formData.selectedUsers.some(u => u.id === user.id) && (
-                <View style={styles.selectedIndicator}>
-                  <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
-                </View>
-              )}
-            </Pressable>
-          </Animated.View>
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  const renderExercisesTab = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="#64748B" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search exercises"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#64748B"
-        />
-      </View>
-      <ScrollView style={styles.selectionList}>
-        {filteredExercises.map((exercise, index) => (
-          <Animated.View
-            key={exercise.id}
-            entering={FadeInUp.delay(index * 100)}
-          >
-            <Pressable
-              style={[
-                styles.selectionCard,
-                formData.selectedExercises.some(e => e.id === exercise.id) && styles.selectedCard
-              ]}
-              onPress={() => toggleExercise(exercise)}
-            >
-              <View style={styles.selectionInfo}>
-                <Text style={styles.selectionName}>{exercise.name}</Text>
-                <Text style={styles.selectionDescription}>{exercise.module_type}</Text>
-              </View>
-              {formData.selectedExercises.some(e => e.id === exercise.id) && (
-                <View style={styles.selectedIndicator}>
-                  <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
-                </View>
-              )}
-            </Pressable>
-          </Animated.View>
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  const renderScene = SceneMap({
-    squads: renderSquadsTab,
-    members: renderMembersTab,
-    exercises: renderExercisesTab,
-  });
-
-  const renderTabBar = (props: any) => (
+  const renderTabBar = useCallback((props: any) => (
     <TabBar
       {...props}
       indicatorStyle={styles.tabIndicator}
@@ -337,7 +204,7 @@ export default function CreateSession() {
       activeColor="#4F46E5"
       inactiveColor="#64748B"
     />
-  );
+  ), []);
 
   return (
     <View style={styles.container}>
@@ -381,15 +248,13 @@ export default function CreateSession() {
                 const date = new Date(e.target.value);
                 setFormData(prev => ({ ...prev, date }));
               }}
-              min={new Date().toLocaleString('sv', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(' ', 'T')}
               style={{
-                width: '100%',
                 padding: '12px',
                 borderRadius: '12px',
-                border: '1px solid #E2E8F0',
+                border: '1px solid #21262F',
                 fontSize: '16px',
-                color: '#1E293B',
-                backgroundColor: '#FFFFFF',
+                color: '#FFFFFF',
+                backgroundColor: '#21262F',
               }}
             />
           </View>
@@ -400,7 +265,10 @@ export default function CreateSession() {
               {formData.selectedSquads.map(squad => (
                 <View key={squad.id} style={styles.selectedItem}>
                   <Text style={styles.selectedItemText}>Squad: {squad.name}</Text>
-                  <Pressable onPress={() => toggleSquad(squad)}>
+                  <Pressable onPress={() => setFormData(prev => ({ 
+                    ...prev, 
+                    selectedSquads: prev.selectedSquads.filter(s => s.id !== squad.id) 
+                  }))}>
                     <Ionicons name="close-circle" size={20} color="#EF4444" />
                   </Pressable>
                 </View>
@@ -408,7 +276,10 @@ export default function CreateSession() {
               {formData.selectedUsers.map(user => (
                 <View key={user.id} style={styles.selectedItem}>
                   <Text style={styles.selectedItemText}>Member: {user.display_name}</Text>
-                  <Pressable onPress={() => toggleUser(user)}>
+                  <Pressable onPress={() => setFormData(prev => ({ 
+                    ...prev, 
+                    selectedUsers: prev.selectedUsers.filter(u => u.id !== user.id) 
+                  }))}>
                     <Ionicons name="close-circle" size={20} color="#EF4444" />
                   </Pressable>
                 </View>
@@ -420,28 +291,33 @@ export default function CreateSession() {
             <View style={styles.exercisesTable}>
               <Text style={styles.selectedTitle}>Selected Exercises</Text>
               <View style={styles.tableHeader}>
-                <Text style={styles.tableHeaderText}>Exercise</Text>
-                <Text style={styles.tableHeaderText}>Reps</Text>
-                <Text style={styles.tableHeaderText}>Sets</Text>
-                <Text style={styles.tableHeaderText}></Text>
+                <Text style={[styles.tableHeaderText, { flex: 2 }]}>Exercise</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Reps</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Sets</Text>
+                <View style={{ width: 20 }} />
               </View>
               {formData.selectedExercises.map(exercise => (
                 <View key={exercise.id} style={styles.tableRow}>
-                  <Text style={styles.tableCell}>{exercise.name}</Text>
+                  <Text style={[styles.tableCell, { flex: 2 }]}>{exercise.name}</Text>
                   <TextInput
-                    style={[styles.tableCell, styles.numberInput]}
+                    style={[styles.tableCell, styles.numberInput, { width: 80 }]}
                     value={exercise.reps?.toString() || ''}
                     onChangeText={(value) => handleExerciseUpdate(exercise.id, 'reps', value)}
                     placeholder="0"
+                    placeholderTextColor="#64748B"
                   />
                   <TextInput
-                    style={[styles.tableCell, styles.numberInput]}
+                    style={[styles.tableCell, styles.numberInput, { width: 80 }]}
                     value={exercise.sets?.toString() || ''}
                     onChangeText={(value) => handleExerciseUpdate(exercise.id, 'sets', value)}
                     keyboardType="numeric"
                     placeholder="0"
+                    placeholderTextColor="#64748B"
                   />
-                  <Pressable onPress={() => toggleExercise(exercise)}>
+                  <Pressable onPress={() => setFormData(prev => ({ 
+                    ...prev, 
+                    selectedExercises: prev.selectedExercises.filter(e => e.id !== exercise.id) 
+                  }))}>
                     <Ionicons name="close-circle" size={20} color="#EF4444" />
                   </Pressable>
                 </View>
@@ -525,24 +401,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   datePickerContainer: {
-    marginBottom: 12,
-    position: 'relative',
-    zIndex: 2,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: "#21262F",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-    color: "#FFFFFF",
+    width: 'auto',
+    alignSelf: 'flex-start',
   },
   selectionList: {
     gap: 12,
@@ -625,41 +486,41 @@ const styles = StyleSheet.create({
   },
   exercisesTable: {
     marginTop: 16,
-    padding: 12,
-    backgroundColor: "#21262F",
+    backgroundColor: '#1E293B',
     borderRadius: 12,
+    padding: 16,
   },
   tableHeader: {
     flexDirection: 'row',
-    paddingVertical: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#3C4148",
+    borderBottomColor: '#374151',
   },
   tableHeaderText: {
-    flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: "#FFFFFF",
+    color: '#94A3B8',
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#3C4148",
   },
   tableCell: {
-    flex: 1,
     fontSize: 14,
-    color: "#FFFFFF",
+    color: '#FFFFFF',
   },
   numberInput: {
-    backgroundColor: "#3C4148",
-    borderRadius: 6,
-    padding: 8,
-    marginHorizontal: 4,
+    backgroundColor: '#374151',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     textAlign: 'center',
-    color: "#FFFFFF",
+    marginHorizontal: 4,
   },
   dateInput: {
     flexDirection: 'row',

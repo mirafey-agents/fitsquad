@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, 'asia-south1');
 // console.log(functions);
 
-connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+// connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 
 export async function getUserSessions(startDate: Date, endDate: Date) {
     try {

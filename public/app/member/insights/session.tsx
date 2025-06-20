@@ -30,14 +30,14 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
       date: session.start_time,
       trainer: {
         name: session.session.trainer.display_name,
-        image: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${session.session.trainer.id}/profilepic/1/1-thumbnail`,
+        image: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${(session.session.trainer as any).id}/profilepic/1/1-thumbnail`,
         verified: true
       },
       type: 'workout',
       title: session.session.title,
       performance_score: session.performance_score,
       feedback: session.trainer_comments,
-      media: [],
+      media: session.session_media,
       session: {
         title: session.session.title,
         time: session.start_time,
@@ -123,9 +123,12 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
                     </Text>
                   </View>
                 </View>
-                <BlurView intensity={80} style={styles.typeBadge}>
-                  <Text style={styles.typeText}>{input.type}</Text>
-                </BlurView>
+                {input.media && input.media.length > 0 && (
+                  <View style={styles.mediaCountContainer}>
+                    <Ionicons name="film-outline" size={16} color={colors.gray[300]} />
+                    <Text style={styles.mediaCountText}>{input.media.length}</Text>
+                  </View>
+                )}
               </View>
 
               <Text style={styles.inputTitle}>{input.title}</Text>
@@ -163,26 +166,6 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
                   </View>
                 )}
               </View>
-
-              {input.media && input.media.length > 0 && (
-                <View style={styles.mediaSection}>
-                  <Text style={styles.sectionLabel}>Media</Text>
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.mediaScroll}
-                  >
-                    {input.media.map((url, i) => (
-                      <View key={i} style={styles.mediaItem}>
-                        <Image 
-                          source={{ uri: url }}
-                          style={styles.mediaImage}
-                        />
-                      </View>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -203,7 +186,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   trainerInfo: {
     flexDirection: 'row',
@@ -234,25 +217,14 @@ const styles = StyleSheet.create({
     fontSize: typography.size.sm,
     color: colors.gray[400],
   },
-  typeBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.accent.coral + '20',
-  },
-  typeText: {
-    fontSize: typography.size.sm,
-    color: colors.accent.coral,
-    textTransform: 'capitalize',
-  },
   inputTitle: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold as any,
     color: colors.gray[200],
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   performanceSection: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   sectionLabel: {
     fontSize: typography.size.sm,
@@ -279,7 +251,7 @@ const styles = StyleSheet.create({
   },
   exerciseFeedback: {
     gap: spacing.sm,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   exerciseHighlight: {
     flexDirection: 'row',
@@ -356,5 +328,19 @@ const styles = StyleSheet.create({
     fontSize: typography.size.md,
     color: colors.gray[400],
     textAlign: 'center',
+  },
+  mediaCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.gray[700],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  mediaCountText: {
+    fontSize: typography.size.sm,
+    color: colors.gray[300],
+    fontWeight: typography.weight.medium as any,
   },
 }); 

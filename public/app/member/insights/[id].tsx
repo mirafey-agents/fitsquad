@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Image, Modal, Dimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { colors, typography, spacing, borderRadius } from '@/constants/theme';
 import { useSessions } from '@/app/context/SessionsContext';
-import { useState, useEffect } from 'react';
 import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
+import { getMediaFetchURL } from '@/utils/firebase';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const renderFormattedText = (text: string) => {
   if (!text) return null;
@@ -54,6 +56,9 @@ export default function WorkoutSessionDetails() {
   const { sessions } = useSessions();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [fullMediaUrl, setFullMediaUrl] = useState<string>('');
 
   useEffect(() => {
     const foundSession = sessions.find(s => s.id === id);
@@ -65,7 +70,7 @@ export default function WorkoutSessionDetails() {
         date: foundSession.start_time,
         trainer: {
           name: foundSession.session.trainer.display_name,
-          image: getProfilePicThumbNailURL(foundSession.session.trainer.id),
+          image: getProfilePicThumbNailURL((foundSession.session.trainer as any).id),
           verified: true
         },
         type: 'workout',
@@ -100,6 +105,31 @@ export default function WorkoutSessionDetails() {
       );
     }
     return stars;
+  };
+
+  const handleMediaPress = async (media: any) => {
+    try {
+      setFullMediaUrl(''); // Reset URL to show loading indicator
+      setSelectedMedia(media);
+      setModalVisible(true);
+      
+      const url = await getMediaFetchURL(
+        session.user_id, 
+        'session', 
+        session.session_id, 
+        media.media_id,
+        false // not thumbnail
+      );
+      setFullMediaUrl(url as string);
+    } catch (error) {
+      console.error('Error getting full media URL:', error);
+    }
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedMedia(null);
+    setFullMediaUrl('');
   };
 
   if (loading) {
@@ -156,34 +186,49 @@ export default function WorkoutSessionDetails() {
 
         <View style={styles.performance}>
           <Text style={styles.sectionTitle}>Performance Score</Text>
-          <View style={styles.performanceContent}>
+          <LinearGradient
+            colors={[colors.gray[900], colors.gray[800]]}
+            style={styles.card}
+          >
             <View style={styles.starsContainer}>
               {renderStars(session.performance_score)}
             </View>
             <Text style={styles.performanceScore}>
               {session.performance_score}/5
             </Text>
-          </View>
+          </LinearGradient>
         </View>
 
         <View style={styles.feedback}>
           <Text style={styles.sectionTitle}>Trainer's Feedback</Text>
-          <Text style={styles.feedbackText}>{session.feedback}</Text>
+          <LinearGradient
+            colors={[colors.gray[900], colors.gray[800]]}
+            style={styles.textCard}
+          >
+            <View style={styles.feedbackTextContainer}>
+              {renderFormattedText(session.feedback)}
+            </View>
+          </LinearGradient>
         </View>
 
         {session.session.exercises && session.session.exercises.length > 0 && (
           <View style={styles.session}>
             <Text style={styles.sectionTitle}>Exercises</Text>
-            <View style={styles.exerciseList}>
-              {session.session.exercises.map((exercise, i) => (
-                <View key={i} style={styles.exerciseItem}>
-                  <Text style={styles.exerciseItemName}>{exercise.name}</Text>
-                  <Text style={styles.exerciseItemDetails}>
-                    {exercise.sets} × {exercise.reps}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            <LinearGradient
+              colors={[colors.gray[900], colors.gray[800]]}
+              style={styles.exerciseCard}
+            >
+              <View style={styles.exerciseList}>
+                {session.session.exercises.map((exercise, i) => (
+                  <View key={i} style={styles.exerciseItem}>
+                    <Text style={styles.exerciseItemName}>{exercise.name}</Text>
+                    <Text style={styles.exerciseItemDetails}>
+                      {exercise.sets} × {exercise.reps}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </LinearGradient>
           </View>
         )}
   
@@ -219,32 +264,85 @@ export default function WorkoutSessionDetails() {
         {session.session_media && session.session_media.length > 0 && (
           <View style={styles.media}>
             <Text style={styles.sectionTitle}>Analysis</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.mediaScrollContent}
-            >
-              {session.session_media.map((media, i) => (
-                <View key={i} style={styles.mediaCard}>
+            <View style={styles.mediaGrid}>
+              {session.session_media.map((media, index) => (
+                <Pressable 
+                  key={`media-${index}`}
+                  style={styles.mediaGridItem} 
+                  onPress={() => handleMediaPress(media)}
+                >
                   <View style={styles.mediaImageContainer}>
                     <Image 
                       source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_id, media.media_id) }}
-                      style={styles.mediaImage}
+                      style={styles.mediaGridImage}
                     />
-                    {media.content_type?.startsWith('video/') && (
-                      <View style={styles.videoIconOverlay}>
-                        <Ionicons name="play-circle" size={32} color="white" />
-                      </View>
-                    )}
+                    <View style={styles.videoIconOverlay}>
+                      <Ionicons name="analytics" size={24} color="white" />
+                      <Text style={styles.videoIconText}>Analyse</Text>
+                    </View>
                   </View>
-                  <View style={styles.reviewContainer}>
-                    {renderFormattedText(media?.review)}
-                  </View>
-                </View>
+                </Pressable>
               ))}
-            </ScrollView>
+            </View>
           </View>
         )}
+
+        {/* Media Modal */}
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={closeModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Media Analysis</Text>
+                <Pressable style={styles.closeButton} onPress={closeModal}>
+                  <Ionicons name="close" size={24} color={colors.gray[200]} />
+                </Pressable>
+              </View>
+              
+              <ScrollView style={styles.modalBody}>
+                {selectedMedia && (
+                  <>
+                    <View style={styles.modalMediaContainer}>
+                      {fullMediaUrl ? (
+                        selectedMedia.content_type?.startsWith('video/') ? (
+                          <video
+                            src={fullMediaUrl}
+                            controls
+                            autoPlay
+                            muted
+                            playsInline
+                            style={{width: '100%', height: '100%'}}
+                          />
+                        ) : (
+                          <Image
+                            source={{ uri: fullMediaUrl }}
+                            style={styles.modalImage}
+                            resizeMode="contain"
+                          />
+                        )
+                      ) : (
+                        <View style={styles.loadingContainer}>
+                           <Text>Loading Media...</Text>
+                        </View>
+                      )}
+                    </View>
+                    
+                    <View style={styles.modalAnalysisContainer}>
+                      <Text style={styles.modalAnalysisTitle}>Analysis</Text>
+                      <View>
+                        {renderFormattedText(selectedMedia?.review)}
+                      </View>
+                    </View>
+                  </>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
 
     </View>
@@ -317,12 +415,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   performanceContent: {
+    // This style is now unused, can be removed but leaving for safety
+  },
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.gray[700],
     padding: spacing.md,
     borderRadius: borderRadius.lg,
+  },
+  textCard: {
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    width: '100%',
   },
   starsContainer: {
     flexDirection: 'row',
@@ -335,6 +440,10 @@ const styles = StyleSheet.create({
   },
   feedback: {
     marginBottom: spacing.xl,
+  },
+  feedbackTextContainer: {
+    flex: 1,
+    width: '100%',
   },
   feedbackText: {
     fontSize: typography.size.md,
@@ -381,22 +490,26 @@ const styles = StyleSheet.create({
   media: {
     marginBottom: spacing.xl,
   },
-  mediaScrollContent: {
-    paddingRight: spacing.md,
-    gap: spacing.md,
+  mediaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  mediaCard: {
-    marginBottom: 20,
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    overflow: 'hidden',
+  mediaGridItem: {
+    width: '32%',
+    aspectRatio: 1,
+    marginBottom: spacing.md,
   },
   mediaImageContainer: {
     position: 'relative',
-  },
-  mediaImage: {
     width: '100%',
-    height: 200,
+    height: '100%',
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  mediaGridImage: {
+    width: '100%',
+    height: '100%',
     backgroundColor: '#334155',
   },
   session: {
@@ -407,18 +520,20 @@ const styles = StyleSheet.create({
     color: colors.gray[400],
     marginBottom: spacing.md,
   },
-  exerciseList: {
-    backgroundColor: colors.gray[700],
+  exerciseCard: {
     borderRadius: borderRadius.lg,
     padding: spacing.md,
+  },
+  exerciseList: {
+    gap: spacing.sm,
   },
   exerciseItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray[600],
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.gray[700],
   },
   exerciseItemName: {
     fontSize: typography.size.md,
@@ -472,6 +587,81 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  videoIconText: {
+    color: 'white',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold as any,
+    marginTop: spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: spacing.md,
+  },
+  modalContent: {
+    backgroundColor: colors.primary.dark,
+    borderRadius: borderRadius.lg,
+    width: '100%',
+    maxWidth: 600,
+    maxHeight: '90%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[700],
+  },
+  modalTitle: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.gray[200],
+  },
+  closeButton: {
+    padding: spacing.sm,
+  },
+  modalBody: {
+    flex: 1,
+    padding: spacing.md,
+  },
+  modalMediaContainer: {
+    width: '100%',
+    height: 300,
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.gray[800],
+  },
+  modalImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: borderRadius.md,
+  },
+  modalAnalysisContainer: {
+    flex: 1,
+  },
+  modalAnalysisTitle: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semibold as any,
+    color: colors.gray[200],
+    marginBottom: spacing.md,
+  },
+  modalAnalysisText: {
+    color: colors.gray[200],
+    fontSize: typography.size.md,
+    lineHeight: 24,
+    fontWeight: typography.weight.regular as any,
+    letterSpacing: 0.3,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 

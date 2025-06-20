@@ -51,10 +51,10 @@ export const getUploadUrl = onCall(
       const prefix = makeKey(userId, category, categoryId);
       const [files] = await storageBucket.getFiles({prefix});
       // console.log(prefix, "files", files);
-      if (files.length >= 6) { // 3 media, 3 thumbnails
+      if (files.length > 16) { // 8 media, 8 thumbnails
         throw new HttpsError(
           "invalid-argument",
-          "Maximum 3 media files allowed"
+          "Maximum 8 media files allowed"
         );
       }
 

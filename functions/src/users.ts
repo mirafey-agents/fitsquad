@@ -26,7 +26,7 @@ export const updateUserProfile = onCall(
     }
     const allowedFields = [
       "display_name", "gender", "age", "goals",
-      "activityLevel", "medical_conditions", "dietary_restrictions",
+      "activity_level", "medical_conditions", "dietary_restrictions",
       "preferred_workout_times", "available_equipment",
       // trainer fields
       "bio", "certifications", "specializations",
@@ -42,7 +42,10 @@ export const updateUserProfile = onCall(
     const {error} = await getAdmin().from("users")
       .update(updateData).eq("id", userId).select();
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      throw error;
+    }
 
     return {success: true};
   }

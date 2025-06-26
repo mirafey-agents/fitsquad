@@ -13,8 +13,12 @@ export {
   getMembers,
   createMember,
   deleteMember,
-  updateUserProfile,
 } from "./members";
+
+export {
+  getUserProfile,
+  updateUserProfile,
+} from "./users";
 
 export {
   getUserSessions,

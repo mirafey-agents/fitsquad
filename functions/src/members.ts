@@ -177,48 +177,6 @@ export const deleteMember = onCall(
     }
   }
 );
-export const updateUserProfile = onCall(
-  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
-  async (request: any) => {
-    const {userId, profileData, authToken} = request.data;
-
-    if (!userId || !profileData || !authToken) {
-      throw new HttpsError("invalid-argument", "Missing required parameters");
-    }
-
-    const {
-      userId: authUserId,
-      error: tokenError,
-    } = verifySupabaseToken(authToken);
-
-    if (tokenError) {
-      throw new HttpsError("unauthenticated", "Invalid authentication token");
-    }
-    if (authUserId !== userId) {
-      throw new HttpsError("permission-denied",
-        "You are not authorized to update this user");
-    }
-
-    const {error} = await getAdmin().from("users")
-      .upsert({
-        id: userId,
-        display_name: profileData.name,
-        gender: profileData.gender,
-        age: parseInt(profileData.age),
-        goals: profileData.goals,
-        experience_level: profileData.activityLevel,
-        medical_conditions: profileData.medicalConditions || [],
-        dietary_restrictions: profileData.dietaryRestrictions,
-        preferred_workout_times: profileData.preferredWorkoutTimes,
-        available_equipment: profileData.availableEquipment,
-        onboarding_status: "completed",
-      }).select();
-
-    if (error) throw error;
-
-    return {success: true};
-  }
-);
 
 export const updateMemberPlan = async (
   userId: string, plan: string, validUntil: Date) => {

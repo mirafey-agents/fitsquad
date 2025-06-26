@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { Redirect, router } from 'expo-router';
-import { logout } from '../utils/supabase';
-import { View, Text } from 'react-native';
+import { logout } from '@/utils/auth';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 export default function LogoutPage() {

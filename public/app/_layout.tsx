@@ -3,13 +3,7 @@ import { Stack, router } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { SessionsProvider } from '@/app/context/SessionsContext';
 import { HabitsProvider } from '@/app/context/HabitsContext';
-import { getLoggedInUser } from '@/utils/supabase';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useAnimatedStyle,
-  interpolate,
-  useSharedValue,
-} from 'react-native-reanimated';
+import { getLoggedInUser } from '@/utils/auth';
 
 declare global {
   interface Window {

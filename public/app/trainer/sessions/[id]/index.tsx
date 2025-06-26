@@ -174,6 +174,20 @@ export default function SessionDetails() {
     } catch (error) {
       console.error('Error picking/uploading image:', error);
       alert('Failed to pick/upload image. Max 3 only.');
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMedia = async (participantId: string, mediaId: string) => {
+    try {
+      setLoading(true);
+      await deleteMedia(participantId, 'session', session.id, mediaId);
+      await fetchSession();
+    } catch (error) {
+      console.error('Error deleting media:', error);
+      alert('Failed to delete media.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,8 +204,16 @@ export default function SessionDetails() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingSpinner}>
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        </View>
+      )}
+      
+      <View style={[styles.header, loading && styles.disabledContent]}>
+        <Pressable style={styles.backButton} onPress={() => router.back()} disabled={loading}>
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </Pressable>
         <View style={styles.headerTitleContainer}>
@@ -230,7 +252,7 @@ export default function SessionDetails() {
         </View>
       )}
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={[styles.content, loading && styles.disabledContent]}>
         <View style={styles.sessionInfo}>
           <View style={styles.statusContainer}>
             <Text style={styles.statusLabel}>Status</Text>
@@ -247,6 +269,7 @@ export default function SessionDetails() {
                         : null
                   ]}
                   onPress={() => setSession(prev => ({ ...prev, status: option.value }))}
+                  disabled={loading}
                 >
                   <Text style={[
                     styles.statusOptionText,
@@ -318,6 +341,7 @@ export default function SessionDetails() {
                     }}
                     trackColor={{ false: '#DC2626', true: '#22C55E' }}
                     thumbColor="#FFFFFF"
+                    disabled={loading}
                   />
                 </View>
               </View>
@@ -337,13 +361,14 @@ export default function SessionDetails() {
                   <View style={styles.feedbackSection}>
                     <Text style={styles.feedbackLabel}>Trainer Comments</Text>
                     <TextInput
-                      style={styles.feedbackInput}
+                      style={[styles.feedbackInput, loading && styles.disabledInput]}
                       value={participant?.trainer_comments}
                       onChangeText={(text) => updateParticipant(participant.id, { trainer_comments: text })}
                       multiline
                       numberOfLines={3}
                       placeholder="Add your feedback..."
                       placeholderTextColor="#64748B"
+                      editable={!loading}
                     />
                   </View>
 
@@ -351,22 +376,24 @@ export default function SessionDetails() {
                     <View style={styles.exerciseField}>
                       <Text style={styles.exerciseFieldLabel}>Best Exercise</Text>
                       <TextInput
-                        style={styles.exerciseInput}
+                        style={[styles.exerciseInput, loading && styles.disabledInput]}
                         value={participant?.bestExercise}
                         onChangeText={(text) => updateParticipant(participant.id, { bestExercise: text })}
                         placeholder="Best performed exercise"
                         placeholderTextColor="#64748B"
+                        editable={!loading}
                       />
                     </View>
 
                     <View style={styles.exerciseField}>
                       <Text style={styles.exerciseFieldLabel}>Needs Improvement</Text>
                       <TextInput
-                        style={styles.exerciseInput}
+                        style={[styles.exerciseInput, loading && styles.disabledInput]}
                         value={participant?.needsImprovement}
                         onChangeText={(text) => updateParticipant(participant.id, { needsImprovement: text })}
                         placeholder="Exercise to improve"
                         placeholderTextColor="#64748B"
+                        editable={!loading}
                       />
                     </View>
                   </View>
@@ -388,10 +415,8 @@ export default function SessionDetails() {
                             </View>
                             <Pressable 
                               style={styles.removeMediaButton}
-                              onPress={() => {
-                                deleteMedia(participant.user_id, 'session', session.id, media.media_id);
-                                fetchSession();
-                              }}
+                              onPress={() => handleDeleteMedia(participant.users.id, media.media_id)}
+                              disabled={loading}
                             >
                               <Ionicons name="close-circle" size={20} color="#EF4444" />
                             </Pressable>
@@ -401,6 +426,7 @@ export default function SessionDetails() {
                       <Pressable 
                         style={styles.addMediaButton}
                         onPress={() => pickUploadMedia(participant.users.id)}
+                        disabled={loading}
                       >
                         <Ionicons name="camera" size={20} color="#4F46E5" />
                         <Text style={styles.addMediaText}>Add</Text>
@@ -781,5 +807,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9AAABD',
     marginTop: 4,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingSpinner: {
+    backgroundColor: '#21262F',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginTop: 8,
+  },
+  disabledContent: {
+    opacity: 0.5,
+  },
+  disabledInput: {
+    opacity: 0.5,
+    backgroundColor: '#2A2F36',
   },
 });

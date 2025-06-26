@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { getTrainerSessions } from '@/utils/firebase';
 import SubscriptionModal from '@/app/components/SubscriptionModal';
-import { checkOnboardingStatus } from '@/utils/supabase';
+import { getLoggedInUser } from '@/utils/auth';
 
 // Demo data
 const QUICK_ACTIONS = [
@@ -57,9 +57,7 @@ export default function TrainerDashboard() {
 
   useEffect(() => {
     fetchSessions();
-    checkOnboardingStatus().then(({ userData, isComplete }) => {
-      setUserData(userData);
-    });
+    setUserData(getLoggedInUser().profile);
   }, []);
 
   async function fetchSessions() {

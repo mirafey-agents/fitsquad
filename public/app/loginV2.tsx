@@ -1,64 +1,63 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Alert, TextInput, Pressable, Image, ScrollView } from 'react-native';
 import { router } from 'expo-router';
+import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { auth } from '@/utils/firebase';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import {
-  colors,
-  typography,
-  spacing,
-} from '../constants/theme';
-import { login } from '@/utils/supabase';
-import { logout } from '@/utils/auth';
-import Logo from '../components/Logo';
-import { cacheUserProfile } from '@/utils/firebase';
 
-export default function Login() {
+export default function LoginV2() {
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async () => {
+  useEffect(() => {
+    // Check if user is already logged in
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('User is signed in:', user.email);
+        // Keep user on this page as requested
+        // You can add logic here to show user info or redirect later
+      } else {
+        console.log('User is signed out');
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const handleEmailLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Error', 'Please enter both email and password');
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await login(email, password);
-      await cacheUserProfile(data.user.id);
-
-      if (data?.user) {
-        router.replace('/');
-      }
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Logged in user:', userCredential.user.email);
+      Alert.alert('Success', 'Logged in successfully!');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to login');
+      console.error('Login error:', error);
+      Alert.alert('Error', error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    logout();
-  }, []);
-
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <Logo size="large" />
+        <Image 
+          source={require('@/assets/images/logo_with_text_1024.svg')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Welcome Back!</Text>
         <Text style={styles.subtitle}>
-          Sign in to continue your fitness journey
+          Sign in to continue
         </Text>
       </View>
 
@@ -69,7 +68,7 @@ export default function Login() {
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="demotrainer@fitsquad.club"
+            placeholder="Email"
             placeholderTextColor={colors.gray[400]}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -84,7 +83,7 @@ export default function Login() {
               style={[styles.input, styles.passwordInput]}
               value={password}
               onChangeText={setPassword}
-              placeholder="demotrainer"
+              placeholder="Password"
               placeholderTextColor={colors.gray[400]}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
@@ -105,7 +104,7 @@ export default function Login() {
 
         <Pressable
           style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-          onPress={handleLogin}
+          onPress={handleEmailLogin}
           disabled={loading}
         >
           {loading ? (
@@ -122,14 +121,14 @@ export default function Login() {
           )}
         </Pressable>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
-          <Pressable onPress={() => router.push({ pathname: '/signup' })}>
-            <Text style={styles.footerLink}>Sign Up</Text>
-          </Pressable>
+        <View style={styles.invitationContainer}>
+          <Ionicons name="mail" size={20} color={colors.semantic.warning} />
+          <Text style={styles.invitationText}>
+            New user? Email support@myfitwave.com to request access
+          </Text>
         </View>
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -137,12 +136,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#060712',
+  },
+  contentContainer: {
     padding: spacing.xl,
+    paddingBottom: spacing['4xl'],
   },
   header: {
     alignItems: 'center',
     marginTop: spacing['4xl'],
     marginBottom: spacing['2xl'],
+  },
+  logo: {
+    width: 450,
+    height: 200,
+    marginBottom: spacing.md,
   },
   title: {
     fontSize: typography.size['3xl'],
@@ -215,20 +222,22 @@ const styles = StyleSheet.create({
     fontSize: typography.size.lg,
     fontWeight: 'bold',
   },
-  footer: {
+  invitationContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: spacing.xl,
+    padding: spacing.md,
+    backgroundColor: colors.semantic.warning + '20',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.semantic.warning + '40',
     gap: spacing.sm,
   },
-  footerText: {
+  invitationText: {
+    color: '#FFFFFF',
     fontSize: typography.size.md,
-    color: '#9AAABD',
+    fontWeight: '500',
+    textAlign: 'center',
   },
-  footerLink: {
-    fontSize: typography.size.md,
-    fontWeight: 'bold',
-    color: '#4A90E2',
-  },
-});
+}); 

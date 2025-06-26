@@ -16,11 +16,11 @@ import {
 } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingFlow from '@/components/OnboardingFlow';
-import { checkOnboardingStatus } from '@/utils/supabase';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadMedia } from '@/utils/firebase';
 import SubscriptionModal from '@/app/components/SubscriptionModal';
+import { getLoggedInUser } from '@/utils/auth';
 
 declare let Razorpay: any;
 
@@ -62,16 +62,12 @@ export default function Profile() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   useEffect(() => {
-    checkOnboardingStatus().then(({ userData, isComplete }) => {
-      setUserData(userData);
-    });
+    setUserData(getLoggedInUser().profile);
   }, []);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
-    checkOnboardingStatus().then(({ userData }) => {
-      setUserData(userData);
-    });
+    setUserData(getLoggedInUser().profile);
   };
 
   const handleImagePick = async () => {

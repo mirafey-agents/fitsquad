@@ -4,9 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { Buffer } from 'buffer';
-import { getMedia, uploadMedia } from '@/utils/firebase';
-import { updateUserProfile } from '@/utils/supabase';
-import { checkOnboardingStatus } from '@/utils/supabase';
+import { getMedia, uploadMedia, updateUserProfile } from '@/utils/firebase';
+import { getLoggedInUser } from '@/utils/auth';
 
 const CERTIFICATIONS = [
   'NASM (National Academy of Sports Medicine)',
@@ -70,11 +69,8 @@ export default function EditTrainerProfile() {
   }
 
   useEffect(() => {
-    checkOnboardingStatus().then(({ userData }) => {
-      console.log(userData)
-      setUserData(userData);
-      getProfilePic(userData.id);
-    });
+    setUserData(getLoggedInUser().profile);
+    getProfilePic(getLoggedInUser().user.id);
   }, []);
 
   const pickImage = async () => {
@@ -115,7 +111,7 @@ export default function EditTrainerProfile() {
     if (!userData?.id) return;
     await updateUserProfile({ display_name: userData.display_name, bio: userData.bio });
     // Refresh userData after update
-    checkOnboardingStatus().then(({ userData }) => setUserData(userData));
+    setUserData(getLoggedInUser().profile);
     router.back();
   };
 

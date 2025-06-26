@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { colors, shadows, typography, spacing, borderRadius } from '../constants/theme';
-import { completeOnboarding } from '../utils/supabase';
+import { updateUserProfile } from '@/utils/firebase';
 
 const GOALS = [
   'Weight Loss',
@@ -58,11 +58,11 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
     gender: initialData.gender || '',
     age: initialData.age ? String(initialData.age) : '',
     goals: initialData.goals || [],
-    activityLevel: initialData.experience_level || '',
-    medicalConditions: initialData.medical_conditions?.[0] || '',
-    dietaryRestrictions: initialData.dietary_restrictions || [],
-    preferredWorkoutTimes: initialData.preferred_workout_times || [],
-    availableEquipment: initialData.available_equipment || [],
+    activity_level: initialData.experience_level || '',
+    medical_conditions: initialData.medical_conditions || '',
+    dietary_restrictions: initialData.dietary_restrictions || [],
+    preferred_workout_times: initialData.preferred_workout_times || [],
+    available_equipment: initialData.available_equipment || [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,7 +82,7 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const success = await completeOnboarding(formData);
+      const success = await updateUserProfile(formData);
       if (success) {
         onComplete();
       } else {
@@ -226,13 +226,13 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
               key={level}
               style={[
                 styles.optionButton,
-                formData.activityLevel === level && styles.selectedOption
+                formData.activity_level === level && styles.selectedOption
               ]}
-              onPress={() => setSingleSelection('activityLevel', level)}
+              onPress={() => setSingleSelection('activity_level', level)}
             >
               <Text style={[
                 styles.optionText,
-                formData.activityLevel === level && styles.selectedOptionText
+                formData.activity_level === level && styles.selectedOptionText
               ]}>{level}</Text>
             </Pressable>
           ))}
@@ -250,8 +250,8 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
         <Text style={styles.label}>Medical Conditions (if any)</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          value={formData.medicalConditions}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, medicalConditions: text }))}
+          value={formData.medical_conditions}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, medical_conditions: text }))}
           placeholder="List any medical conditions or injuries we should know about"
           placeholderTextColor="#94A3B8"
           multiline
@@ -267,13 +267,13 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
               key={diet}
               style={[
                 styles.optionChip,
-                formData.dietaryRestrictions.includes(diet) && styles.selectedChip
+                formData.dietary_restrictions.includes(diet) && styles.selectedChip
               ]}
-              onPress={() => toggleSelection('dietaryRestrictions', diet)}
+              onPress={() => toggleSelection('dietary_restrictions', diet)}
             >
               <Text style={[
                 styles.chipText,
-                formData.dietaryRestrictions.includes(diet) && styles.selectedChipText
+                formData.dietary_restrictions.includes(diet) && styles.selectedChipText
               ]}>{diet}</Text>
             </Pressable>
           ))}
@@ -295,13 +295,13 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
               key={time}
               style={[
                 styles.optionChip,
-                formData.preferredWorkoutTimes.includes(time) && styles.selectedChip
+                formData.preferred_workout_times.includes(time) && styles.selectedChip
               ]}
-              onPress={() => toggleSelection('preferredWorkoutTimes', time)}
+              onPress={() => toggleSelection('preferred_workout_times', time)}
             >
               <Text style={[
                 styles.chipText,
-                formData.preferredWorkoutTimes.includes(time) && styles.selectedChipText
+                formData.preferred_workout_times.includes(time) && styles.selectedChipText
               ]}>{time}</Text>
             </Pressable>
           ))}
@@ -316,13 +316,13 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
               key={equipment}
               style={[
                 styles.optionChip,
-                formData.availableEquipment.includes(equipment) && styles.selectedChip
+                formData.available_equipment.includes(equipment) && styles.selectedChip
               ]}
-              onPress={() => toggleSelection('availableEquipment', equipment)}
+              onPress={() => toggleSelection('available_equipment', equipment)}
             >
               <Text style={[
                 styles.chipText,
-                formData.availableEquipment.includes(equipment) && styles.selectedChipText
+                formData.available_equipment.includes(equipment) && styles.selectedChipText
               ]}>{equipment}</Text>
             </Pressable>
           ))}

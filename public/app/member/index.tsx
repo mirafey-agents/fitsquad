@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRootNavigationState } from 'expo-router';
-import { getLoggedInUser } from '@/utils/supabase';
+import { getLoggedInUser } from '@/utils/auth';
 import { voteSession } from '@/utils/firebase';
 import { Dimensions } from 'react-native';
 import ConfirmModal from '@/components/ConfirmModal';

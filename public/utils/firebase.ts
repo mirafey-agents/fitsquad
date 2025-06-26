@@ -1,7 +1,8 @@
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
-import { supabase } from '@/utils/supabase';
 import {generateVideoThumbnail} from './mediaUtils';
+import { getAuth } from 'firebase/auth';
+import { getAuthToken, getLoggedInUser } from './auth';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -18,20 +19,15 @@ const functions = getFunctions(app, 'asia-south1');
 
 // connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 
+// Initialize Firebase services
+export const auth = getAuth(app);
+
 export async function getUserSessions(startDate: Date, endDate: Date) {
     try {
-      // Get current session from Supabase
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-      
-      if (!session?.access_token) {
-        throw new Error('No active session');
-      }
+      const authToken = await getAuthToken();
       
       const result = await httpsCallable(functions, 'getUserSessions')({
-        startDate,
-        endDate,
-        authToken: session.access_token
+        startDate, endDate, authToken
       });
 
       //Todo: Move this to the backend
@@ -72,20 +68,14 @@ export async function getTrainerSessions(
   startDate: Date=null, endDate: Date=null,
   sessionId: string=null, fetchUsers=false) {
   try {
-    // Get current session from Supabase
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    
-    if (!session?.access_token) {
-      throw new Error('No active session');
-    }
+    const authToken = await getAuthToken();
     
     const result = await httpsCallable(functions, 'getTrainerSessions')({
-      startDate: startDate,
+      startDate,
       endDate,
       sessionId,
       fetchUsers,
-      authToken: session.access_token
+      authToken
     });
 
     return result.data;
@@ -97,13 +87,7 @@ export async function getTrainerSessions(
 
 export async function createMember(member: any) {
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
-      
-  if (!session?.access_token) {
-    throw new Error('No active session');
-  }
-
+  const authToken = await getAuthToken();
   const {email, password, name, phone_number} = member;
   try {
     const result = await httpsCallable(functions, 'createMember')({
@@ -111,7 +95,7 @@ export async function createMember(member: any) {
       password,
       name,
       phoneNumber:phone_number,
-      authToken: session.access_token
+      authToken
     });
     return {data: result.data, error: null};
   } catch (error) {
@@ -121,35 +105,58 @@ export async function createMember(member: any) {
 }
 
 export async function getMembers(memberId: string | null) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'getMembers')({
-    memberId, authToken: session.access_token
+    memberId, authToken
   });
 }
 
+export async function updateUserProfile(profileData: any) {
+  const authToken = await getAuthToken();
+  const result = await httpsCallable(functions, 'updateUserProfile')({
+    userId: getLoggedInUser().user.id, profileData, authToken
+  });
+  cacheUserProfile(getLoggedInUser().user.id);
+  return result;
+}
+
+export async function getUserProfile(userId: string) {
+  const authToken = await getAuthToken();
+  
+  return httpsCallable(functions, 'getUserProfile')({
+    userId, authToken
+  });
+}
+
+export async function cacheUserProfile(userId: string) {
+  const profile = (await getUserProfile(userId))?.data as any;
+  console.log('profile to cache: ', profile);
+  
+  const data = getLoggedInUser();
+  data.profile = profile;
+  
+  localStorage.setItem('loggedinUser', JSON.stringify(data));
+}
+
 export async function deleteMember(memberId: string | null) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'deleteMember')({
-    memberId, authToken: session.access_token
+    memberId, authToken
   });
 }
 
 export async function getSquads(squadId: string | null) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'getSquads')({
-    squadId, authToken: session.access_token
+    squadId, authToken
   });
 }
 
 export async function createOrEditSquad(name, description, isPrivate, schedule, members, id=null) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'createOrEditSquad')({
     id,
@@ -158,24 +165,21 @@ export async function createOrEditSquad(name, description, isPrivate, schedule, 
     isPrivate,
     schedule,
     members,
-    authToken: session.access_token
+    authToken
   });
 }
 
 export async function deleteSquad(squadId: string) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'deleteSquad')(
-    {squadId, authToken: session.access_token}
+    {squadId, authToken}
   );
 } 
 
 export async function getExercises() {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
-  
-  return httpsCallable(functions, 'getExercises')({authToken: session.access_token});
+  const authToken = await getAuthToken();
+  return httpsCallable(functions, 'getExercises')({authToken});
 }
 
 export async function createSession(
@@ -183,58 +187,50 @@ export async function createSession(
   userIds: Array<string>=null, exercises: Array<any>=null) {
   
   // console.log("title", title, "start", startTime, "squad", squadId, "users", userIds, "exercises", exercises);
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'createSession')({
-    title, startTime, squadId, userIds, exercises,
-    authToken: session.access_token
+    title, startTime, squadId, userIds, exercises, authToken
   });
 }
 
 export async function updateSession(
   sessionId: string, status: string, sessionUsers: Array<any>) {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   return httpsCallable(functions, 'updateSession')({
-    sessionId, status, sessionUsers,
-    authToken: session.access_token
+    sessionId, status, sessionUsers, authToken
   });
 }
 
 export async function voteSession(sessionId: string, voteMvpId: string) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'voteSession')({
-    sessionId, voteMvpId, authToken: session.access_token
+    sessionId, voteMvpId, authToken
   });
 }
 
 export async function deleteSession(sessionId: string) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'deleteSession')({
-    sessionId, authToken: session.access_token
+    sessionId, authToken
   });
 }
 
 export async function getHabitIdeas() {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return (await httpsCallable(functions, 'getHabitIdeas')({
-    authToken: session.access_token,
+    authToken
   })).data;
 }
 
 export async function getHabitsHistory() {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return (await httpsCallable(functions, 'getHabitsHistory')({
-    authToken: session.access_token,
+    authToken
   })).data;
 }
 
@@ -242,29 +238,26 @@ export async function setHabitCompletion(
   habitId: string, date: Date,
   completed: boolean, completionId: string
 ) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return (await httpsCallable(functions, 'setHabitCompletion')({
-    habitId, date, completed, completionId, authToken: session.access_token
+    habitId, date, completed, completionId, authToken
   })).data;
 }
 
 export async function addHabit(title: string, description: string, icon: string) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return (await httpsCallable(functions, 'addHabit')({
-    title, description, icon, authToken: session.access_token,
+    title, description, icon, authToken
   })).data;
 }
 
 export async function deleteHabit(habitId: string) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
   
   return (await httpsCallable(functions, 'deleteHabit')({
-    habitId, authToken: session.access_token,
+    habitId, authToken
   })).data;
 }
 
@@ -274,13 +267,12 @@ export async function uploadMedia(
   category: string,
   categoryId: string
 ) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
 
   try {
   
     const {url, mediaId} = (await httpsCallable(functions, 'getUploadUrl')({
-      authToken: session.access_token, userId, category, categoryId,
+      authToken, userId, category, categoryId,
       mimeType: asset.mimeType,
     })).data as {url: string, mediaId: string};
 
@@ -307,7 +299,7 @@ export async function uploadMedia(
     }
 
     const processResult = (await httpsCallable(functions, 'processUploadedMedia')({
-        authToken: session.access_token, 
+        authToken, 
         userId, 
         category, 
         categoryId, 
@@ -328,11 +320,10 @@ export async function getMedia(
   categoryId: string,
   objectId: string
 ) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
 
   return (await httpsCallable(functions, 'getMedia')({
-    userId, category, categoryId, objectId, authToken: session.access_token
+    userId, category, categoryId, objectId, authToken
   }));
 }
 
@@ -342,11 +333,10 @@ export async function deleteMedia(
   categoryId: string,
   objectId: string
 ) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
 
   return (await httpsCallable(functions, 'deleteMedia')({
-    userId, category, categoryId, objectId, authToken: session.access_token
+    userId, category, categoryId, objectId, authToken
   }));
 }
 
@@ -355,11 +345,10 @@ export async function listMedia(
   category: string,
   categoryId: string
 ) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
 
   return (await httpsCallable(functions, 'listMedia')({
-    userId, category, categoryId, authToken: session.access_token
+    userId, category, categoryId, authToken
   })).data;
 }
 
@@ -370,12 +359,7 @@ export async function getMediaFetchURL(
   objectId: string,
   isThumbnail: boolean = false
 ) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
-
-  if (!session?.access_token) {
-    throw new Error('No active session');
-  }
+  const authToken = await getAuthToken();
 
   return (await httpsCallable(functions, 'getMediaFetchUrl')({
     userId,
@@ -383,7 +367,7 @@ export async function getMediaFetchURL(
     categoryId,
     objectId,
     isThumbnail,
-    authToken: session.access_token,
+    authToken
   })).data;
 }
 
@@ -391,26 +375,20 @@ export async function getSessionMediaReview(
   userId: string,
   sessionId: string
 ) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
+  const authToken = await getAuthToken();
 
   return (await httpsCallable(functions, 'getSessionMediaReview')({
-    userId, sessionId, authToken: session.access_token
+    userId, sessionId, authToken
   })).data;
 }
 
 export async function rzpCreateOrder(data: { userId: string; billingPlan: string }) {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    
-    if (!session?.access_token) {
-      throw new Error('No active session');
-    }
+    const authToken = await getAuthToken();
     
     const result = await httpsCallable(functions, 'rzpCreateOrder')({
       ...data,
-      authToken: session.access_token
+      authToken
     });
     return result.data;
   } catch (error) {
@@ -421,16 +399,11 @@ export async function rzpCreateOrder(data: { userId: string; billingPlan: string
 
 export async function getSubscriptionPlans(data: { role: string }) {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    
-    if (!session?.access_token) {
-      throw new Error('No active session');
-    }
+    const authToken = await getAuthToken();
     
     const result = await httpsCallable(functions, 'getSubscriptionPlans')({
       ...data,
-      authToken: session.access_token
+      authToken
     });
     return result.data;
   } catch (error) {

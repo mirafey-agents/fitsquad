@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { getLoggedInUser } from '../utils/supabase';
+import { getLoggedInUser } from '@/utils/auth';
 
 const Index = () => {
   useFrameworkReady();

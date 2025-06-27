@@ -8,6 +8,7 @@ interface Session {
   start_time: string;
   status: string;
   performance_score: number;
+  total_energy_points: number;
   trainer_comments: string;
   session_media: Array<{
     media_id: string;
@@ -21,9 +22,10 @@ interface Session {
   };
   exercises: Array<{
     name: string;
-    sets: number;
-    reps: number;
-    energyPoints: number;
+    sets: string;
+    reps: string;
+    energy_points: number;
+    module_type: string;
   }>;
   participants: Array<{
     id: string;
@@ -55,6 +57,12 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
         new Date(2024, 1, 1),
         new Date(2025, 12, 1)
       );
+      sessionsData.map((session: Session) => {
+        session.total_energy_points = session.exercises.reduce(
+          (acc, exercise) => {
+            return acc + exercise.energy_points * parseInt(exercise.sets);
+           }, 0);
+      });
       setSessions(sessionsData as Session[]);
       setError(null);
     } catch (err) {

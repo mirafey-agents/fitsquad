@@ -1,12 +1,16 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Image } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '@/utils/supabase';
 import { deleteMember, getMembers } from '@/utils/firebase';
+import { getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 import ConfirmModal from '@/components/ConfirmModal';
+import { getSquads } from '@/utils/firebase';
 
 interface Member {
   id: string;
@@ -20,7 +24,7 @@ interface Member {
   height: number | null;
   weight: number | null;
   body_fat: number | null;
-  medical_conditions: string[] | null;
+  medical_conditions: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
   lifestyle_habits: Record<string, any> | null;
@@ -44,6 +48,7 @@ export default function MemberDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (typeof id === 'string') {
@@ -61,99 +66,14 @@ export default function MemberDetails() {
       console.log(memberData[0]);
       setMember(memberData[0]);
 
-      // Fetch squads the member belongs to
-      const { data: squadData, error: squadError } = await supabase
-        .from('squad_members')
-        .select(`
-          squad:squads(
-            id,
-            name,
-            description
-          )
-        `)
-        .eq('user_id', memberId);
-
-      if (squadError) throw squadError;
-      setSquads(squadData.map(item => item.squad));
-
+      const {data: allSquads} = await getSquads(null);
+      const squads = (allSquads as []).filter((squad: any) => squad.squad_members.some((member: any) => member.users.id === memberId));
+      setSquads(squads);
     } catch (error) {
       console.error('Error fetching member details:', error);
       setError('Failed to load member details');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResendInvitation = async () => {
-    if (!member) return;
-
-    try {
-      // Generate a new invitation code
-      const invitationCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      
-      // Set expiry date to 48 hours from now
-      const expiryDate = new Date();
-      expiryDate.setHours(expiryDate.getHours() + 48);
-      
-      // Set reminder date to 24 hours from now
-      const reminderDate = new Date();
-      reminderDate.setHours(reminderDate.getHours() + 24);
-
-      // Check if there's an existing invitation
-      const { data: existingInvitation } = await supabase
-        .from('member_invitations')
-        .select('id')
-        .eq('user_id', member.id)
-        .single();
-
-      if (existingInvitation) {
-        // Update existing invitation
-        const { error: updateError } = await supabase
-          .from('member_invitations')
-          .update({
-            invitation_code: invitationCode,
-            status: 'sent',
-            expiry_date: expiryDate.toISOString(),
-            reminder_date: reminderDate.toISOString(),
-          })
-          .eq('id', existingInvitation.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new invitation
-        const { error: createError } = await supabase
-          .from('member_invitations')
-          .insert({
-            user_id: member.id,
-            invitation_code: invitationCode,
-            status: 'sent',
-            expiry_date: expiryDate.toISOString(),
-            reminder_date: reminderDate.toISOString(),
-          });
-
-        if (createError) throw createError;
-      }
-
-      // Update member status
-      const { error: memberUpdateError } = await supabase
-        .from('users')
-        .update({
-          onboarding_status: 'invited',
-        })
-        .eq('id', member.id);
-
-      if (memberUpdateError) throw memberUpdateError;
-
-      // Refresh member data
-      fetchMemberDetails(member.id);
-
-      // In a real app, you would send the invitation via WhatsApp and email here
-      console.log(`Invitation resent to ${member.email} and ${member.phone_number}`);
-
-      Alert.alert('Success', 'Invitation has been resent');
-    } catch (error) {
-      console.error('Error resending invitation:', error);
-      Alert.alert('Error', 'Failed to resend invitation');
     }
   };
 
@@ -193,13 +113,18 @@ export default function MemberDetails() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#1E293B" />
-          </Pressable>
-          <Text style={styles.title}>Member Details</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <LinearGradient
+          colors={['#21262F', '#353D45']}
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </Pressable>
+            <Text style={styles.title}>Member Details</Text>
+            <View style={{ width: 40 }} />
+          </View>
+        </LinearGradient>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading member details...</Text>
         </View>
@@ -210,13 +135,18 @@ export default function MemberDetails() {
   if (error || !member) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#1E293B" />
-          </Pressable>
-          <Text style={styles.title}>Member Details</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <LinearGradient
+          colors={['#21262F', '#353D45']}
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </Pressable>
+            <Text style={styles.title}>Member Details</Text>
+            <View style={{ width: 40 }} />
+          </View>
+        </LinearGradient>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error || 'Member not found'}</Text>
           <Pressable style={styles.backToMembersButton} onPress={() => router.back()}>
@@ -229,26 +159,39 @@ export default function MemberDetails() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
-        </Pressable>
-        <Text style={styles.title}>Member Details</Text>
-        <Pressable 
-          style={styles.deleteButton}
-          onPress={handleDelete}
-        >
-          <Ionicons name="trash-outline" size={24} color="#EF4444" />
-        </Pressable>
-      </View>
+      <LinearGradient
+        colors={['#21262F', '#353D45']}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </Pressable>
+          <Text style={styles.title}>Member Details</Text>
+          <Pressable 
+            style={styles.deleteButton}
+            onPress={handleDelete}
+          >
+            <Ionicons name="trash-outline" size={24} color="#EF4444" />
+          </Pressable>
+        </View>
+      </LinearGradient>
 
       <ScrollView style={styles.content}>
         <Animated.View entering={FadeInUp.delay(100)}>
           <View style={styles.profileHeader}>
             <View style={styles.profileAvatar}>
-              <Text style={styles.avatarText}>
-                {member.display_name.split(' ').map(n => n[0]).join('').toUpperCase()}
-              </Text>
+              {!imageError ? (
+                <Image
+                  source={{ uri: getProfilePicThumbNailURL(member.id) }}
+                  style={styles.avatarImage}
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {member.display_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </Text>
+              )}
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{member.display_name}</Text>
@@ -259,49 +202,25 @@ export default function MemberDetails() {
                      member.onboarding_status === 'invited' ? 'Invited' : 'Active'}
                   </Text>
                 </BlurView>
-                <BlurView intensity={80} style={styles.typeBadge}>
-                  <Text style={styles.typeText}>
-                    {member.service_type === 'Personal Training' ? 'Personal' : 'Group'}
-                  </Text>
-                </BlurView>
               </View>
             </View>
           </View>
         </Animated.View>
 
-        {member.onboarding_status === 'invited' && (
-          <Animated.View entering={FadeInUp.delay(150)}>
-            <View style={styles.invitationCard}>
-              <View style={styles.invitationHeader}>
-                <Ionicons name="mail" size={24} color="#4F46E5" />
-                <Text style={styles.invitationTitle}>Invitation Sent</Text>
-              </View>
-              <Text style={styles.invitationText}>
-                An invitation has been sent to this member. They will need to complete their profile setup.
-              </Text>
-              <Pressable 
-                style={styles.resendButton}
-                onPress={handleResendInvitation}
-              >
-                <Text style={styles.resendButtonText}>Resend Invitation</Text>
-              </Pressable>
-            </View>
-          </Animated.View>
-        )}
 
         <Animated.View entering={FadeInUp.delay(200)}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Contact Information</Text>
             <View style={styles.infoCard}>
               <View style={styles.infoItem}>
-                <Ionicons name="mail" size={20} color="#64748B" />
+                <Ionicons name="mail" size={20} color="#94A3B8" />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Email</Text>
                   <Text style={styles.infoValue}>{member.email}</Text>
                 </View>
               </View>
               <View style={styles.infoItem}>
-                <Ionicons name="call" size={20} color="#64748B" />
+                <Ionicons name="call" size={20} color="#94A3B8" />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Phone (WhatsApp)</Text>
                   <Text style={styles.infoValue}>{member.phone_number}</Text>
@@ -309,7 +228,7 @@ export default function MemberDetails() {
               </View>
               {member.emergency_contact_name && (
                 <View style={styles.infoItem}>
-                  <Ionicons name="alert-circle" size={20} color="#64748B" />
+                  <Ionicons name="alert-circle" size={20} color="#94A3B8" />
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Emergency Contact</Text>
                     <Text style={styles.infoValue}>
@@ -327,21 +246,21 @@ export default function MemberDetails() {
             <Text style={styles.sectionTitle}>Membership Details</Text>
             <View style={styles.infoCard}>
               <View style={styles.infoItem}>
-                <Ionicons name="fitness" size={20} color="#64748B" />
+                <Ionicons name="fitness" size={20} color="#94A3B8" />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Membership Type</Text>
                   <Text style={styles.infoValue}>{member.service_type}</Text>
                 </View>
               </View>
               <View style={styles.infoItem}>
-                <Ionicons name="flag" size={20} color="#64748B" />
+                <Ionicons name="flag" size={20} color="#94A3B8" />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Primary Goal</Text>
                   <Text style={styles.infoValue}>{member.primary_goal}</Text>
                 </View>
               </View>
               <View style={styles.infoItem}>
-                <Ionicons name="calendar" size={20} color="#64748B" />
+                <Ionicons name="calendar" size={20} color="#94A3B8" />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Start Date</Text>
                   <Text style={styles.infoValue}>
@@ -353,7 +272,7 @@ export default function MemberDetails() {
           </View>
         </Animated.View>
 
-        {member.service_type === 'Group Training' && squads.length > 0 && (
+        {squads.length > 0 && (
           <Animated.View entering={FadeInUp.delay(400)}>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Assigned Squads</Text>
@@ -405,12 +324,10 @@ export default function MemberDetails() {
                   <Text style={styles.sectionTitle}>Medical Information</Text>
                   <View style={styles.infoCard}>
                     <View style={styles.infoItem}>
-                      <Ionicons name="medkit" size={20} color="#64748B" />
+                      <Ionicons name="medkit" size={20} color="#94A3B8" />
                       <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Medical Conditions</Text>
-                        {member.medical_conditions.map((condition, index) => (
-                          <Text key={index} style={styles.medicalCondition}>• {condition}</Text>
-                        ))}
+                        <Text style={styles.medicalCondition}>{member.medical_conditions}</Text>
                       </View>
                     </View>
                   </View>
@@ -425,7 +342,7 @@ export default function MemberDetails() {
                   <View style={styles.infoCard}>
                     {member.lifestyle_habits.sleep && (
                       <View style={styles.infoItem}>
-                        <Ionicons name="moon" size={20} color="#64748B" />
+                        <Ionicons name="moon" size={20} color="#94A3B8" />
                         <View style={styles.infoContent}>
                           <Text style={styles.infoLabel}>Sleep</Text>
                           <Text style={styles.infoValue}>{member.lifestyle_habits.sleep}</Text>
@@ -434,7 +351,7 @@ export default function MemberDetails() {
                     )}
                     {member.lifestyle_habits.diet && (
                       <View style={styles.infoItem}>
-                        <Ionicons name="nutrition" size={20} color="#64748B" />
+                        <Ionicons name="nutrition" size={20} color="#94A3B8" />
                         <View style={styles.infoContent}>
                           <Text style={styles.infoLabel}>Diet</Text>
                           <Text style={styles.infoValue}>{member.lifestyle_habits.diet}</Text>
@@ -443,7 +360,7 @@ export default function MemberDetails() {
                     )}
                     {member.lifestyle_habits.activity_level && (
                       <View style={styles.infoItem}>
-                        <Ionicons name="walk" size={20} color="#64748B" />
+                        <Ionicons name="walk" size={20} color="#94A3B8" />
                         <View style={styles.infoContent}>
                           <Text style={styles.infoLabel}>Activity Level</Text>
                           <Text style={styles.infoValue}>{member.lifestyle_habits.activity_level}</Text>
@@ -493,7 +410,7 @@ export default function MemberDetails() {
                         <Text style={styles.documentName}>
                           {doc.split('/').pop() || `Document ${index + 1}`}
                         </Text>
-                        <Ionicons name="download" size={20} color="#64748B" />
+                        <Ionicons name="download" size={20} color="#94A3B8" />
                       </Pressable>
                     ))}
                   </View>
@@ -513,18 +430,6 @@ export default function MemberDetails() {
             </View>
           </Animated.View>
         )}
-
-        {/* <View style={styles.actionButtons}>
-          {member.onboarding_status === 'completed' && (
-            <Pressable 
-              style={styles.assessmentButton}
-              onPress={() => router.push(`./assessment`, {relativeToDirectory: true})}
-            >
-              <Ionicons name="analytics" size={20} color="#FFFFFF" />
-              <Text style={styles.assessmentButtonText}>Schedule Assessment</Text>
-            </Pressable>
-          )}
-        </View> */}
       </ScrollView>
 
       {showDeleteConfirm && (
@@ -541,25 +446,27 @@ export default function MemberDetails() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#181C23',
   },
   header: {
+    paddingTop: 10,
+    paddingBottom: 0,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   backButton: {
     padding: 8,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
   },
   deleteButton: {
     padding: 8,
@@ -570,7 +477,7 @@ const styles = StyleSheet.create({
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -579,9 +486,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   profileAvatar: {
     width: 60,
@@ -592,9 +499,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 16,
   },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+  },
   avatarText: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#FFFFFF',
   },
   profileInfo: {
@@ -603,7 +515,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   profileBadges: {
@@ -623,7 +535,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+    backgroundColor: 'rgba(79, 70, 229, 0.2)',
   },
   typeText: {
     fontSize: 12,
@@ -631,10 +543,12 @@ const styles = StyleSheet.create({
     color: '#4F46E5',
   },
   invitationCard: {
-    backgroundColor: '#F0F0FF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4F46E5',
   },
   invitationHeader: {
     flexDirection: 'row',
@@ -649,7 +563,7 @@ const styles = StyleSheet.create({
   },
   invitationText: {
     fontSize: 14,
-    color: '#4F46E5',
+    color: '#94A3B8',
     marginBottom: 16,
   },
   resendButton: {
@@ -668,13 +582,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 8,
+    color: '#FFFFFF',
+    marginBottom: 16,
   },
   infoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -682,9 +596,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   infoItem: {
     flexDirection: 'row',
@@ -697,18 +611,18 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
     marginBottom: 4,
   },
   infoValue: {
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   squadsContainer: {
     gap: 8,
   },
   squadCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -716,22 +630,22 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   squadName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   squadDescription: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
   },
   measurementsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
@@ -741,31 +655,31 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   measurementItem: {
     alignItems: 'center',
   },
   measurementLabel: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
     marginBottom: 4,
   },
   measurementValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
   },
   medicalCondition: {
     fontSize: 14,
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginTop: 4,
   },
   experienceText: {
     fontSize: 14,
-    color: '#1E293B',
+    color: '#FFFFFF',
     lineHeight: 20,
   },
   timesContainer: {
@@ -777,7 +691,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F0F0FF',
+    backgroundColor: 'rgba(79, 70, 229, 0.2)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -792,7 +706,7 @@ const styles = StyleSheet.create({
   documentCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -800,38 +714,20 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   documentName: {
     flex: 1,
     fontSize: 14,
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginLeft: 12,
   },
   notesText: {
     fontSize: 14,
-    color: '#1E293B',
-    lineHeight: 20,
-  },
-  actionButtons: {
-    marginTop: 16,
-    marginBottom: 40,
-  },
-  assessmentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#4F46E5',
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  assessmentButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#FFFFFF',
+    lineHeight: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -840,7 +736,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#64748B',
+    color: '#94A3B8',
   },
   errorContainer: {
     flex: 1,

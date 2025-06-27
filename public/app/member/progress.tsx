@@ -4,9 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
-import { supabase } from '../../utils/supabase';
 import { LineChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
 import MeasurementInput from '../../components/MeasurementInput';
 import MetricDetails from '../../components/MetricDetails';
 
@@ -99,16 +97,6 @@ export default function Progress() {
     try {
       setLoading(true);
       setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .rpc('get_latest_metrics', {
-          p_user_id: '00000000-0000-0000-0000-000000000000'
-        });
-
-      if (fetchError) throw fetchError;
-      if (data && data.length > 0) {
-        setMetrics(data);
-      }
     } catch (error) {
       console.error('Error fetching progress:', error);
       setError('Failed to load progress data');
@@ -119,16 +107,7 @@ export default function Progress() {
 
   const handleAddMeasurement = async (measurements: Record<string, number>) => {
     try {
-      const { error } = await supabase
-        .from('progress_metrics')
-        .insert({
-          user_id: '00000000-0000-0000-0000-000000000000',
-          date: new Date().toISOString(),
-          ...measurements
-        });
-
-      if (error) throw error;
-      
+      alert('add measurement not implemented!');
       fetchProgressData();
       setShowMeasurementInput(false);
     } catch (error) {

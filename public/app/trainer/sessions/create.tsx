@@ -110,12 +110,6 @@ export default function CreateSession() {
       setLoading(true);
       setError(null);
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-      
-      if (!session?.access_token) {
-        throw new Error('No active session');
-      }
       const result = await createSession(
         formData.title,
         formData.date.toISOString(),

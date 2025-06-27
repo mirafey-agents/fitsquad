@@ -66,12 +66,8 @@ export default function Locations() {
       setLoading(true);
       setError(null);
 
-      // Fetch locations from Supabase
-      const { data, error: fetchError } = await supabase
-        .from('training_locations')
-        .select('*');
-
-      if (fetchError) throw fetchError;
+      alert('fetch locations not implemented!');
+      const data =[];
 
       const transformedLocations = (data || []).map(location => ({
         ...location,

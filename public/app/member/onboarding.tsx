@@ -3,7 +3,7 @@ import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useState } from 'react';
-import { completeOnboarding } from '../../utils/supabase';
+import { updateUserProfile } from '@/utils/firebase';
 
 const EXPERIENCE_LEVELS = [
   {
@@ -50,7 +50,7 @@ export default function MemberOnboarding() {
         availableEquipment: []
       };
       
-      await completeOnboarding(profileData);
+      await updateUserProfile(profileData);
       router.push('/');
     } catch (error) {
       console.error('Error completing onboarding:', error);

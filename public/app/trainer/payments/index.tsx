@@ -7,7 +7,6 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../../../utils/supabase';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
-import { colors, typography, spacing, borderRadius, shadows } from '../../../constants/theme';
 
 interface Payment {
   id: string;

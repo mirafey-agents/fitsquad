@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { colors, typography, spacing, borderRadius, shadows } from '../../../../constants/theme';
-import { supabase } from '../../../../utils/supabase';
+import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
+import { supabase } from '@/utils/supabase';
 
 interface Reminder {
   id: string;

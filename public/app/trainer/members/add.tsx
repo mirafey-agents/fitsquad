@@ -1,10 +1,11 @@
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Switch } from 'react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { createMember } from '@/utils/firebase';
-import { supabase } from '@/utils/supabase';
+import { createMember, getSquads } from '@/utils/firebase';
 import * as Yup from 'yup';
 
 interface Squad {
@@ -44,38 +45,18 @@ export default function AddMember() {
     notes: '',
   });
   
-  const [selectedSquads, setSelectedSquads] = useState<string[]>([]);
   const [squads, setSquads] = useState<Squad[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [sendInvitation, setSendInvitation] = useState(true);
-
+  
   useEffect(() => {
     fetchSquads();
   }, []);
 
   const fetchSquads = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('squads')
-        .select('id, name, description')
-        .order('name');
-
-      if (error) throw error;
-      setSquads(data || []);
-    } catch (error) {
-      console.error('Error fetching squads:', error);
-      Alert.alert('Error', 'Failed to load squads');
-    }
-  };
-
-  const toggleSquad = (squadId: string) => {
-    setSelectedSquads(prev => 
-      prev.includes(squadId)
-        ? prev.filter(id => id !== squadId)
-        : [...prev, squadId]
-    );
-  };
+    const {data} = await getSquads(null);
+    setSquads(data as Squad[]);
+  }
 
   const validateForm = async () => {
     try {
@@ -123,55 +104,6 @@ export default function AddMember() {
         console.log('Error:', error);
         alert('Failed to add member: ' + error.message);
       }
-      // If it's group training, add to selected squads
-      // if (formData.serviceType === 'Group Training' && selectedSquads.length > 0) {
-      //   const squadMembersData = selectedSquads.map(squadId => ({
-      //     squad_id: squadId,
-      //     user_id: member.id,
-      //     role: 'member',
-      //   }));
-
-      //   const { error: squadError } = await supabase
-      //     .from('squad_members')
-      //     .insert(squadMembersData);
-
-      //   if (squadError) throw squadError;
-      // }
-
-      // // If sending invitation, create an invitation record
-      // if (sendInvitation) {
-      //   const expiryDate = new Date();
-      //   expiryDate.setHours(expiryDate.getHours() + 48); // 48 hours from now
-        
-      //   const reminderDate = new Date();
-      //   reminderDate.setHours(reminderDate.getHours() + 24); // 24 hours from now
-
-      //   const { error: invitationError } = await supabase
-      //     .from('member_invitations')
-      //     .insert({
-      //       user_id: member.id,
-      //       invitation_code: invitationCode,
-      //       status: 'sent',
-      //       expiry_date: expiryDate.toISOString(),
-      //       reminder_date: reminderDate.toISOString(),
-      //     });
-
-      //   if (invitationError) throw invitationError;
-
-      //   // In a real app, you would send the invitation via WhatsApp and email here
-      //   console.log(`Invitation sent to ${formData.email} and ${formData.phoneNumber}`);
-      // }
-
-      Alert.alert(
-        'Success',
-        `Member added successfully${sendInvitation ? ' and invitation sent' : ''}`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
     } catch (error) {
       console.error('Error adding member:', error);
       Alert.alert('Error', 'Failed to add member');
@@ -182,21 +114,26 @@ export default function AddMember() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
-        </Pressable>
-        <Text style={styles.title}>Add New Member</Text>
-        <Pressable 
-          style={[styles.saveButton, loading && styles.disabledButton]}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          <Text style={styles.saveButtonText}>
-            {loading ? 'Saving...' : 'Save'}
-          </Text>
-        </Pressable>
-      </View>
+      <LinearGradient
+        colors={['#21262F', '#353D45']}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </Pressable>
+          <Text style={styles.title}>Add New Member</Text>
+          <Pressable 
+            style={[styles.saveButton, loading && styles.disabledButton]}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            <Text style={styles.saveButtonText}>
+              {loading ? 'Creating...' : 'Create'}
+            </Text>
+          </Pressable>
+        </View>
+      </LinearGradient>
 
       <ScrollView style={styles.content}>
         <Animated.View entering={FadeInUp.delay(100)}>
@@ -276,7 +213,7 @@ export default function AddMember() {
                   <Ionicons 
                     name="person" 
                     size={20} 
-                    color={formData.serviceType === 'Personal Training' ? '#FFFFFF' : '#64748B'} 
+                    color={formData.serviceType === 'Personal Training' ? '#FFFFFF' : '#94A3B8'} 
                   />
                   <Text style={[
                     styles.serviceTypeText,
@@ -293,7 +230,7 @@ export default function AddMember() {
                   <Ionicons 
                     name="people" 
                     size={20} 
-                    color={formData.serviceType === 'Group Training' ? '#FFFFFF' : '#64748B'} 
+                    color={formData.serviceType === 'Group Training' ? '#FFFFFF' : '#94A3B8'} 
                   />
                   <Text style={[
                     styles.serviceTypeText,
@@ -344,72 +281,28 @@ export default function AddMember() {
           </View>
         </Animated.View>
 
-        {formData.serviceType === 'Group Training' && (
-          <Animated.View entering={FadeInUp.delay(300)}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Squad Assignment</Text>
-              <Text style={styles.sectionSubtitle}>Select squads for this member</Text>
-              
-              {squads.length === 0 ? (
-                <Text style={styles.emptyText}>No squads available</Text>
-              ) : (
-                squads.map((squad, index) => (
-                  <Pressable
-                    key={squad.id}
-                    style={[
-                      styles.squadCard,
-                      selectedSquads.includes(squad.id) && styles.selectedSquad
-                    ]}
-                    onPress={() => toggleSquad(squad.id)}
-                  >
-                    <View style={styles.squadInfo}>
-                      <Text style={styles.squadName}>{squad.name}</Text>
-                      {squad.description && (
-                        <Text style={styles.squadDescription}>{squad.description}</Text>
-                      )}
-                    </View>
-                    {selectedSquads.includes(squad.id) && (
-                      <View style={styles.selectedIndicator}>
-                        <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
-                      </View>
-                    )}
-                  </Pressable>
-                ))
-              )}
+        <Animated.View entering={FadeInUp.delay(300)}>
+          <View style={styles.infoSection}>
+            <View style={styles.infoHeader}>
+              <Ionicons name="information-circle" size={24} color="#4F46E5" />
+              <Text style={styles.infoTitle}>What happens next?</Text>
             </View>
-          </Animated.View>
-        )}
-
-        {/* <Animated.View entering={FadeInUp.delay(400)}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Invitation Settings</Text>
-            
-            <View style={styles.switchContainer}>
-              <View style={styles.switchInfo}>
-                <Text style={styles.switchLabel}>Send Invitation</Text>
-                <Text style={styles.switchDescription}>
-                  Automatically send an invitation to the member via WhatsApp and email
-                </Text>
-              </View>
-              <Switch
-                value={sendInvitation}
-                onValueChange={setSendInvitation}
-                trackColor={{ false: '#E2E8F0', true: '#818CF8' }}
-                thumbColor={sendInvitation ? '#4F46E5' : '#FFFFFF'}
-              />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoText}>
+                • An email and WhatsApp message will be sent to the member with their login credentials
+              </Text>
+              <Text style={styles.infoText}>
+                • The member can choose to sign up with MyFitWave or continue without the app
+              </Text>
+              <Text style={styles.infoText}>
+                • You can still log sessions, track progress, and send payment reminders regardless of their app usage
+              </Text>
+              <Text style={styles.infoText}>
+                • All member data and progress will be managed through your trainer dashboard
+              </Text>
             </View>
-
-            {sendInvitation && (
-              <View style={styles.invitationInfo}>
-                <Ionicons name="information-circle" size={20} color="#4F46E5" />
-                <Text style={styles.invitationInfoText}>
-                  An invitation will be sent to the member with a unique registration link that expires in 48 hours. 
-                  A reminder will be sent if they don't respond within 24 hours.
-                </Text>
-              </View>
-            )}
           </View>
-        </Animated.View> */}
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -418,25 +311,27 @@ export default function AddMember() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#181C23',
   },
   header: {
+    paddingTop: 10,
+    paddingBottom: 0,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   backButton: {
     padding: 8,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
   },
   saveButton: {
     paddingHorizontal: 16,
@@ -457,7 +352,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -465,19 +360,14 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 16,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   inputGroup: {
@@ -486,17 +376,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#94A3B8',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1F2937',
     borderRadius: 12,
     padding: 12,
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#374151',
   },
   inputError: {
     borderColor: '#EF4444',
@@ -521,10 +411,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1F2937',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#374151',
   },
   selectedServiceType: {
     backgroundColor: '#4F46E5',
@@ -533,7 +423,7 @@ const styles = StyleSheet.create({
   serviceTypeText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748B',
+    color: '#94A3B8',
   },
   selectedServiceTypeText: {
     color: '#FFFFFF',
@@ -545,10 +435,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1F2937',
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#374151',
   },
   selectedGoal: {
     backgroundColor: '#4F46E5',
@@ -556,83 +446,43 @@ const styles = StyleSheet.create({
   },
   goalText: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
     fontWeight: '500',
   },
   selectedGoalText: {
     color: '#FFFFFF',
   },
-  squadCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  infoSection: {
+    marginBottom: 24,
+    backgroundColor: '#21262F',
+    borderRadius: 16,
     padding: 16,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  selectedSquad: {
-    borderColor: '#4F46E5',
-    backgroundColor: '#F0F0FF',
-  },
-  squadInfo: {
-    flex: 1,
-  },
-  squadName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1E293B',
-    marginBottom: 4,
-  },
-  squadDescription: {
-    fontSize: 14,
-    color: '#64748B',
-  },
-  selectedIndicator: {
-    marginLeft: 16,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#64748B',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 16,
-  },
-  switchContainer: {
+  infoHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    padding: 16,
-    borderRadius: 12,
     marginBottom: 16,
   },
-  switchInfo: {
-    flex: 1,
-    marginRight: 16,
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
-  switchLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1E293B',
-    marginBottom: 4,
+  infoContent: {
+    marginBottom: 16,
   },
-  switchDescription: {
+  infoText: {
     fontSize: 14,
-    color: '#64748B',
-  },
-  invitationInfo: {
-    flexDirection: 'row',
-    backgroundColor: '#F0F0FF',
-    padding: 12,
-    borderRadius: 12,
-    gap: 8,
-  },
-  invitationInfoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#4F46E5',
+    color: '#94A3B8',
+    marginBottom: 8,
   },
 });

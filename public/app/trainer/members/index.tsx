@@ -1,12 +1,12 @@
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '@/utils/supabase';
 import { getMembers } from '@/utils/firebase';
-import { colors, shadows } from '@/constants/theme';
 
 interface Member {
   id: string;
@@ -47,60 +47,6 @@ export default function MemberManagement() {
     }
   };
 
-  const handleDeleteMember = async (memberId: string) => {
-    Alert.alert(
-      'Delete Member',
-      'Are you sure you want to delete this member? This action cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              
-              // Delete member from squad_members first
-              const { error: squadMemberError } = await supabase
-                .from('squad_members')
-                .delete()
-                .eq('user_id', memberId);
-
-              if (squadMemberError) throw squadMemberError;
-
-              // Delete member from workout_participants
-              const { error: workoutParticipantError } = await supabase
-                .from('workout_participants')
-                .delete()
-                .eq('user_id', memberId);
-
-              if (workoutParticipantError) throw workoutParticipantError;
-
-              // Finally delete the member
-              const { error: deleteError } = await supabase
-                .from('users')
-                .delete()
-                .eq('id', memberId);
-
-              if (deleteError) throw deleteError;
-              
-              // Update local state
-              setMembers(prev => prev.filter(member => member.id !== memberId));
-              Alert.alert('Success', 'Member deleted successfully');
-            } catch (error) {
-              console.error('Error deleting member:', error);
-              Alert.alert('Error', 'Failed to delete member');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
-  };
 
   const filteredMembers = members.filter(member => {
     const matchesSearch = 
@@ -138,131 +84,141 @@ export default function MemberManagement() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
-        </Pressable>
-        <Text style={styles.title}>Member Management</Text>
-        <Pressable 
-          style={styles.addButton}
-          onPress={() => router.push('./add', {relativeToDirectory: true})}
-        >
-          <Ionicons name="add" size={24} color="#FFFFFF" />
-        </Pressable>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#64748B" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search members"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#64748B"
-          />
+      <LinearGradient
+        colors={['#21262F', '#353D45']}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </Pressable>
+          <Text style={styles.title}>Member Management</Text>
+          <Pressable 
+            style={styles.addButton}
+            onPress={() => router.push('./add', {relativeToDirectory: true})}
+          >
+            <Ionicons name="add" size={24} color="#FFFFFF" />
+          </Pressable>
         </View>
-      </View>
+      </LinearGradient>
 
-      {/* <View style={styles.filterSection}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContainer}
-        >
-          <Pressable
-            style={[
-              styles.filterChip,
-              filter === 'all' && styles.selectedFilter
-            ]}
-            onPress={() => setFilter('all')}
-          >
-            <Text style={[
-              styles.filterText,
-              filter === 'all' && styles.selectedFilterText
-            ]}>All Members</Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.filterChip,
-              filter === 'personal' && styles.selectedFilter
-            ]}
-            onPress={() => setFilter('personal')}
-          >
-            <Text style={[
-              styles.filterText,
-              filter === 'personal' && styles.selectedFilterText
-            ]}>Personal Training</Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.filterChip,
-              filter === 'group' && styles.selectedFilter
-            ]}
-            onPress={() => setFilter('group')}
-          >
-            <Text style={[
-              styles.filterText,
-              filter === 'group' && styles.selectedFilterText
-            ]}>Group Training</Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.filterChip,
-              filter === 'pending' && styles.selectedFilter
-            ]}
-            onPress={() => setFilter('pending')}
-          >
-            <Text style={[
-              styles.filterText,
-              filter === 'pending' && styles.selectedFilterText
-            ]}>Pending</Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.filterChip,
-              filter === 'active' && styles.selectedFilter
-            ]}
-            onPress={() => setFilter('active')}
-          >
-            <Text style={[
-              styles.filterText,
-              filter === 'active' && styles.selectedFilterText
-            ]}>Active</Text>
-          </Pressable>
-        </ScrollView>
-      </View> */}
-
-      {/* <View style={styles.actionsRow}>
-        <Pressable 
-          style={styles.invitationsButton}
-          onPress={() => router.push('./invitations', {relativeToDirectory: true})}
-        >
-          <Ionicons name="mail" size={16} color="#4F46E5" />
-          <Text style={styles.invitationsText}>Manage Invitations</Text>
-        </Pressable>
-      </View> */}
-
-      <ScrollView style={styles.content}>
-        {loading ? (
-          <Text style={styles.loadingText}>Loading members...</Text>
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : filteredMembers.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="people" size={48} color="#E2E8F0" />
-            <Text style={styles.emptyText}>No members found</Text>
-            <Text style={styles.emptySubtext}>
-              Add your first member by clicking the "Add Member" button above.
-            </Text>
-            <Pressable 
-              style={styles.addFirstMemberButton}
-              onPress={() => router.push('./add', {relativeToDirectory: true})}
-            >
-              <Ionicons name="person-add" size={20} color="#FFFFFF" />
-              <Text style={styles.addFirstMemberText}>Add First Member</Text>
-            </Pressable>
+      <View style={styles.content}>
+        <Animated.View entering={FadeInUp.delay(100)}>
+          <View style={styles.searchContainer}>
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={20} color="#94A3B8" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search members"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#94A3B8"
+              />
+            </View>
           </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(150)}>
+          <View style={styles.filterSection}>
+            <Text style={styles.sectionTitle}>Filter Members</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterContainer}
+            >
+              <Pressable
+                style={[
+                  styles.filterChip,
+                  filter === 'all' && styles.selectedFilter
+                ]}
+                onPress={() => setFilter('all')}
+              >
+                <Text style={[
+                  styles.filterText,
+                  filter === 'all' && styles.selectedFilterText
+                ]}>All</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.filterChip,
+                  filter === 'personal' && styles.selectedFilter
+                ]}
+                onPress={() => setFilter('personal')}
+              >
+                <Text style={[
+                  styles.filterText,
+                  filter === 'personal' && styles.selectedFilterText
+                ]}>Personal</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.filterChip,
+                  filter === 'group' && styles.selectedFilter
+                ]}
+                onPress={() => setFilter('group')}
+              >
+                <Text style={[
+                  styles.filterText,
+                  filter === 'group' && styles.selectedFilterText
+                ]}>Group</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.filterChip,
+                  filter === 'pending' && styles.selectedFilter
+                ]}
+                onPress={() => setFilter('pending')}
+              >
+                <Text style={[
+                  styles.filterText,
+                  filter === 'pending' && styles.selectedFilterText
+                ]}>Pending</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.filterChip,
+                  filter === 'active' && styles.selectedFilter
+                ]}
+                onPress={() => setFilter('active')}
+              >
+                <Text style={[
+                  styles.filterText,
+                  filter === 'active' && styles.selectedFilterText
+                ]}>Active</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </Animated.View>
+
+        {loading ? (
+          <Animated.View entering={FadeInUp.delay(200)}>
+            <View style={styles.centerContainer}>
+              <Text style={styles.loadingText}>Loading members...</Text>
+            </View>
+          </Animated.View>
+        ) : error ? (
+          <Animated.View entering={FadeInUp.delay(200)}>
+            <View style={styles.centerContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          </Animated.View>
+        ) : filteredMembers.length === 0 ? (
+          <Animated.View entering={FadeInUp.delay(200)}>
+            <View style={styles.emptyContainer}>
+              <Ionicons name="people" size={48} color="#94A3B8" />
+              <Text style={styles.emptyText}>No members found</Text>
+              <Text style={styles.emptySubtext}>
+                Add your first member by clicking the "Add Member" button above.
+              </Text>
+              <Pressable 
+                style={styles.addFirstMemberButton}
+                onPress={() => router.push('./add', {relativeToDirectory: true})}
+              >
+                <Ionicons name="person-add" size={20} color="#FFFFFF" />
+                <Text style={styles.addFirstMemberText}>Add First Member</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
         ) : (
           filteredMembers.map((member, index) => (
             <Animated.View
@@ -295,46 +251,11 @@ export default function MemberManagement() {
                     </BlurView>
                   </View>
                 </View>
-
-                {/* <View style={styles.memberDetails}>
-                  {member.primary_goal && (
-                    <View style={styles.detailItem}>
-                      <Ionicons name="flag" size={16} color="#64748B" />
-                      <Text style={styles.detailText}>Goal: {member.primary_goal}</Text>
-                    </View>
-                  )}
-                </View> */}
-
-                {/* <View style={styles.memberActions}>
-                  <Pressable 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`./${member.id}/edit`, {relativeToDirectory: true})}
-                  >
-                    <Ionicons name="create" size={20} color="#4F46E5" />
-                    <Text style={styles.actionButtonText}>Edit</Text>
-                  </Pressable>
-                  {member.onboarding_status === 'completed' && (
-                    <Pressable 
-                      style={styles.actionButton}
-                      onPress={() => router.push(`./${member.id}/assessment`, {relativeToDirectory: true})}
-                    >
-                      <Ionicons name="fitness" size={20} color="#4F46E5" />
-                      <Text style={styles.actionButtonText}>Assessment</Text>
-                    </Pressable>
-                  )}
-                  <Pressable 
-                    style={[styles.actionButton, styles.deleteButton]}
-                    onPress={() => handleDeleteMember(member.id)}
-                  >
-                    <Ionicons name="trash" size={20} color="#EF4444" />
-                    <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
-                  </Pressable>
-                </View> */}
               </Pressable>
             </Animated.View>
           ))
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -342,116 +263,105 @@ export default function MemberManagement() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#060712",
+    backgroundColor: '#181C23',
   },
   header: {
+    paddingTop: 10,
+    paddingBottom: 0,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
-    paddingTop: 60,
-    backgroundColor: "#060712",
-    borderBottomWidth: 1,
-    borderBottomColor: "#21262F",
   },
   backButton: {
     padding: 8,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: "#FFFFFF",
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
   },
   addButton: {
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: "#4F46E5",
+    backgroundColor: '#4F46E5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -20,
-    ...shadows.md,
+  },
+  content: {
+    padding: 20,
   },
   searchContainer: {
-    padding: 20,
-    backgroundColor: "#060712",
+    marginBottom: 16,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: "#21262F",
+    backgroundColor: '#21262F',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#374151',
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: '#FFFFFF',
   },
   filterSection: {
-    backgroundColor: '#FFFFFF',
-    paddingBottom: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 16,
   },
   filterContainer: {
-    paddingHorizontal: 20,
     gap: 8,
   },
   filterChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#21262F',
+    borderWidth: 1,
+    borderColor: '#374151',
   },
   selectedFilter: {
     backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
   },
   filterText: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#94A3B8',
     fontWeight: '500',
   },
   selectedFilterText: {
     color: '#FFFFFF',
   },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-  },
-  invitationsButton: {
-    flexDirection: 'row',
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#F0F0FF',
-    borderRadius: 20,
-  },
-  invitationsText: {
-    fontSize: 14,
-    color: '#4F46E5',
-    fontWeight: '500',
-  },
-  content: {
-    padding: 20,
+    padding: 40,
   },
   loadingText: {
-    fontSize: 14,
-    color: "#9AAABD",
+    fontSize: 16,
+    color: '#94A3B8',
     textAlign: 'center',
-    marginTop: 20,
   },
   errorText: {
-    fontSize: 14,
-    color: "#EF4444",
+    fontSize: 16,
+    color: '#EF4444',
     textAlign: 'center',
-    marginTop: 20,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -461,13 +371,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#9AAABD",
+    color: '#94A3B8',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -475,50 +385,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: "#4F46E5",
+    backgroundColor: '#4F46E5',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
   },
   addFirstMemberText: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   memberCard: {
-    backgroundColor: "#21262F",
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   memberHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
   },
   memberName: {
     fontSize: 16,
     fontWeight: '600',
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   memberEmail: {
     fontSize: 14,
-    color: "#9AAABD",
+    color: '#94A3B8',
     marginBottom: 2,
   },
   memberPhone: {
     fontSize: 14,
-    color: "#9AAABD",
+    color: '#94A3B8',
   },
   memberBadges: {
     alignItems: 'flex-end',
@@ -537,49 +446,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+    backgroundColor: 'rgba(79, 70, 229, 0.2)',
   },
   typeText: {
     fontSize: 12,
     fontWeight: '500',
-    color: "#4F46E5",
-  },
-  memberDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 12,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#64748B',
-  },
-  memberActions: {
-    flexDirection: 'row',
-    gap: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingTop: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  actionButtonText: {
-    fontSize: 14,
     color: '#4F46E5',
-    fontWeight: '500',
-  },
-  deleteButton: {
-    marginLeft: 'auto',
-  },
-  deleteButtonText: {
-    color: '#EF4444',
   },
 });

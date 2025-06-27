@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '../../../../utils/supabase';
+import { getSquads } from '@/utils/firebase';
 
 interface WorkoutPlan {
   id: string;
@@ -38,16 +38,9 @@ export default function SquadCalendar() {
     try {
       setLoading(true);
       setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from('squads')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-      setSquad(data);
-      setSchedule(data?.schedule || {});
+      const {data} = await getSquads(id as string);
+      setSquad(data as any);
+      setSchedule((data as any)?.schedule || {});
     } catch (error) {
       console.error('Error fetching squad:', error);
       setError('Failed to load squad data');
@@ -58,15 +51,8 @@ export default function SquadCalendar() {
 
   const fetchWorkoutPlans = async () => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('workout_plans')
-        .select(`
-          *,
-          exercises_count:workout_plan_exercises(count)
-        `)
-        .eq('created_by', '00000000-0000-0000-0000-000000000000');
-
-      if (fetchError) throw fetchError;
+      const data = [];
+      alert('fetch workout plans not implemented!');
       setWorkoutPlans(data || []);
     } catch (error) {
       console.error('Error fetching workout plans:', error);
@@ -74,23 +60,7 @@ export default function SquadCalendar() {
   };
 
   const handleAssignWorkout = async (day: string, workoutPlanId: string | null) => {
-    try {
-      const newSchedule = {
-        ...schedule,
-        [day]: workoutPlanId,
-      };
-
-      const { error: updateError } = await supabase
-        .from('squads')
-        .update({ schedule: newSchedule })
-        .eq('id', id);
-
-      if (updateError) throw updateError;
-      setSchedule(newSchedule);
-      setSelectedDay(null);
-    } catch (error) {
-      console.error('Error updating schedule:', error);
-    }
+    alert('assign workout not implemented!');
   };
 
   return (

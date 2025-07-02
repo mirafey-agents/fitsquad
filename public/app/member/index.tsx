@@ -11,6 +11,7 @@ import { useSessions } from '@/app/context/SessionsContext';
 import { HabitsPreview } from './components/HabitsPreview';
 import Svg, { Circle } from 'react-native-svg';
 import { Animated as RNAnimated, Easing } from 'react-native';
+import MirrorPreview from './components/MirrorPreview';
 
 import {
   spacing,
@@ -444,6 +445,7 @@ export default function Home() {
           isFutureDate,
           handleVote: (type, sessionId, id, name) => { handleVote(type, sessionId, id, name); }
         })}
+        <MirrorPreview />
         <HabitsPreview />
       </View>
 
@@ -603,7 +605,7 @@ const styles = StyleSheet.create({
   },
   workoutReviewTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 18,
   },

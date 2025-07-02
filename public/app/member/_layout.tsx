@@ -1,7 +1,8 @@
 import { Tabs } from 'expo-router';
-import { Platform, StyleSheet, View, Text, Image } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const handleTabPress = () => {
@@ -55,10 +56,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => (
-            <Image
-              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/cdmcrxxk_expires_30_days.png" }}
-              style={{ width: 36, height: 36 }}
-            />
+            <Ionicons name="home" size={24} color={color} />
           ),
         }}
       />
@@ -67,10 +65,7 @@ export default function TabLayout() {
         options={{
           title: 'Insights',
           tabBarIcon: ({ color }) => (
-            <Image
-              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/xwgn8pyz_expires_30_days.png" }}
-              style={{ width: 36, height: 36 }}
-            />
+            <Ionicons name="analytics" size={24} color={color} />
           ),
         }}
       />
@@ -79,10 +74,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => (
-            <Image
-              source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/ZD3WvyHBvM/4i7wkk3u_expires_30_days.png" }}
-              style={{ width: 36, height: 36 }}
-            />
+            <Ionicons name="person" size={24} color={color} />
           ),
         }}
       />
@@ -97,6 +89,9 @@ export default function TabLayout() {
       <Tabs.Screen name="habits/add" options={{href: null}}/>
       <Tabs.Screen name="habits/index" options={{href: null}}/>
       <Tabs.Screen name="components/HabitsPreview" options={{href: null}}/>
+      <Tabs.Screen name="components/MirrorPreview" options={{href: null}}/>
+      <Tabs.Screen name="mirrormoment/index" options={{href: null}}/>
+      <Tabs.Screen name="mirrormoment/capture" options={{href: null}}/>
     </Tabs>
   );
 }

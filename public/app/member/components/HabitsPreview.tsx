@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 import { useRouter } from 'expo-router';
 import { useHabits } from '@/app/context/HabitsContext';
@@ -20,17 +19,12 @@ export function HabitsPreview() {
       <Animated.View entering={FadeInUp.delay(200)}>
         <View style={styles.habitsContainer}>
           <Text style={styles.habitsTitle}>Daily Habits</Text>
-          <LinearGradient 
-            start={{x:0, y:0}}
-            end={{x:0, y:1}}
-            colors={["#21262F", "#353D45"]}
-            style={[styles.habitsCard, styles.loadingCard]}
-          >
+          <View style={styles.habitsCard}>
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colors.accent.coral} />
               <Text style={styles.loadingText}>Loading your habits...</Text>
             </View>
-          </LinearGradient>
+          </View>
         </View>
       </Animated.View>
     );
@@ -40,12 +34,7 @@ export function HabitsPreview() {
     <Animated.View entering={FadeInUp.delay(200)}>
       <View style={styles.habitsContainer}>
         <Text style={styles.habitsTitle}>Daily Habits</Text>
-        <LinearGradient 
-          start={{x:0, y:0}}
-          end={{x:0, y:1}}
-          colors={["#21262F", "#353D45"]}
-          style={styles.habitsCard}
-        >
+        <View style={styles.habitsCard}>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -73,7 +62,7 @@ export function HabitsPreview() {
           >
             <Text style={styles.logHabitsText}>Log Your Habits</Text>
           </TouchableOpacity>
-        </LinearGradient>
+        </View>
       </View>
     </Animated.View>
   );
@@ -92,11 +81,13 @@ const styles = StyleSheet.create({
   habitsCard: {
     borderRadius: 24,
     paddingVertical: 20,
+    backgroundColor: '#23262F',
   },
   loadingCard: {
     minHeight: 200,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#23262F',
   },
   loadingContainer: {
     alignItems: 'center',

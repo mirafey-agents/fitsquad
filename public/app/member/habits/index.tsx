@@ -246,6 +246,9 @@ export default function HabitsPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <Pressable onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </Pressable>
         <Pressable onPress={() => setIsEditMode(!isEditMode)}>
           <LinearGradient 
             start={{x:0, y:0}}
@@ -288,7 +291,8 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
   },

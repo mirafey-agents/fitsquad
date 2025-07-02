@@ -69,7 +69,7 @@ export default function Login() {
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="demotrainer@fitsquad.club"
+            placeholder="email"
             placeholderTextColor={colors.gray[400]}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -84,7 +84,7 @@ export default function Login() {
               style={[styles.input, styles.passwordInput]}
               value={password}
               onChangeText={setPassword}
-              placeholder="demotrainer"
+              placeholder="password"
               placeholderTextColor={colors.gray[400]}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
@@ -123,10 +123,7 @@ export default function Login() {
         </Pressable>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
-          <Pressable onPress={() => router.push({ pathname: '/signup' })}>
-            <Text style={styles.footerLink}>Sign Up</Text>
-          </Pressable>
+          <Text style={styles.footerText}>Don't have account? Contact us at support@myfitwave.com</Text>
         </View>
       </Animated.View>
     </View>

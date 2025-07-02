@@ -268,9 +268,10 @@ export async function uploadMedia(
   categoryId: string
 ) {
   const authToken = await getAuthToken();
-
   try {
-  
+    if (!userId) {
+      userId = getLoggedInUser().user.id;
+    }
     const {url, mediaId} = (await httpsCallable(functions, 'getUploadUrl')({
       authToken, userId, category, categoryId,
       mimeType: asset.mimeType,
@@ -334,21 +335,22 @@ export async function deleteMedia(
   objectId: string
 ) {
   const authToken = await getAuthToken();
-
+  if (!userId) {
+    userId = getLoggedInUser().user.id;
+  }
   return (await httpsCallable(functions, 'deleteMedia')({
     userId, category, categoryId, objectId, authToken
   }));
 }
 
 export async function listMedia(
-  userId: string,
   category: string,
   categoryId: string
 ) {
   const authToken = await getAuthToken();
 
   return (await httpsCallable(functions, 'listMedia')({
-    userId, category, categoryId, authToken
+    userId: getLoggedInUser().user.id, category, categoryId, authToken
   })).data;
 }
 

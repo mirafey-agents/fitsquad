@@ -12,13 +12,16 @@ const makeKey = (
   categoryId: string, objectId = "",
   isThumbnail = false
 ) => {
-  if (!["profilepic", "session", "challenge", "habit"].includes(category)) {
+  if (!["profilepic", "session", "challenge",
+    "habit", "mirrormoment"].includes(category)) {
     throw new HttpsError("invalid-argument", "Invalid category");
   }
 
   if (category === "profilepic") {
     categoryId = "1";
     objectId = "1";
+  } else if (category === "mirrormoment") {
+    categoryId = "1";
   }
 
   const basePath = `media/${userId}/${category}/${categoryId}/${objectId}`;
@@ -262,6 +265,7 @@ export const listMedia = onCall(
           return {
             mediaId: key.name.split("/").pop(),
             thumbnail_url: `${baseUrl}/${bucketName}/${thumbnailPath}`,
+            date: key.metadata.timeCreated,
           };
         });
     } catch (error: any) {

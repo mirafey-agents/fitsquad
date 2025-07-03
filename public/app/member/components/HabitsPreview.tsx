@@ -60,7 +60,8 @@ export function HabitsPreview() {
             style={styles.logHabitsButton}
             onPress={() => router.push('/member/habits')}
           >
-            <Text style={styles.logHabitsText}>Log Your Habits</Text>
+            <Text style={styles.logHabitsText}>Log Habits</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -133,11 +134,13 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   logHabitsButton: {
-    backgroundColor: colors.primary.dark,
+    backgroundColor: '#2563FF',
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
     padding: spacing.md,
     borderRadius: borderRadius.lg,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   logHabitsText: {

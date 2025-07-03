@@ -63,7 +63,7 @@ export default function MirrorPreview() {
           style={styles.scanButton}
           onPress={() => router.push('/member/mirrormoment')}
         >
-          <Text style={styles.scanButtonText}>See My AI Progress Scan</Text>
+          <Text style={styles.scanButtonText}>Compare Progress</Text>
           <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
         </Pressable>
       </View>

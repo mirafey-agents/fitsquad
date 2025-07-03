@@ -37,8 +37,10 @@ const dateFormatOption = {
 
 const AnimatedCircle = RNAnimated.createAnimatedComponent(Circle);
 
-const renderEnergyPoints = (selectedWorkout: any) => {
-  const total = Math.min(selectedWorkout?.total_energy_points || 0, 100);
+const renderEnergyPoints = (session_users: Array<any>) => {
+  const total = session_users?.reduce(
+    (acc, curr) => acc + (curr.total_energy_points || 0),
+    0);
   const percent = total;
   const percentDisplay = Math.round(percent);
   const size = 120;
@@ -51,7 +53,7 @@ const renderEnergyPoints = (selectedWorkout: any) => {
 
   useEffect(() => {
     RNAnimated.timing(animatedValue, {
-      toValue: percent,
+      toValue: Math.min(percent, 100),
       duration: 800,
       easing: Easing.out(Easing.ease),
       useNativeDriver: false,
@@ -139,17 +141,18 @@ const renderEnergyPoints = (selectedWorkout: any) => {
 
 const renderWorkoutReview = ({
   selectedWorkout,
-  isFutureDate,
   handleVote
 }: {
   selectedWorkout: any;
-  isFutureDate: boolean;
   handleVote: (type: 'mvp' | 'toughest', sessionId: string, id: string, name: string) => void;
 }) => {
+  const [moduleType, moduleIcon, goal] = selectedWorkout.session_trainers_id ? 
+    ['Barbell', 'barbell', 'Strength'] :
+    ['Activity', 'heart', 'Cardio'];
+  
   if (!selectedWorkout) {
     return (
       <>
-        <Text style={styles.workoutReviewTitle}>Workout Review</Text>
         <View style={styles.workoutReviewCard}>
           <View style={styles.workoutCardContent}>
             <Ionicons name="calendar" size={48} color="#9BA9BD" style={{ alignSelf: 'center', marginBottom: 8 }} />
@@ -164,14 +167,13 @@ const renderWorkoutReview = ({
   }
   return (
     <>
-      <Text style={styles.workoutReviewTitle}>Workout Review</Text>
       <View style={styles.workoutReviewCard}>
         <View style={styles.workoutCardContent}>
           {/* Header row with title and chevron */}
           <View style={styles.workoutHeaderRow}>
             <View style={{ flex: 1 }}>
               <View style={styles.workoutTitleRow}>
-                <Text style={styles.workoutName}>{selectedWorkout?.session.title} - Group</Text>
+                <Text style={styles.workoutName}>{selectedWorkout?.session?.title || selectedWorkout.exercises[0].name}</Text>
                 {selectedWorkout?.status === 'completed' && (
                   <View style={styles.completedBadgeRowInline}>
                     <Text style={styles.completedBadgeText}>Completed</Text>
@@ -180,15 +182,19 @@ const renderWorkoutReview = ({
               </View>
               <Text style={styles.workoutTime}>
                 {new Date(selectedWorkout.start_time).toLocaleString('en-US', dateFormatOption)}
-                <Text style={styles.workoutTrainer}>  with {selectedWorkout?.session.trainer.display_name}</Text>
+                {selectedWorkout?.session?.trainer && ( 
+                  <Text style={styles.workoutTrainer}>  with {selectedWorkout?.session.trainer.display_name}</Text>
+                )}
               </Text>
             </View>
-            <Pressable
-              onPress={() => router.push(`/member/insights/${selectedWorkout.id}`)}
-              style={styles.chevronButton}
-            >
-              <Ionicons name="chevron-forward" size={24} color="#9BA9BD" />
-            </Pressable>
+            {selectedWorkout.session_trainers_id && (
+              <Pressable
+                onPress={() => router.push(`/member/insights/${selectedWorkout.id}`)}
+                style={styles.chevronButton}
+              >
+                <Ionicons name="chevron-forward" size={24} color="#9BA9BD" />
+              </Pressable>
+            )}
           </View>
 
           {/* Summary Section */}
@@ -197,9 +203,9 @@ const renderWorkoutReview = ({
             <View style={styles.workoutSummaryGridRow}>
               <View style={styles.summaryPillRow}>
                 <View style={[styles.summaryPillIcon, styles.summaryPillModule]}>
-                  <Ionicons name="barbell" size={16} color="#60D394" />
+                  <Ionicons name={moduleIcon as any} size={16} color="#60D394" />
                 </View>
-                <Text style={styles.summaryPillLabel}>Barbell</Text>
+                <Text style={styles.summaryPillLabel}>{moduleType}</Text>
               </View>
               <View style={styles.summaryPillRow}>
                 <View style={[styles.summaryPillIcon, styles.summaryPillLevel]}>
@@ -213,7 +219,7 @@ const renderWorkoutReview = ({
                 <View style={[styles.summaryPillIcon, styles.summaryPillType]}>
                   <Ionicons name="flash" size={16} color="#A259FF" />
                 </View>
-                <Text style={styles.summaryPillLabel}>Strength</Text>
+                <Text style={styles.summaryPillLabel}>{goal}</Text>
               </View>
               <View style={styles.summaryPillRow}>
                 <View style={[styles.summaryPillIcon, styles.summaryPillEnergy]}>
@@ -318,14 +324,9 @@ export default function Home() {
     toughest: null,
   });
 
-  const selectedWorkout = sessions.find((session: any) => 
+  const userSessionsToday = sessions.filter((session: any) => 
     new Date(session.start_time).toDateString() === selectedDate.toDateString());
   
-  const isFutureDate = isAfter(
-    selectedDate,
-    new Date(new Date().setHours(23, 59, 59, 999))
-  );
-
   const handleVote = async (type: 'mvp' | 'toughest', sessionId: string, id: string, name: string) => {
     setPendingVote({ type, sessionId, id, name });
     setShowConfirmModal(true);
@@ -439,12 +440,21 @@ export default function Home() {
       </View>
 
       <View style={styles.content}>
-        {renderEnergyPoints(selectedWorkout)}
-        {renderWorkoutReview({
-          selectedWorkout,
-          isFutureDate,
+        {renderEnergyPoints(userSessionsToday)}
+        <View style={styles.workoutReviewHeader}>
+          <Text style={styles.workoutReviewTitle}>Workout Review</Text>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => router.push('./insights/add', { relativeToDirectory: true })}
+          >
+            <Ionicons name="add" size={24} color="#FFFFFF" />
+          </Pressable>
+        </View>
+        {userSessionsToday.length > 0 && userSessionsToday.map((session) =>
+          renderWorkoutReview({
+          selectedWorkout: session,
           handleVote: (type, sessionId, id, name) => { handleVote(type, sessionId, id, name); }
-        })}
+        }))}
         <MirrorPreview />
         <HabitsPreview />
       </View>
@@ -501,6 +511,14 @@ const styles = StyleSheet.create({
   },
   menuIconNew: {
     marginLeft: 12,
+  },
+  addButton: {
+    backgroundColor: "#2563FF",
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   calendarContainer: {
     backgroundColor: "#060712",
@@ -603,11 +621,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  workoutReviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
   workoutReviewTitle: {
     color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 18,
   },
   workoutCardContent: {
     // The inner card content (header, summary, etc.)

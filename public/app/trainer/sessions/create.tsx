@@ -3,8 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Platfo
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TabView, TabBar } from 'react-native-tab-view';
-import { supabase } from '@/utils/supabase';
-import { getSquads, getMembers, getExercises, createSession } from '@/utils/firebase';
+import { getSquads, getMembers, getExercises, createSessionTrainer } from '@/utils/firebase';
 import FilterableList from './components/FilterableList';
 
 interface Squad {
@@ -81,7 +80,7 @@ export default function CreateSession() {
   const fetchExercises = async () => {
     try {
       setLoading(true);
-      const {data} = await getExercises();
+      const data = await getExercises();
       setExercises(data as Exercise[] || []);
     } catch (error) {
       console.error('Error fetching exercises:', error);
@@ -110,7 +109,7 @@ export default function CreateSession() {
       setLoading(true);
       setError(null);
 
-      const result = await createSession(
+      const result = await createSessionTrainer(
         formData.title,
         formData.date.toISOString(),
         formData.selectedSquads[0].id,

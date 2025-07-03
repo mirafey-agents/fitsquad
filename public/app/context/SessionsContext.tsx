@@ -4,7 +4,7 @@ import { getUserSessions } from '@/utils/firebase';
 interface Session {
   id: string;
   user_id: string;
-  session_id: string;
+  session_trainers_id: string;
   start_time: string;
   status: string;
   performance_score: number;
@@ -60,9 +60,10 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
       sessionsData.map((session: Session) => {
         session.total_energy_points = session.exercises.reduce(
           (acc, exercise) => {
-            return acc + exercise.energy_points * parseInt(exercise.sets);
+            return acc + exercise.energy_points * parseInt(exercise.sets || exercise.reps);
            }, 0);
       });
+      console.log('sessionsData', sessionsData);
       setSessions(sessionsData as Session[]);
       setError(null);
     } catch (err) {

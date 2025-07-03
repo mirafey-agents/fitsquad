@@ -63,26 +63,25 @@ export default function WorkoutSessionDetails() {
   useEffect(() => {
     const foundSession = sessions.find(s => s.id === id);
     if (foundSession) {
+      const trainer = {name: null, image: null, verified: false};
+      if (foundSession.session?.trainer) {
+        trainer.name = foundSession.session?.trainer.display_name;
+        trainer.image = getProfilePicThumbNailURL((foundSession.session?.trainer as any).id);
+        trainer.verified = true;
+      }
       const newSession = {
         id: foundSession.id,
         user_id: foundSession.user_id,
-        session_id: foundSession.session_id,
+        session_trainers_id: foundSession.session_trainers_id,
         date: foundSession.start_time,
-        trainer: {
-          name: foundSession.session.trainer.display_name,
-          image: getProfilePicThumbNailURL((foundSession.session.trainer as any).id),
-          verified: true
-        },
+        trainer: trainer,
         type: 'workout',
-        title: foundSession.session.title,
+        title: foundSession.session?.title || foundSession.exercises[0]?.name,
         performance_score: foundSession.performance_score,
         feedback: foundSession.trainer_comments,
         session_media: foundSession.session_media,
-        session: {
-          title: foundSession.session.title,
-          time: foundSession.start_time,
-          exercises: foundSession.exercises
-        }
+        start_time: foundSession.start_time,
+        exercises: foundSession.exercises
       };
       
       setSession(newSession);
@@ -116,7 +115,7 @@ export default function WorkoutSessionDetails() {
       const url = await getMediaFetchURL(
         session.user_id, 
         'session', 
-        session.session_id, 
+        session.session_trainers_id, 
         media.media_id,
         false // not thumbnail
       );
@@ -211,7 +210,7 @@ export default function WorkoutSessionDetails() {
           </LinearGradient>
         </View>
 
-        {session.session.exercises && session.session.exercises.length > 0 && (
+        {session.exercises && session.exercises.length > 0 && (
           <View style={styles.session}>
             <Text style={styles.sectionTitle}>Exercises</Text>
             <LinearGradient
@@ -219,7 +218,7 @@ export default function WorkoutSessionDetails() {
               style={styles.exerciseCard}
             >
               <View style={styles.exerciseList}>
-                {session.session.exercises.map((exercise, i) => (
+                {session.exercises.map((exercise, i) => (
                   <View key={i} style={styles.exerciseItem}>
                     <Text style={styles.exerciseItemName}>{exercise.name}</Text>
                     <Text style={styles.exerciseItemDetails}>
@@ -273,7 +272,7 @@ export default function WorkoutSessionDetails() {
                 >
                   <View style={styles.mediaImageContainer}>
                     <Image 
-                      source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_id, media.media_id) }}
+                      source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_trainers_id, media.media_id) }}
                       style={styles.mediaGridImage}
                     />
                     <View style={styles.videoIconOverlay}>

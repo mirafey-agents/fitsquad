@@ -7,6 +7,8 @@ import { useSessions } from '@/app/context/SessionsContext';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getProfilePicThumbNailURL } from '@/utils/mediaUtils';
+import { getLoggedInUser } from '@/utils/auth';
 
 interface TrainerInputsProps {
   loading: boolean;
@@ -20,29 +22,35 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
   useEffect(() => {
     getTrainerInputsFromSessions().then(inputs => {
       console.log('inputs: ', inputs);
-      setTrainerInputs(inputs);
+      setTrainerInputs(inputs.filter(input => input.session));
     });
   }, [sessions]);
 
   const getTrainerInputsFromSessions = async () => {
+    const loggedInUser = await getLoggedInUser();
+    const defaultTrainer = {
+      name: loggedInUser.profile.display_name,
+      image: getProfilePicThumbNailURL(loggedInUser.profile.id),
+      verified: true
+    }
     return sessions.map(session => ({
       id: session.id,
       date: session.start_time,
-      trainer: {
+      trainer: session.session? {
         name: session.session.trainer.display_name,
-        image: `https://storage.googleapis.com/fit-squad-club.firebasestorage.app/media/${(session.session.trainer as any).id}/profilepic/1/1-thumbnail`,
+        image: getProfilePicThumbNailURL((session.session.trainer as any).id),
         verified: true
-      },
+      }: defaultTrainer,
       type: 'workout',
-      title: session.session.title,
+      title: session.session?.title || session.exercises[0].name,
       performance_score: session.performance_score,
       feedback: session.trainer_comments,
       media: session.session_media,
-      session: {
+      session: session.session ? {
         title: session.session.title,
         time: session.start_time,
         exercises: session.exercises
-      }
+      }: null,
     }));
   };
 
@@ -106,13 +114,13 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
               <View style={styles.inputHeader}>
                 <View style={styles.trainerInfo}>
                   <Image 
-                    source={{ uri: input.trainer.image }}
+                    source={{ uri: input.trainer?.image }}
                     style={styles.trainerImage}
                   />
                   <View>
                     <View style={styles.trainerNameRow}>
-                      <Text style={styles.trainerName}>{input.trainer.name}</Text>
-                      {input.trainer.verified && (
+                      <Text style={styles.trainerName}>{input.trainer?.name}</Text>
+                      {input.trainer?.verified && (
                         <BlurView intensity={80} style={styles.verifiedBadge}>
                           <Ionicons name="checkmark-circle" size={14} color={colors.semantic.success} />
                         </BlurView>

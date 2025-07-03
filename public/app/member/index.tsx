@@ -356,7 +356,7 @@ export default function Home() {
 
   const scrollToSelectedDate = (date: Date) => {
     if (scrollViewRef.current) {
-      const dayWidth = 64 + spacing.sm; // width of each day + margin
+      const dayWidth = 44 + 8; // width of calendarDayPill (44) + marginHorizontal (4 * 2)
       const screenWidth = Dimensions.get('window').width;
       const days = getCalendarDays();
       const selectedIndex = days.findIndex(d => isSameDay(d, date));

@@ -124,88 +124,90 @@ export default function MirrorMoment() {
       >
         <Ionicons name="chevron-back" size={28} color="#fff" />
       </Pressable>
-      <Text style={[styles.title, { marginTop: 8 }]}>Compare Progress</Text>
-      <View style={styles.compareRow}>
-        <View style={styles.compareCol}>
-          <Pressable style={styles.imagePicker} onPress={() => {}}>
-            {before ? (
-              <Image source={{ uri: before.url }} style={styles.compareImage} />
-            ) : (
-              <Ionicons name="image" size={32} color="#9BA9BD" />
-            )}
-          </Pressable>
-          <Text style={styles.compareDate}>{before ? before.date : 'Select'}</Text>
-        </View>
-        <View style={styles.compareCol}>
-          <Pressable style={styles.imagePicker} onPress={() => {}}>
-            {after ? (
-              <Image source={{ uri: after.url }} style={styles.compareImage} />
-            ) : (
-              <Ionicons name="image" size={32} color="#9BA9BD" />
-            )}
-          </Pressable>
-          <Text style={styles.compareDate}>{after ? after.date : 'Select'}</Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginTop: 18 }}>
-        <Text style={[styles.galleryTitle, {marginLeft: 12}]}>Choose pics to compare</Text>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryRow}>
-        {gallery.map((img, idx) => (
-          <View
-            key={img.thumbnail_url}
-            style={[
-              styles.galleryImageWrap,
-              (before && before.url === img.url) || (after && after.url === img.url)
-                ? styles.galleryImageSelected
-                : null,
-              idx !== gallery.length - 1 ? { marginRight: 16 } : {},
-            ]}
-          >
-            <Pressable onPress={() => handleSelect(img)} style={{width: CARD_WIDTH, height: CARD_IMAGE_HEIGHT}} onLongPress={() => setShowTrash((v) => !v)}>
-              <Image source={{ uri: img.url }} style={styles.galleryImage} />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.title, { marginTop: 8 }]}>Compare Progress</Text>
+        <View style={styles.compareRow}>
+          <View style={styles.compareCol}>
+            <Pressable style={styles.imagePicker} onPress={() => {}}>
+              {before ? (
+                <Image source={{ uri: before.url }} style={styles.compareImage} />
+              ) : (
+                <Ionicons name="image" size={32} color="#9BA9BD" />
+              )}
             </Pressable>
-            <Text style={styles.galleryDate}>{img.date}</Text>
-            {showTrash && (
-              <Pressable
-                style={{
-                  position: 'absolute',
-                  top: 4,
-                  right: 4,
-                  backgroundColor: 'rgba(0,0,0,0.7)',
-                  borderRadius: 12,
-                  padding: 4,
-                  zIndex: 10,
-                }}
-                onPress={() => handleDelete(img)}
-              >
-                <Ionicons name="trash" size={18} color="#fff" />
-              </Pressable>
-            )}
+            <Text style={styles.compareDate}>{before ? before.date : 'Select'}</Text>
           </View>
-        ))}
+          <View style={styles.compareCol}>
+            <Pressable style={styles.imagePicker} onPress={() => {}}>
+              {after ? (
+                <Image source={{ uri: after.url }} style={styles.compareImage} />
+              ) : (
+                <Ionicons name="image" size={32} color="#9BA9BD" />
+              )}
+            </Pressable>
+            <Text style={styles.compareDate}>{after ? after.date : 'Select'}</Text>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginTop: 18 }}>
+          <Text style={[styles.galleryTitle, {marginLeft: 12}]}>Choose pics to compare</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryRow}>
+          {gallery.map((img, idx) => (
+            <View
+              key={img.thumbnail_url}
+              style={[
+                styles.galleryImageWrap,
+                (before && before.url === img.url) || (after && after.url === img.url)
+                  ? styles.galleryImageSelected
+                  : null,
+                idx !== gallery.length - 1 ? { marginRight: 16 } : {},
+              ]}
+            >
+              <Pressable onPress={() => handleSelect(img)} style={{width: CARD_WIDTH, height: CARD_IMAGE_HEIGHT}} onLongPress={() => setShowTrash((v) => !v)}>
+                <Image source={{ uri: img.url }} style={styles.galleryImage} />
+              </Pressable>
+              <Text style={styles.galleryDate}>{img.date}</Text>
+              {showTrash && (
+                <Pressable
+                  style={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    borderRadius: 12,
+                    padding: 4,
+                    zIndex: 10,
+                  }}
+                  onPress={() => handleDelete(img)}
+                >
+                  <Ionicons name="trash" size={18} color="#fff" />
+                </Pressable>
+              )}
+            </View>
+          ))}
+        </ScrollView>
+        <Pressable
+          style={[styles.analyzeButton, before && after ? styles.analyzeButtonActive : null]}
+          onPress={before && after ? handleAnalyze : undefined}
+          disabled={!(before && after)}
+        >
+          <Text style={styles.analyzeButtonText}>Compare now</Text>
+        </Pressable>
+        <Pressable
+          style={styles.uploadButton}
+          onPress={handleUploadButton}
+          disabled={isUploading}
+        >
+          {isUploading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="camera" size={22} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.uploadButtonText}>Upload Selfie</Text>
+            </>
+          )}
+        </Pressable>
       </ScrollView>
-      <Pressable
-        style={[styles.analyzeButton, before && after ? styles.analyzeButtonActive : null]}
-        onPress={before && after ? handleAnalyze : undefined}
-        disabled={!(before && after)}
-      >
-        <Text style={styles.analyzeButtonText}>Compare now</Text>
-      </Pressable>
-      <Pressable
-        style={styles.uploadButton}
-        onPress={handleUploadButton}
-        disabled={isUploading}
-      >
-        {isUploading ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <>
-            <Ionicons name="camera" size={22} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.uploadButtonText}>Upload Selfie</Text>
-          </>
-        )}
-      </Pressable>
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -288,6 +290,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B0C16',
     paddingTop: 32,
     paddingHorizontal: 0,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   title: {
     color: '#fff',

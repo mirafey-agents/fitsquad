@@ -47,7 +47,8 @@ export const getUserSessions = onCall(
       if (fetchError) throw fetchError;
 
       const sessionTrainersIds =
-        data.map((item: any) => item.session_trainers_id);
+        data.map((item: any) => item.session_trainers_id).filter(Boolean);
+
       const {data: sessionParticipants, error: sessionError} = await getAdmin()
         .from("session_users")
         .select(
@@ -197,7 +198,7 @@ export const getTrainerSessions = onCall(
 //     }
 //   });
 
-export const createSession = onCall(
+export const createSessionTrainer = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
@@ -271,6 +272,46 @@ export const createSession = onCall(
       if (participantsError) throw participantsError;
 
       return {success: true, sessionId: data.id};
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);
+
+export const createSessionUser = onCall(
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+  async (request: any) => {
+    try {
+      const {authToken, exercises, startDateTime} = request.data;
+
+      if (!authToken || !exercises || !startDateTime) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters"
+        );
+      }
+      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      if (tokenError) {
+        throw new HttpsError(
+          "unauthenticated",
+          "Invalid authentication token"
+        );
+      }
+      await getAdmin()
+        .from("session_users")
+        .insert({
+          session_trainers_id: null,
+          user_id: userId,
+          exercises: exercises,
+          start_time: startDateTime,
+          status: "completed",
+        })
+        .select()
+        .single();
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {

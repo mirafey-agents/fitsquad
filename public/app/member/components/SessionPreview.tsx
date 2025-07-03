@@ -108,7 +108,10 @@ export default function SessionPreview({ selectedWorkout, handleVote, refreshSes
               <Text style={styles.workoutTime}>
                 {new Date(selectedWorkout.start_time).toLocaleString('en-US', dateFormatOption)}
                 {selectedWorkout?.session?.trainer && ( 
-                  <Text style={styles.workoutTrainer}>  with {selectedWorkout?.session.trainer.display_name}</Text>
+                  <Text style={styles.workoutTrainer}> with {selectedWorkout?.session.trainer.display_name}</Text>
+                )}
+                {selectedWorkout?.session?.trainer === undefined && ( 
+                  <Text style={styles.workoutTrainer}> for {selectedWorkout.exercises[0].reps} mins</Text>
                 )}
               </Text>
             </View>

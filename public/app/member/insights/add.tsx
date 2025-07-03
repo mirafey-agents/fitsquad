@@ -42,6 +42,7 @@ export default function AddSession() {
           id: selectedExercise.id,
           name: selectedExercise.name,
           reps: duration,
+          level: selectedExercise.level,
           energy_points: selectedExercise.energy_points
         }],
         startDateTime // exercises array

@@ -19,7 +19,8 @@ export const {
   createSessionUser,
   updateSession,
   voteSession,
-  deleteSession,
+  deleteSessionTrainer,
+  deleteSessionUser,
   getSessionMediaReview
 } = Sessions;
 

@@ -111,11 +111,18 @@ export async function voteSession(sessionId: string, voteMvpId: string) {
   });
 }
 
-export async function deleteSession(sessionId: string) {
+export async function deleteSessionTrainer(sessionId: string) {
   const authToken = await getAuthToken();
   
-  return httpsCallable(functions, 'deleteSession')({
+  return httpsCallable(functions, 'deleteSessionTrainer')({
     sessionTrainersId: sessionId, authToken
+  });
+}
+
+export async function deleteSessionUser(sessionUsersId: string) {
+  const authToken = await getAuthToken();
+  return httpsCallable(functions, 'deleteSessionUser')({
+    sessionUsersId, authToken
   });
 }
 

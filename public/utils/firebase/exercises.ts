@@ -282,7 +282,7 @@ const exercisesCsv = `id,module_type,name,level,muscle_group,type,energy_points,
 281,Yoga,Pigeon Pose,Intermediate,Hips,Flexibility,2,Flexibility & Rehab,Mobility & Rehab
 282,Yoga,Reclining Twist,Beginner,Spine,Flexibility,1,Flexibility & Rehab,Core Strength & Stability
 283,Yoga,Camel Pose,Intermediate,"Chest, Spine",Flexibility,2,Flexibility & Rehab,Mobility & Rehab
-284,Sports,Tennis,Beginner,Full Body,Cardio,3,General Fitness,Sports Conditioning
+284,Sports,Tennis,Intermediate,Full Body,Cardio,2.5,General Fitness,Sports Conditioning
 285,Sports,Brisk Walking,Beginner,Full Body,Cardio,1,Fat Loss,Fat Loss at Home
 286,Sports,Running,Intermediate,Full Body,Cardio,3,Fat Loss,Fat Loss at Home
 287,Sports,Basketball,Intermediate,Full Body,Cardio,2,General Fitness,Sports Conditioning

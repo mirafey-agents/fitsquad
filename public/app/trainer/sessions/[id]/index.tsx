@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { deleteMedia, deleteSession, getTrainerSessions, updateSession, uploadMedia } from '@/utils/firebase';
+import { deleteMedia, deleteSessionTrainer, getTrainerSessions, updateSession, uploadMedia } from '@/utils/firebase';
 import ConfirmModal from '@/components/ConfirmModal';
 import { colors } from '@/constants/theme';
 import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
@@ -140,7 +140,7 @@ export default function SessionDetails() {
       setLoading(true);
       setError(null);
 
-      const {data} = await deleteSession(id as string);
+      const {data} = await deleteSessionTrainer(id as string);
       if (!data || typeof data !== 'object' || !('success' in data) || !data.success) {
         throw new Error('Failed to delete session');
       }

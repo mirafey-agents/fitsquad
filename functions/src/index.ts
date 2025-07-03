@@ -23,13 +23,13 @@ export {
 export {
   getUserSessions,
   getTrainerSessions,
-  getExercises,
+  // getExercises,
   createSession,
   updateSession,
-  sessionFeedback,
-  sessionStatus,
+  // sessionFeedback,
+  // sessionStatus,
   deleteSession,
-  getSessionParticipants,
+  // getSessionParticipants,
   voteSession,
 } from "./sessions";
 

@@ -37,7 +37,7 @@ export const getUserSessions = onCall(
       const {userId} = verifySupabaseToken(auTkn);
       const {data, error: fetchError} = await getAdmin()
         .from("session_users")
-        .select("*,session:sessions(id, title, start_time, status,"+
+        .select("*,session:session_trainers(id, title, start_time, status,"+
           "trainer:users!trainer_id(id, display_name)),"+
           "session_media(media_id, review, content_type)")
         .eq("user_id", userId)
@@ -46,23 +46,27 @@ export const getUserSessions = onCall(
         .order("start_time", {ascending: true});
       if (fetchError) throw fetchError;
 
-      const sessionIds = data.map((item: any) => item.session_id);
+      const sessionTrainersIds =
+        data.map((item: any) => item.session_trainers_id);
       const {data: sessionParticipants, error: sessionError} = await getAdmin()
         .from("session_users")
-        .select("session_id, users!user_id(id, display_name), vote_mvp_user_id")
-        .in("session_id", sessionIds);
+        .select(
+          "session_trainers_id, vote_mvp_user_id, " +
+          "users!user_id(id, display_name)")
+        .in("session_trainers_id", sessionTrainersIds);
       if (sessionError) throw sessionError;
 
       const participantsDict: any = {};
       sessionParticipants.forEach((item: any) => {
-        participantsDict[item.session_id] =
-        (participantsDict[item.session_id] || []).concat(
+        participantsDict[item.session_trainers_id] =
+        (participantsDict[item.session_trainers_id] || []).concat(
           {...item.users, vote_mvp_user_id: item.vote_mvp_user_id}
         );
       });
 
       for (const userSession of data) {
-        userSession.participants = participantsDict[userSession.session_id];
+        userSession.participants =
+          participantsDict[userSession.session_trainers_id];
       }
 
       return data;
@@ -75,30 +79,33 @@ export const getUserSessions = onCall(
     }
   });
 
-export const getSessionParticipants = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
-  async (request: any) => {
-    try {
-      const {sessionId, authToken} = request.data;
-      const {userId} = verifySupabaseToken(authToken);
-      if (!userId) {
-        throw new HttpsError("unauthenticated", "Invalid authentication token");
-      }
-      const {data, error: fetchError} = await getAdmin()
-        .from("session_users")
-        .select("partcipants:users!user_id(id, display_name)")
-        .eq("session_id", sessionId);
-      if (fetchError) throw fetchError;
-      return data;
-    } catch (error: any) {
-      console.error("Function error:", error);
-      if (error instanceof HttpsError) {
-        throw error;
-      }
-      throw new HttpsError("internal", error.message);
-    }
-  }
-);
+// export const getSessionParticipants = onCall(
+//   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
+//   async (request: any) => {
+//     try {
+//       const {sessionId, authToken} = request.data;
+//       const {userId} = verifySupabaseToken(authToken);
+//       if (!userId) {
+//         throw new HttpsError(
+//            "unauthenticated",
+//            "Invalid authentication token"
+//         );
+//       }
+//       const {data, error: fetchError} = await getAdmin()
+//         .from("session_users")
+//         .select("partcipants:users!user_id(id, display_name)")
+//         .eq("session_trainers_id", sessionTrainersId);
+//       if (fetchError) throw fetchError;
+//       return data;
+//     } catch (error: any) {
+//       console.error("Function error:", error);
+//       if (error instanceof HttpsError) {
+//         throw error;
+//       }
+//       throw new HttpsError("internal", error.message);
+//     }
+//   }
+// );
 
 export const getTrainerSessions = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
@@ -108,7 +115,7 @@ export const getTrainerSessions = onCall(
       const {
         startDate: stDt,
         endDate: enDt,
-        sessionId: sId,
+        sessionTrainersId: sId,
         authToken: auTkn,
         fetchUsers,
       } = request.data;
@@ -120,11 +127,11 @@ export const getTrainerSessions = onCall(
       const {userId} = verifySupabaseToken(auTkn);
 
       const queryStr = fetchUsers ?
-        ("*, session_users!session_id(*, " +
+        ("*, session_users!session_trainers_id(*, " +
         "users!user_id(id, display_name, email),"+
         "session_media(media_id, review, content_type))") :
         "*";
-      let query = getAdmin().from("sessions")
+      let query = getAdmin().from("session_trainers")
         .select(queryStr).eq("trainer_id", userId);
 
       if (sId) {
@@ -162,33 +169,33 @@ export const getTrainerSessions = onCall(
     }
   });
 
-export const getExercises = onCall(
-  {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
-  async (request: any) => {
-    try {
-    // Validate input
-      const {authToken} = request.data;
+// export const getExercises = onCall(
+//   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
+//   async (request: any) => {
+//     try {
+//     // Validate input
+//       const {authToken} = request.data;
 
-      // Verify Supabase JWT and get user ID
-      const {userId} = verifySupabaseToken(authToken);
-      if (!userId) {
-        throw new HttpsError("invalid-argument", "Invalid auth token");
-      }
-      // Fetch squads
-      const {data, error: fetchError} = await getAdmin()
-        .from("exercises").select("*");
+//       // Verify Supabase JWT and get user ID
+//       const {userId} = verifySupabaseToken(authToken);
+//       if (!userId) {
+//         throw new HttpsError("invalid-argument", "Invalid auth token");
+//       }
+//       // Fetch squads
+//       const {data, error: fetchError} = await getAdmin()
+//         .from("exercises").select("*");
 
-      if (fetchError) throw fetchError;
+//       if (fetchError) throw fetchError;
 
-      return data;
-    } catch (error: any) {
-      console.error("Function error:", error);
-      if (error instanceof HttpsError) {
-        throw error;
-      }
-      throw new HttpsError("internal", error.message);
-    }
-  });
+//       return data;
+//     } catch (error: any) {
+//       console.error("Function error:", error);
+//       if (error instanceof HttpsError) {
+//         throw error;
+//       }
+//       throw new HttpsError("internal", error.message);
+//     }
+//   });
 
 export const createSession = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
@@ -233,7 +240,7 @@ export const createSession = onCall(
 
       // Create or update workout
       const {data, error: insertError} = await getAdmin()
-        .from("sessions")
+        .from("session_trainers")
         .insert({
           title,
           "start_time": startTime,
@@ -248,7 +255,7 @@ export const createSession = onCall(
 
       // Add participants
       const participantsData = allUsers.map((userId: string) => ({
-        session_id: data.id,
+        session_trainers_id: data.id,
         user_id: userId,
         start_time: startTime,
         squad_id: squadId,
@@ -280,13 +287,13 @@ export const updateSession = onCall(
     try {
       const {
         authToken,
-        sessionId,
+        sessionTrainersId,
         status,
         sessionUsers,
       } = request.data;
 
       // console.log(request.data);
-      if (!authToken || !status || !sessionId) {
+      if (!authToken || !status || !sessionTrainersId) {
         throw new HttpsError(
           "invalid-argument",
           "Missing required parameters"
@@ -301,12 +308,12 @@ export const updateSession = onCall(
 
       // Create or update workout
       const {error: updateError} = await getAdmin()
-        .from("sessions")
+        .from("session_trainers")
         .update({
           "updated_at": new Date().toISOString(),
           "status": status,
         })
-        .eq("id", sessionId)
+        .eq("id", sessionTrainersId)
         .eq("trainer_id", userId)
         .select()
         .single();
@@ -323,7 +330,7 @@ export const updateSession = onCall(
             exercises: user.exercises,
             updated_at: new Date().toISOString(),
           })
-          .eq("session_id", sessionId)
+          .eq("session_trainers_id", sessionTrainersId)
           .eq("user_id", user.user_id);
 
         if (updateError) throw updateError;
@@ -344,8 +351,8 @@ export const voteSession = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {sessionId, voteMvpId, authToken} = request.data;
-      if (!sessionId || !voteMvpId || !authToken) {
+      const {sessionTrainersId, voteMvpId, authToken} = request.data;
+      if (!sessionTrainersId || !voteMvpId || !authToken) {
         throw new HttpsError("invalid-argument", "Missing required parameters");
       }
       const {userId, error: tokenError} = verifySupabaseToken(authToken);
@@ -356,7 +363,7 @@ export const voteSession = onCall(
       const {error: updateError} = await getAdmin()
         .from("session_users")
         .update({vote_mvp_user_id: voteMvpId})
-        .eq("session_id", sessionId)
+        .eq("session_trainers_id", sessionTrainersId)
         .eq("user_id", userId);
 
       if (updateError) throw updateError;
@@ -371,82 +378,94 @@ export const voteSession = onCall(
     }
   });
 
-export const sessionFeedback = onCall(
-  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
-  async (request: any) => {
-    try {
-      const {sessionId, authToken, userFeedbacks} = request.data;
-      if (!sessionId || !authToken || !userFeedbacks) {
-        throw new HttpsError("invalid-argument", "Missing required parameters");
-      }
-      const {error: tokenError} = verifySupabaseToken(authToken);
-      if (tokenError) {
-        throw new HttpsError("unauthenticated", "Invalid authentication token");
-      }
+// export const sessionFeedback = onCall(
+//   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+//   async (request: any) => {
+//     try {
+//       const {sessionTrainersId, authToken, userFeedbacks} = request.data;
+//       if (!sessionTrainersId || !authToken || !userFeedbacks) {
+//         throw new HttpsError(
+//            "invalid-argument",
+//            "Missing required parameters"
+//         );
+//       }
+//       const {error: tokenError} = verifySupabaseToken(authToken);
+//       if (tokenError) {
+//         throw new HttpsError(
+//            "unauthenticated",
+//            "Invalid authentication token"
+//         );
+//       }
 
-      for (const userFeedback of userFeedbacks) {
-        const {error: updateError} = await getAdmin()
-          .from("session_users")
-          .update(
-            {status: userFeedback.status,
-              trainer_comment: userFeedback.trainerComment,
-            })
-          .eq("session_id", sessionId)
-          .eq("user_id", userFeedback.userId);
+//       for (const userFeedback of userFeedbacks) {
+//         const {error: updateError} = await getAdmin()
+//           .from("session_users")
+//           .update(
+//             {status: userFeedback.status,
+//               trainer_comment: userFeedback.trainerComment,
+//             })
+//           .eq("session_trainers_id", sessionTrainersId)
+//           .eq("user_id", userFeedback.userId);
 
-        if (updateError) throw updateError;
-      }
-      return {success: true};
-    } catch (error: any) {
-      console.error("Function error:", error);
-      if (error instanceof HttpsError) {
-        throw error;
-      }
-      throw new HttpsError("internal", error.message);
-    }
-  });
+//         if (updateError) throw updateError;
+//       }
+//       return {success: true};
+//     } catch (error: any) {
+//       console.error("Function error:", error);
+//       if (error instanceof HttpsError) {
+//         throw error;
+//       }
+//       throw new HttpsError("internal", error.message);
+//     }
+//   });
 
-export const sessionStatus = onCall(
-  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
-  async (request: any) => {
-    try {
-      const {sessionId, authToken, userFeedbacks} = request.data;
-      if (!sessionId || !authToken || !userFeedbacks) {
-        throw new HttpsError("invalid-argument", "Missing required parameters");
-      }
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
-      if (tokenError) {
-        throw new HttpsError("unauthenticated", "Invalid authentication token");
-      }
+// export const sessionStatus = onCall(
+//   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+//   async (request: any) => {
+//     try {
+//       const {sessionTrainersId, authToken, userFeedbacks} = request.data;
+//       if (!sessionTrainersId || !authToken || !userFeedbacks) {
+//         throw new HttpsError(
+//            "invalid-argument",
+//            "Missing required parameters"
+//         );
+//       }
+//       const {userId, error: tokenError} = verifySupabaseToken(authToken);
+//       if (tokenError) {
+//         throw new HttpsError(
+//            "unauthenticated",
+//            "Invalid authentication token"
+//         );
+//       }
 
-      const {error: updateError} = await getAdmin()
-        .from("sessions")
-        .update({status: "completed"})
-        .eq("session_id", sessionId)
-        .eq("trainer_id", userId);
+//       const {error: updateError} = await getAdmin()
+//         .from("session_trainers")
+//         .update({status: "completed"})
+//         .eq("id", sessionTrainersId)
+//         .eq("trainer_id", userId);
 
-      if (updateError) throw updateError;
+//       if (updateError) throw updateError;
 
-      return {success: true};
-    } catch (error: any) {
-      console.error("Function error:", error);
-      if (error instanceof HttpsError) {
-        throw error;
-      }
-      throw new HttpsError("internal", error.message);
-    }
-  });
+//       return {success: true};
+//     } catch (error: any) {
+//       console.error("Function error:", error);
+//       if (error instanceof HttpsError) {
+//         throw error;
+//       }
+//       throw new HttpsError("internal", error.message);
+//     }
+//   });
 
 export const deleteSession = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {sessionId, authToken} = request.data;
+      const {sessionTrainersId, authToken} = request.data;
 
-      if (!sessionId || !authToken) {
+      if (!sessionTrainersId || !authToken) {
         throw new HttpsError(
           "invalid-argument",
-          "Missing required parameters: session_id or auth_token"
+          "Missing required parameters"
         );
       }
 
@@ -458,9 +477,9 @@ export const deleteSession = onCall(
 
       // First verify the session belongs to the trainer
       const {data: session, error: fetchError} = await getAdmin()
-        .from("sessions")
+        .from("session_trainers")
         .select("trainer_id")
-        .eq("id", sessionId)
+        .eq("id", sessionTrainersId)
         .single();
 
       if (fetchError) throw fetchError;
@@ -475,15 +494,15 @@ export const deleteSession = onCall(
       const {error: deleteUsersError} = await getAdmin()
         .from("session_users")
         .delete()
-        .eq("session_id", sessionId);
+        .eq("session_trainers_id", sessionTrainersId);
 
       if (deleteUsersError) throw deleteUsersError;
 
       // Delete from sessions
       const {error: deleteSessionError} = await getAdmin()
-        .from("sessions")
+        .from("session_trainers")
         .delete()
-        .eq("id", sessionId)
+        .eq("id", sessionTrainersId)
         .eq("trainer_id", userId);
 
       if (deleteSessionError) throw deleteSessionError;
@@ -500,7 +519,7 @@ export const deleteSession = onCall(
 );
 
 export const updateSessionMedia = async function(
-  sessionId: string,
+  sessionTrainersId: string,
   userId: string,
   mediaId: string,
   review: string,
@@ -511,12 +530,12 @@ export const updateSessionMedia = async function(
     const {error} = await getAdmin()
       .from("session_media")
       .delete()
-      .eq("session_id", sessionId)
+      .eq("session_trainers_id", sessionTrainersId)
       .eq("user_id", userId)
       .eq("media_id", mediaId);
     if (error) {
       console.log("Error deleting session media",
-        sessionId, userId, mediaId, error);
+        sessionTrainersId, userId, mediaId, error);
       throw error;
     }
     return {success: true};
@@ -524,7 +543,7 @@ export const updateSessionMedia = async function(
     const {error} = await getAdmin()
       .from("session_media")
       .insert({
-        session_id: sessionId,
+        session_trainers_id: sessionTrainersId,
         user_id: userId,
         media_id: mediaId,
         review: review,
@@ -532,7 +551,7 @@ export const updateSessionMedia = async function(
       });
     if (error) {
       console.log("Error inserting session media",
-        sessionId, userId, mediaId, error);
+        sessionTrainersId, userId, mediaId, error);
       throw error;
     }
 

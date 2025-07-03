@@ -29,7 +29,8 @@ export {
   updateSession,
   // sessionFeedback,
   // sessionStatus,
-  deleteSession,
+  deleteSessionTrainer,
+  deleteSessionUser,
   // getSessionParticipants,
   voteSession,
 } from "./sessions";

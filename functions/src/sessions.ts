@@ -497,7 +497,7 @@ export const voteSession = onCall(
 //     }
 //   });
 
-export const deleteSession = onCall(
+export const deleteSessionTrainer = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
@@ -548,6 +548,41 @@ export const deleteSession = onCall(
 
       if (deleteSessionError) throw deleteSessionError;
 
+      return {success: true};
+    } catch (error: any) {
+      console.error("Function error:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);
+
+export const deleteSessionUser = onCall(
+  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+  async (request: any) => {
+    try {
+      const {sessionUsersId, authToken} = request.data;
+      if (!sessionUsersId || !authToken) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Missing required parameters"
+        );
+      }
+      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      if (tokenError) {
+        throw new HttpsError(
+          "unauthenticated",
+          "Invalid authentication token"
+        );
+      }
+      const {error: deleteError} = await getAdmin()
+        .from("session_users")
+        .delete()
+        .eq("id", sessionUsersId)
+        .eq("user_id", userId);
+      if (deleteError) throw deleteError;
       return {success: true};
     } catch (error: any) {
       console.error("Function error:", error);

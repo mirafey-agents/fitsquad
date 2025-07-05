@@ -73,9 +73,11 @@ export async function getTrainerSessions(
   }
 }
 
-export async function createSessionTrainer(
-  title: string="", startTime: string= "", squadId: string="",
-  userIds: Array<string>=null, exercises: Array<any>=null) {
+export async function createSessionTrainer({
+  title, startTime, squadId, userIds, exercises
+}: {
+  title: string, startTime: string, squadId: string, userIds: Array<string>, exercises: Array<any>
+}) {
   
   // console.log("title", title, "start", startTime, "squad", squadId, "users", userIds, "exercises", exercises);
   const authToken = await getAuthToken();

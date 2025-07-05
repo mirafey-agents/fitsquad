@@ -108,14 +108,13 @@ export default function CreateSession() {
     try {
       setLoading(true);
       setError(null);
-
-      const result = await createSessionTrainer(
-        formData.title,
-        formData.date.toISOString(),
-        formData.selectedSquads[0].id,
-        formData.selectedUsers.map(u => u.id),
-        formData.selectedExercises
-      );
+      const result = await createSessionTrainer({
+        title: formData.title,
+        startTime: formData.date.toISOString(),
+        squadId: formData.selectedSquads?.[0].id || null,
+        userIds: formData.selectedUsers.map(u => u.id),
+        exercises: formData.selectedExercises
+      });
       if (!result.data || !(result.data as any).success) {
         throw new Error('Failed to create session');
       }

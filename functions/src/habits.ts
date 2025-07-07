@@ -31,7 +31,7 @@ const col = (c: string) => {
 };
 
 const _addHabit = async (data: any, authUserId: string) => {
-  const {title, description, icon} = data;
+  const {title, description, icon, schedule} = data;
   const docRef = await col("habits").doc();
   await docRef.set({
     id: docRef.id,
@@ -40,6 +40,7 @@ const _addHabit = async (data: any, authUserId: string) => {
     icon,
     userId: authUserId,
     createdAt: new Date(),
+    schedule,
   });
 
   return {success: true, id: docRef.id};

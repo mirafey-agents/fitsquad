@@ -29,11 +29,14 @@ export async function setHabitCompletion(
   })).data;
 }
 
-export async function addHabit(title: string, description: string, icon: string) {
+export async function addHabit(
+  title: string, description: string,
+  icon: string, schedule: string
+) {
   const authToken = await getAuthToken();
   
   return (await httpsCallable(functions, 'addHabit')({
-    title, description, icon, authToken
+    title, description, icon, schedule, authToken
   })).data;
 }
 

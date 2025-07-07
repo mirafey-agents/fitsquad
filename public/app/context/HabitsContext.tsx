@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { getHabitsHistory, setHabitCompletion, deleteHabit, addHabit as addHabitFirebase } from '@/utils/firebase';
 
 interface HabitCompletion {
@@ -11,6 +11,7 @@ export interface Habit {
   id: string;
   title: string;
   description: string;
+  schedule?: string;
   icon?: string;
   completions: Array<HabitCompletion>;
   completionHistory?: Array<{ date: string; completed: boolean }>;
@@ -27,17 +28,33 @@ interface HabitsContextType {
   refreshHabits: () => Promise<void>;
   toggleHabitCompletion: (habitId: string, date: Date, completed: boolean, completionId: string) => Promise<void>;
   removeHabit: (habitId: string) => Promise<void>;
-  addHabit: (title: string, description: string, selectedIcon: string) => Promise<void>;
+  addHabit: (title: string, description: string, selectedIcon: string, schedule: string) => Promise<void>;
 }
 
 const HabitsContext = createContext<HabitsContextType | undefined>(undefined);
-const MAX_HISTORY = 30;
+const MAX_DAYS = 30;
 
-// Helper function to get start of day in local timezone
-const getStartOfDay = (date: Date) => {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+// Generate schedule for the last 30 days based on crontab string
+const generateScheduleFromCrontab = (crontab: string): any[] => {
+  const schedule: any[] = [];
+  const date = new Date();
+  date.setHours(6, 0, 0, 0); // Always 6 AM
+    
+  // Parse crontab: "0 3 * * mon,wed,fri" or "0 3 * * *"
+  const dayOfWeek = crontab?.split(' ')?.[4] || '*';
+  
+  // Generate dates for the last 30 days
+  for (let i = 0; i < MAX_DAYS; i++) {
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+    
+    // Check if this day matches the schedule
+    if (dayOfWeek === '*' || dayOfWeek.includes(dayName)) {
+      schedule.push({date: new Date(date), completed: false, completionId: null});
+    }
+    date.setDate(date.getDate() - 1); 
+  }
+  
+  return schedule;
 };
 
 export function HabitsProvider({ children }: { children: React.ReactNode }) {
@@ -50,30 +67,28 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     try {
       const habitsData = await getHabitsHistory() as Habit[];
       const habitsWithHistory = habitsData?.map(habit => {
-        // Get start of today in local timezone
-        const today = getStartOfDay(new Date());
-        const history = Array(MAX_HISTORY).fill({
-          completedDate: null,
-          completed: false,
-          completionId: null
-        });
+        // Generate expected schedule dates based on crontab
+        const history = generateScheduleFromCrontab(habit.schedule);
+        console.log("history", history);
+        // Mark expected dates based on schedule
+        for (const item of history) {
+          const itemDate = item.date.toISOString().split('T')[0];
+          const completion = habit.completions.find(c => {
+            return (new Date(c.date)).toISOString().split('T')[0] === itemDate
+          });
 
-        for (const c of habit.completions) {
-          // Convert completion date to local timezone start of day
-          const completionDate = getStartOfDay(new Date(c.date));
-          const offsetDays = Math.floor((today.getTime() - completionDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          if (offsetDays >= 0 && offsetDays < MAX_HISTORY) {
-            history[offsetDays] = {
-              completedDate: c.date,
-              completed: true,
-              completionId: c.completionId
-            }
+          if (completion) {
+            item.completed = true;
+            item.completionId = completion.completionId;
           }
         }
 
         let streak = 0;
-        while (history[streak]?.completed && streak < MAX_HISTORY) {
+        while (streak + 1 < history.length && history[streak+1]?.completed) {
+          streak++;
+        }
+
+        if (history[0]?.completed) {
           streak++;
         }
         
@@ -103,9 +118,12 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addHabit = async (title: string, description: string, selectedIcon: string) => {
+  const addHabit = async (
+    title: string, description: string,
+    selectedIcon: string, schedule: string
+  ) => {
     try {
-      await addHabitFirebase(title, description, selectedIcon);
+      await addHabitFirebase(title, description, selectedIcon, schedule);
       await fetchHabits();
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to add habit'));

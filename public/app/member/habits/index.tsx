@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { colors } from '@/constants/theme';
 import ConfirmModal from '@/components/ConfirmModal';
+import { BlurView } from 'expo-blur';
 import Animated, { 
   useAnimatedStyle, 
   withSequence, 
@@ -25,6 +26,12 @@ export default function HabitsPage() {
   const { habits, loading, refreshHabits, removeHabit, toggleHabitCompletion } = useHabits();
   const [isEditMode, setIsEditMode] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
+  const [showMissedHabitModal, setShowMissedHabitModal] = useState(false);
+  const [missedHabitData, setMissedHabitData] = useState<{
+    habitId: string;
+    previousDate: Date;
+  } | null>(null);
+  const [isCompletingHabit, setIsCompletingHabit] = useState(false);
 
   useEffect(() => {
     refreshHabits();
@@ -55,6 +62,26 @@ export default function HabitsPage() {
   const handleDeleteCancel = () => {
     setHabitToDelete(null);
     setIsEditMode(false);
+  };
+
+  const handleMissedHabitCancel = () => {
+    setShowMissedHabitModal(false);
+    setMissedHabitData(null);
+  };
+
+  const handleComplete = async (habitId: string, date: Date, currentState: boolean, completionId: string) => {
+    setIsCompletingHabit(true);
+    try {
+      console.log('Habit Toggle', habitId, date, currentState, completionId);
+      const p1 = new Promise(resolve => setTimeout(resolve, 1000));
+      const p2 = await toggleHabitCompletion(habitId, date, currentState, completionId);
+      await Promise.all([p1, p2]);
+      await refreshHabits();
+      setShowMissedHabitModal(false);
+      setMissedHabitData(null);
+    } finally {
+      setIsCompletingHabit(false);
+    }
   };
 
   const CircularProgress = ({ progress, size = 112, strokeWidth = 4, children, isCompleted }) => {
@@ -107,7 +134,7 @@ export default function HabitsPage() {
     );
   };
 
-  const HabitCard = ({ habit, idx }) => {
+  const HabitCard = ({ habit, onComplete }) => {
     const scale = useSharedValue(1);
     const progress = useSharedValue(0);
     const [showCheckmark, setShowCheckmark] = useState(false);
@@ -121,18 +148,17 @@ export default function HabitsPage() {
       };
     }, []);
 
-    const handleComplete = async () => {
-      if (!habit.currentCompleted) {
-        setShowCheckmark(true);
+    const checkForMissedHabit = (h) => {
+      if (
+        h.completionHistory &&
+        h.completionHistory.length >= 2 &&
+        h.completionHistory[0].completed === false &&
+        h.completionHistory[1].completed === false &&
+        h.completionHistory[2].completed === true
+      ) {
+        return h.completionHistory[1].date;
       }
-      
-      const today = new Date();
-      console.log('Habit Toggle', habit.id, today, habit.currentCompleted, habit.currentCompletionId);
-      const p1 =  new Promise(resolve => setTimeout(resolve, 1000));
-      const p2 = await toggleHabitCompletion(habit.id, today, habit.currentCompleted, habit.currentCompletionId);
-      await Promise.all([p1, p2]);
-      setShowCheckmark(false);
-      refreshHabits();
+      return null;
     };
 
     const handlePressIn = () => {
@@ -146,7 +172,18 @@ export default function HabitsPage() {
       
       // Start timer for completion
       pressTimeout.current = setTimeout(() => {
-        handleComplete();
+        // Check for missed habit before completing
+        const previousDate = checkForMissedHabit(habit);
+        if (previousDate) {
+          setShowMissedHabitModal(true);
+          setMissedHabitData({ habitId: habit.id, previousDate });
+        } else {
+          if (!habit.currentCompleted) {
+            setShowCheckmark(true);
+          }
+          onComplete(habit.id, new Date(), habit.currentCompleted, habit.currentCompletionId);
+          setShowCheckmark(false);
+        }
         scale.value = withSpring(1);
       }, 1500);
     };
@@ -228,11 +265,11 @@ export default function HabitsPage() {
               </View>
             </CircularProgress>
           </Animated.View>
-          <Text style={styles.habitName} selectable={false}>{habit.title}</Text>
+                    <Text style={styles.habitName} selectable={false}>{habit.title}</Text>
           <Text style={styles.habitDesc} selectable={false}>{habit.description}</Text>
         </Pressable>
       </Animated.View>
-    );
+  );
   };
 
   // if (loading) {
@@ -246,9 +283,10 @@ export default function HabitsPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
+        <Text style={styles.title}>Habits</Text>
         <Pressable onPress={() => setIsEditMode(!isEditMode)}>
           <LinearGradient 
             start={{x:0, y:0}}
@@ -262,10 +300,10 @@ export default function HabitsPage() {
       </View>
       <ScrollView contentContainerStyle={styles.grid}>
         {habits.map((habit, idx) => (
-          <HabitCard key={habit.id || idx} habit={habit} idx={idx} />
+          <HabitCard key={habit.id || idx} habit={habit} onComplete={handleComplete} />
         ))}
         {/* Add Habit Button */}
-        <Pressable style={styles.habitCard} onPress={() => router.push('/member/habits/add')}>
+        <Pressable style={styles.habitCard} onPress={() => router.navigate('./add', {relativeToDirectory: true})}>
           <View style={styles.iconCircle}>
             <Ionicons name="add" size={64} color="#fff" />
           </View>
@@ -280,6 +318,49 @@ export default function HabitsPage() {
           onCancel={handleDeleteCancel}
         />
       )}
+
+      {showMissedHabitModal && (
+        <BlurView intensity={80} style={styles.modalOverlay}>
+          <Pressable style={styles.modalOverlay} onPress={handleMissedHabitCancel}>
+            <Pressable style={styles.missedHabitModal} onPress={(e) => e.stopPropagation()}>
+                          <Text style={styles.modalTitle}>
+              You have missed the habit as of {missedHabitData?.previousDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+            </Text>
+              <Text style={styles.modalSubtitle}>
+                Which date do you want to mark complete?
+              </Text>
+              <View style={styles.modalButtons}>
+                <Pressable 
+                  style={[styles.modalButton, isCompletingHabit && styles.disabledButton]} 
+                  onPress={() => handleComplete(missedHabitData!.habitId, missedHabitData!.previousDate, false, '')}
+                  disabled={isCompletingHabit}
+                >
+                  {isCompletingHabit ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.modalButtonText}>
+                      {missedHabitData?.previousDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                    </Text>
+                  )}
+                </Pressable>
+                <Pressable 
+                  style={[styles.modalButton, isCompletingHabit && styles.disabledButton]} 
+                  onPress={() => handleComplete(missedHabitData!.habitId, new Date(), false, '')}
+                  disabled={isCompletingHabit}
+                >
+                  {isCompletingHabit ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.modalButtonText}>
+                      Today
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </BlurView>
+      )}
     </SafeAreaView>
   );
 }
@@ -293,8 +374,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    marginBottom: 8,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#353D45',
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '600',
   },
   editButton: {
     paddingVertical: 8,
@@ -309,12 +405,13 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     paddingVertical: 24,
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
+    gap: 0,
   },
   habitCard: {
-    width: '44%',
+    width: '48%',
     alignItems: 'center',
     marginBottom: 32,
     position: 'relative',
@@ -394,5 +491,59 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Missed habit modal styles
+  // Missed habit modal styles
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  missedHabitModal: {
+    width: '80%',
+    backgroundColor: '#21262F',
+    borderRadius: 24,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#9AAABD',
+    textAlign: 'center',
+    marginBottom: 24,
+    fontWeight: 'bold',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 16,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 24,
+    alignItems: 'center',
+    marginHorizontal: 8,
+    backgroundColor: '#4A90E2',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });

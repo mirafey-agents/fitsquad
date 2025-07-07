@@ -1,10 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, Image, ImageBackground, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
+import { spacing } from '@/constants/theme';
 import { useSessions } from '@/app/context/SessionsContext';
 import TrainerInputs from './session';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Insights() {
   const { refreshSessions } = useSessions();

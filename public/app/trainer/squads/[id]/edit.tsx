@@ -8,9 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { getMembers, getSquads, createOrEditSquad, deleteSquad } from '@/utils/firebase';
 import ConfirmModal from '@/components/ConfirmModal';
-
-
-const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+import SchedulePicker from '../../components/SchedulePicker';
 
 export default function EditSquad() {
   const { id } = useLocalSearchParams();
@@ -31,19 +29,23 @@ export default function EditSquad() {
     }
   }, [id]);
 
+
+
   const fetchSquadDetails = async (id: string) => {
     try {
       const squad: any = (await getSquads(id)).data[0];
       console.log("Squad:", squad);
       setSquadName(squad.name);
       setSquadDescription(squad.description);
-      setSelectedDays(squad.schedule);
+      
+      // Set schedule directly as it's already in crontab format
+      if (squad.schedule && Array.isArray(squad.schedule)) {
+        setSelectedDays(squad.schedule);
+      }
+      
       setSelectedMembers(squad.squad_members.map((member: any) => member?.users?.id));
-    //   console.log("Selected Members:", selectedMembers);
-    //   setSquad(squad);
     } catch (error) {
       console.error('Error fetching squad:', error);
-    //   setError('Failed to load squad details');
     } finally {
       setIsLoading(false);
     }
@@ -59,13 +61,7 @@ export default function EditSquad() {
     }
   };
 
-  const toggleDay = (day: string) => {
-    setSelectedDays(prev => 
-      prev.includes(day)
-        ? prev.filter(d => d !== day)
-        : [...prev, day]
-    );
-  };
+
 
   const toggleMember = (memberId: string) => {
     setSelectedMembers(prev => 
@@ -85,9 +81,8 @@ export default function EditSquad() {
 
   const handleEdit = async () => {
     try {
-        // console.log("Selected Members:", selectedMembers);
       const ack = await createOrEditSquad(
-        squadName, squadDescription, selectedDays, selectedMembers, id);
+        squadName, squadDescription, false, selectedDays, selectedMembers, id);
       console.log("Squad Edited:", ack);
       alert("Squad Saved successfully");
       router.back();
@@ -170,24 +165,10 @@ export default function EditSquad() {
 
         <Animated.View entering={FadeInUp.delay(200)}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Schedule</Text>
-            <View style={styles.daysGrid}>
-              {WEEK_DAYS.map((day) => (
-                <Pressable
-                  key={day}
-                  style={[
-                    styles.dayButton,
-                    selectedDays?.includes(day) && styles.selectedDay
-                  ]}
-                  onPress={() => toggleDay(day)}
-                >
-                  <Text style={[
-                    styles.dayText,
-                    selectedDays?.includes(day) && styles.selectedDayText
-                  ]}>{day}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <SchedulePicker
+              selectedDays={selectedDays}
+              onSelectedDaysChange={setSelectedDays}
+            />
           </View>
         </Animated.View>
 
@@ -330,31 +311,6 @@ const styles = StyleSheet.create({
     height: 120,
     textAlignVertical: 'top',
   },
-  daysGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  dayButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#21262F',
-    borderWidth: 1,
-    borderColor: '#374151',
-  },
-  selectedDay: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
-  },
-  dayText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  selectedDayText: {
-    color: '#FFFFFF',
-  },
   selectedMembersContainer: {
     gap: 8,
   },
@@ -407,30 +363,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
   },
-  filterContainer: {
-    paddingBottom: 16,
-    gap: 8,
-  },
-  filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#21262F',
-    borderWidth: 1,
-    borderColor: '#374151',
-  },
-  selectedFilter: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
-  },
-  filterText: {
-    fontSize: 14,
-    color: '#94A3B8',
-    fontWeight: '500',
-  },
-  selectedFilterText: {
-    color: '#FFFFFF',
-  },
   memberCard: {
     backgroundColor: '#21262F',
     borderRadius: 16,
@@ -465,34 +397,6 @@ const styles = StyleSheet.create({
   memberEmail: {
     fontSize: 14,
     color: '#94A3B8',
-  },
-  serviceTypeBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: 'rgba(79, 70, 229, 0.2)',
-  },
-  serviceTypeText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#4F46E5',
-  },
-  memberPerformance: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1F2937',
-    borderRadius: 12,
-    padding: 12,
-  },
-  performanceLabel: {
-    fontSize: 14,
-    color: '#94A3B8',
-  },
-  performanceValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
   selectedIndicator: {
     position: 'absolute',

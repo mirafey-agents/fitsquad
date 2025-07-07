@@ -42,6 +42,7 @@ export default function TrainerLayout() {
         }}
       />
       <Tabs.Screen name="edit-profile" options={{href: null}}/>
+      <Tabs.Screen name="components/SchedulePicker" options={{href: null}}/>
       <Tabs.Screen name="members" options={{href: null}}/>
       <Tabs.Screen name="members/[id]" options={{href: null}}/>
       <Tabs.Screen name="members/create" options={{href: null}}/>

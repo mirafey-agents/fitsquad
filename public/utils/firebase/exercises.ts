@@ -301,7 +301,50 @@ const exercisesCsv = `Sl No	Module Type	Exercise	Level	Muscle Group	Type	Energy 
 300	Sports	Surfing	Advanced	Full Body	Cardio	3	General Fitness	Sports Conditioning
 301	Sports	Skiing	Advanced	Full Body	Cardio	3	General Fitness	Sports Conditioning
 302	Sports	Snowboarding	Advanced	Full Body	Cardio	3	General Fitness	Sports Conditioning
-303	Sports	Hiking	Intermediate	Full Body	Cardio	2	General Fitness	Sports Conditioning`;
+303	Sports	Hiking	Intermediate	Full Body	Cardio	2	General Fitness	Sports Conditioning
+304	Strength	Kettlebell Sumo Squat	Intermediate	Glutes, Quads, Hamstrings	Strength	3	Build Muscle	Lower Body Strength
+305	Strength	Bicep Curl	Beginner	Biceps	Strength	2	Build Muscle	Arm Strength
+306	Strength	Triceps Press	Beginner	Triceps	Strength	2	Build Muscle	Arm Strength
+307	Strength	Lunges	Beginner	Glutes, Quads, Hamstrings	Strength	2	Build Muscle	Lower Body Strength
+308	Strength	Pull-ups	Advanced	Back, Biceps	Strength	4	Build Muscle	Upper Body Strength
+309	Strength	Bent Over Row	Intermediate	Back, Biceps	Strength	3	Build Muscle	Upper Body Strength
+311	Glutes	Glute Bridge	Beginner	Glutes	Strength	2	Build Muscle	Glute Activation
+312	Cardio	Jumping Jacks	Beginner	Full Body	Cardio	2	Fat Loss	Fat Loss at Home
+313	Cardio	Mountain Climbers	Intermediate	Core, Legs, Shoulders	Cardio	3	Fat Loss	HIIT & Conditioning
+314	Strength	Deadlift	Advanced	Back, Glutes, Hamstrings	Strength	4	Build Muscle	Full Body Strength
+315	Strength	Overhead Press	Intermediate	Shoulders, Triceps	Strength	3	Build Muscle	Shoulder Strength
+316	Warm-up	Arm Circles	Beginner	Shoulders	Mobility	1	Warm-up	Joint Mobility
+317	Warm-up	High Knees	Beginner	Legs	Cardio	2	Warm-up	Cardio Activation
+319	Mobility	World's Greatest Stretch	Intermediate	Hips, Hamstrings, Shoulders	Mobility	2	Mobility	Full Body Mobility
+321	Mobility	Thoracic Spine Rotation	Beginner	Back	Mobility	1	Mobility	Thoracic Mobility
+322	Rehab	Wall Slides	Beginner	Shoulders	Mobility	1	Rehabilitation	Shoulder Rehab
+323	Rehab	Clamshells	Beginner	Glutes	Strength	1	Rehabilitation	Hip Strength
+324	Rehab	Ankle Alphabet	Beginner	Ankles	Mobility	1	Rehabilitation	Ankle Mobility
+325	Machine	Leg Press	Beginner	Quads, Glutes	Strength	3	Build Muscle	Lower Body Strength
+326	Machine	Lat Pulldown	Beginner	Back, Biceps	Strength	3	Build Muscle	Upper Body Strength
+327	Machine	Chest Press Machine	Beginner	Chest, Triceps	Strength	3	Build Muscle	Chest Strength
+328	Machine	Cable Row	Intermediate	Back, Biceps	Strength	3	Build Muscle	Back Strength
+329	Machine	Leg Curl Machine	Beginner	Hamstrings	Strength	2	Build Muscle	Hamstring Strength
+331	Yoga	Cobra Pose	Beginner	Back	Mobility	2	Flexibility	Spinal Extension
+332	Yoga	Child's Pose	Beginner	Back, Hips	Relaxation	1	Recovery	Restorative Yoga
+334	Yoga	Warrior I	Beginner	Legs, Shoulders	Strength	2	Mobility	Yoga for Strength
+336	Yoga	Triangle Pose	Intermediate	Hips, Back	Mobility	2	Flexibility	Lateral Stretching
+338	Yoga	Seated Forward Bend	Beginner	Hamstrings, Back	Mobility	2	Flexibility	Hamstring Stretch
+339	Yoga	Boat Pose	Intermediate	Core	Core	3	Core Strength	Yoga for Abs
+340	Yoga	Chair Pose	Beginner	Quads, Glutes	Strength	2	Build Muscle	Yoga for Legs
+341	Yoga	Plank to Cobra Flow	Intermediate	Full Body	Flow	3	Mobility	Yoga Flow
+343	Yoga	Savasana	Beginner	Full Body	Relaxation	1	Recovery	Mind-Body Relaxation
+345	Yoga	Eagle Pose	Advanced	Full Body	Balance	3	Balance	Stability and Focus
+346	Strength	Barbell Bench Press	Intermediate	Chest, Triceps	Strength	4	Build Muscle	Chest Strength
+347	Strength	Incline Dumbbell Press	Intermediate	Chest, Shoulders	Strength	3	Build Muscle	Upper Chest Strength
+348	Strength	Dumbbell Fly	Intermediate	Chest	Strength	2	Build Muscle	Chest Isolation
+349	Strength	Dumbbell Lateral Raise	Beginner	Shoulders	Strength	2	Build Muscle	Shoulder Isolation
+350	Strength	Seated Cable Row	Intermediate	Back, Biceps	Strength	3	Build Muscle	Back Strength
+351	Strength	Preacher Curl	Intermediate	Biceps	Strength	2	Build Muscle	Biceps Isolation
+352	Strength	Skull Crushers	Intermediate	Triceps	Strength	3	Build Muscle	Triceps Strength
+353	Strength	Smith Machine Squat	Intermediate	Quads, Glutes	Strength	3	Build Muscle	Leg Strength
+354	Strength	Calf Raises	Beginner	Calves	Strength	2	Build Muscle	Calf Strength
+355	Strength	Face Pulls	Intermediate	Shoulders, Upper Back	Strength	3	Posture	Shoulder Health`;
 
 export interface Exercise {
   id: string;

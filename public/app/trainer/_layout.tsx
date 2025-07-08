@@ -55,6 +55,7 @@ export default function TrainerLayout() {
       <Tabs.Screen name="sessions/index" options={{href: null}}/>
       <Tabs.Screen name="sessions/[id]/index" options={{href: null}}/>
       <Tabs.Screen name="sessions/components/FilterableList" options={{href: null}}/>
+      <Tabs.Screen name="sessions/components/ExercisePicker" options={{href: null}}/>
       <Tabs.Screen name="sessions/create" options={{href: null}}/>
       <Tabs.Screen name="sessions/edit" options={{href: null}}/>
       <Tabs.Screen name="schedule" options={{href: null}}/>

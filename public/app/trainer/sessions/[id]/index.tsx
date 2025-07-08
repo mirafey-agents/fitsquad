@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, Switch, Modal } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { deleteMedia, deleteSessionTrainer, getTrainerSessions, updateSession, u
 import ConfirmModal from '@/components/ConfirmModal';
 import { colors } from '@/constants/theme';
 import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
+import ExercisePicker from '../components/ExercisePicker';
 
 const dateFormatOption = {
   weekday: 'short' as const,
@@ -46,6 +47,14 @@ interface Session {
     name: string;
     sets: number;
     reps: string;
+    energy_points: number;
+    module_type: string;
+    type: string;
+    level: string;
+    goal: string;
+    goal_specific: string;
+    muscle_group: string;
+
   }>;
   status: string;
 }
@@ -99,6 +108,8 @@ export default function SessionDetails() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditExercisesModal, setShowEditExercisesModal] = useState(false);
+  const [selectedExercises, setSelectedExercises] = useState<any[]>([]);
 
   useEffect(() => {
     if (typeof id === 'string') {
@@ -202,6 +213,41 @@ export default function SessionDetails() {
     }));
   };
 
+  const handleOpenEditExercisesModal = async () => {
+    setSelectedExercises(session.exercises || []);
+    setShowEditExercisesModal(true);
+  };
+
+  const handleCloseEditExercisesModal = () => {
+    setShowEditExercisesModal(false);
+    setSelectedExercises([]);
+  };
+
+  const updateSessionExercises = (exercises: any[]) => {
+    const formattedExercises = exercises.map(ex => ({
+      id: ex.id,
+      name: ex.name,
+      sets: ex.sets || 0,
+      reps: ex.reps || '',
+      energy_points: ex.energy_points || 0,
+      module_type: ex.module_type || '',
+      type: ex.type || '',
+      level: ex.level || '',
+      goal: ex.goal || '',
+      goal_specific: ex.goal_specific || '',
+      muscle_group: ex.muscle_group || ''
+    }));
+
+    setSession(prev => ({
+      ...prev,
+      exercises: formattedExercises,
+      session_users: prev.session_users.map(user => ({
+        ...user,
+        exercises: formattedExercises
+      }))
+    }));
+  };
+
   return (
     <View style={styles.container}>
       {loading && (
@@ -214,7 +260,7 @@ export default function SessionDetails() {
       
       <View style={[styles.header, loading && styles.disabledContent]}>
         <Pressable style={styles.backButton} onPress={() => router.back()} disabled={loading}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </Pressable>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>{session?.title}</Text>
@@ -245,6 +291,32 @@ export default function SessionDetails() {
           onCancel={() => setShowDeleteModal(false)}
         />
       )}
+
+      <Modal
+        visible={showEditExercisesModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Edit Exercises</Text>
+            <Pressable style={styles.modalBackButton} onPress={handleCloseEditExercisesModal}>
+              <Ionicons name="close" size={24} color="#FFFFFF" />
+            </Pressable>
+          </View>
+
+          <View style={styles.modalContent}>
+            <ExercisePicker
+              selectedExercises={selectedExercises}
+              onDone={(exercises) => {
+                console.log('Done', exercises)
+                updateSessionExercises(exercises);
+                handleCloseEditExercisesModal();
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
       {error && (
         <View style={styles.errorContainer}>
@@ -284,7 +356,15 @@ export default function SessionDetails() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Exercises</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Exercises</Text>
+            <Pressable 
+              style={styles.editButton}
+              onPress={handleOpenEditExercisesModal}
+            >
+              <Ionicons name="pencil" size={16} color="#FFFFFF" />
+            </Pressable>
+          </View>
           {session?.exercises.map((exercise, index) => (
             <View key={exercise.id} style={styles.exerciseCard}>
               <Text style={styles.exerciseName}>{exercise.name}</Text>
@@ -838,5 +918,56 @@ const styles = StyleSheet.create({
   disabledInput: {
     opacity: 0.5,
     backgroundColor: '#2A2F36',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  editButton: {
+    backgroundColor: '#4F46E5',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#060712',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#060712',
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262F',
+  },
+  modalBackButton: {
+    padding: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  modalSaveButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#4F46E5',
+    borderRadius: 20,
+  },
+  modalSaveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
   },
 });

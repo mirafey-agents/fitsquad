@@ -65,9 +65,14 @@ export default function TrainerDashboard() {
     startDate.setUTCHours(0, 0, 0, 0);
     const endDate = new Date()
     endDate.setUTCHours(23, 59, 59, 999);
-    const sessions = await getTrainerSessions(startDate, endDate);
+    const sessions = await getTrainerSessions(startDate, endDate, null, true);
     console.log("sessions", sessions);
     setSessions(sessions as any[]);
+  }
+
+  function getSessionTime(time: string) {
+    const date = new Date(time);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
   return (
@@ -108,30 +113,38 @@ export default function TrainerDashboard() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Today's Sessions</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Today's Sessions</Text>
+              <Pressable 
+                style={styles.createSessionSmallButton}
+                onPress={() => router.push('./sessions/create', {relativeToDirectory: true})}
+              >
+                <Ionicons name="add" size={16} color="#FFFFFF" />
+              </Pressable>
+            </View>
             {sessions.map((session, index) => (
               <Animated.View
                 key={session.id}
                 entering={FadeInUp.delay(index * 100)}
               >
-                <Pressable 
-                  style={styles.sessionCard}
-                  onPress={() => router.push(`./sessions/${session.id}`, {relativeToDirectory: true})}
-                >
+                <View style={styles.sessionCard}>
                   <View style={styles.sessionHeader}>
                     <View>
                       <Text style={styles.sessionTime}>{session.time}</Text>
                       <Text style={styles.sessionTitle}>{session.title}</Text>
-                      <Text style={styles.squadName}>{session.squad}</Text>
+                      <Text style={styles.squadName}>{getSessionTime(session.start_time)}</Text>
+                      <Text style={styles.squadName}>{session.squad?.name || session.session_users.length > 1 ? "Squad" : session.session_users[0].display_name}</Text>
                     </View>
                     <View style={styles.sessionBadges}>
                       <BlurView intensity={80} style={styles.typeBadge}>
-                        <Text style={styles.typeText}>{session.type}</Text>
+                        <Text style={styles.participantsText}>
+                          {session.status}
+                        </Text>
                       </BlurView>
                       <BlurView intensity={80} style={styles.participantsBadge}>
                         <Ionicons name="people" size={16} color="#000000" />
                         <Text style={styles.participantsText}>
-                          {session.participants}/{session.maxParticipants}
+                          {session.session_users?.length || ""}
                         </Text>
                       </BlurView>
                     </View>
@@ -140,23 +153,16 @@ export default function TrainerDashboard() {
                     style={styles.startSessionButton}
                     onPress={() => router.push(`./sessions/${session.id}`, {relativeToDirectory: true})}
                   >
-                    <Ionicons name="play-circle" size={20} color="#FFFFFF" />
-                    <Text style={styles.startSessionText}>Start Session</Text>
+                    <Text style={styles.startSessionText}>View Session</Text>
                   </Pressable>
-                </Pressable>
+                </View>
               </Animated.View>
             ))}
           </View>
 
-          <Pressable 
-            style={styles.createSessionButton}
-            onPress={() => router.push('./sessions/create', {relativeToDirectory: true})}
-          >
-            <Ionicons name="add-circle" size={24} color="#FFFFFF" />
-            <Text style={styles.createSessionText}>Create New Session</Text>
-          </Pressable>
-
-          <View style={styles.bottomSection}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Subscription</Text>
+            <View style={styles.bottomSection}>
             <View style={styles.subscriptionInfo}>
               {userData?.subscription_plan && new Date(userData.subscription_valid_until) > new Date() ? (
                 <View style={styles.premiumBadge}>
@@ -178,19 +184,13 @@ export default function TrainerDashboard() {
                     style={styles.getPremiumButton}
                     onPress={() => setShowSubscriptionModal(true)}
                   >
-                    <LinearGradient
-                      start={{x:0, y:0}}
-                      end={{x:0, y:1}}
-                      colors={["#4F46E5", "#7C3AED"]}
-                      style={styles.getPremiumGradient}
-                    >
-                      <Ionicons name="star-outline" size={20} color="#FFF" />
-                      <Text style={styles.getPremiumText}>Upgrade Plan</Text>
-                    </LinearGradient>
+                    <Ionicons name="star-outline" size={20} color="#FFF" />
+                    <Text style={styles.getPremiumText}>Upgrade Plan</Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
+          </View>
           </View>
         </View>
       </ScrollView>
@@ -286,18 +286,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   actionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
   },
   section: {
     marginTop: 32,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 16,
+  },
+  createSessionSmallButton: {
+    backgroundColor: '#4F46E5',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sessionCard: {
     backgroundColor: '#21262F',
@@ -401,10 +415,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 4,
-    backgroundColor: 'rgba(79, 70, 229, 0.2)',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#21262F',
+    borderWidth: 1,
+    borderColor: '#4F46E5',
     minWidth: 200,
     justifyContent: 'center',
   },
@@ -421,16 +437,18 @@ const styles = StyleSheet.create({
   freePlanBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#21262F',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 4,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#64748B',
     minWidth: 200,
     justifyContent: 'center',
   },
   freePlanText: {
-    color: '#64748B',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   limitationText: {
@@ -439,18 +457,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   getPremiumButton: {
-    marginVertical: 8,
-  },
-  getPremiumGradient: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
     gap: 8,
+    marginVertical: 8,
   },
   getPremiumText: {
-    color: '#FFF',
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
   },

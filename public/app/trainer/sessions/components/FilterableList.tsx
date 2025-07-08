@@ -125,10 +125,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 10,
     backgroundColor: '#21262F',
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: 8,
+    marginBottom: 4,
   },
   selectedCard: {
     backgroundColor: '#374151',
@@ -139,17 +139,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   selectionName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   selectionDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#64748B',
   },
   selectedIndicator: {
-    marginLeft: 12,
+    marginLeft: 8,
   },
 });
 

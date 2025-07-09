@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types/supabase';
+import { setLoggedInUser } from './storage';
 
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
@@ -25,10 +26,8 @@ export async function login(email, password) {
     email: email,
     password: password,
   });
-  console.log('login: ', data);
 
-  const res = {user: data.user};
-  localStorage.setItem('loggedinUser', JSON.stringify(res));
+  await setLoggedInUser(data.user);
 
-  return res;
+  return data.user;
 }

@@ -20,7 +20,7 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadMedia } from '@/utils/firebase';
 import SubscriptionModal from '@/app/components/SubscriptionModal';
-import { getLoggedInUser } from '@/utils/auth';
+import { getUserProfile } from '@/utils/storage';
 
 declare let Razorpay: any;
 
@@ -62,12 +62,16 @@ export default function Profile() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   useEffect(() => {
-    setUserData(getLoggedInUser().profile);
+    getUserProfile().then((profile) => {
+      setUserData(profile);
+    });
   }, []);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
-    setUserData(getLoggedInUser().profile);
+    getUserProfile().then((profile) => {
+      setUserData(profile);
+    });
   };
 
   const handleImagePick = async () => {

@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { getTrainerSessions } from '@/utils/firebase';
 import SubscriptionModal from '@/app/components/SubscriptionModal';
-import { getLoggedInUser } from '@/utils/auth';
+import { getUserProfile } from '@/utils/storage';
 
 // Demo data
 const QUICK_ACTIONS = [
@@ -57,7 +57,9 @@ export default function TrainerDashboard() {
 
   useEffect(() => {
     fetchSessions();
-    setUserData(getLoggedInUser().profile);
+    getUserProfile().then((profile) => {
+      setUserData(profile);
+    });
   }, []);
 
   async function fetchSessions() {

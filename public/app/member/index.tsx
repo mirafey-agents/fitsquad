@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { router, useRootNavigationState } from 'expo-router';
-import { getLoggedInUser } from '@/utils/auth';
+import { getUserProfile } from '@/utils/storage';
 import { voteSession } from '@/utils/firebase';
 import { Dimensions } from 'react-native';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -15,13 +15,8 @@ import MirrorPreview from './components/MirrorPreview';
 import SessionPreview from './components/SessionPreview';
 
 import {
-  spacing,
-} from '@/constants/theme';
-
-import {
   format,
   isSameDay,
-  isAfter,
   addDays,
   eachDayOfInterval,
 } from 'date-fns';
@@ -149,6 +144,8 @@ function getInitials(name) {
 }
 
 export default function Home() {
+
+  const CURRENT_DATE = new Date();
   const scrollViewRef = useRef<ScrollView>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingVote, setPendingVote] = useState<{
@@ -161,36 +158,28 @@ export default function Home() {
   const rootNavigationState = useRootNavigationState()
   const navigatorReady = rootNavigationState?.key != null
   const { sessions, refreshSessions } = useSessions();
+  const [selectedDate, setSelectedDate] = useState(CURRENT_DATE);
+  const [userProfile, setUserProfile] = useState<
+    {display_name: string, id: string }>
+      ({display_name: 'Guest', id: ''});
+
 
   useEffect(() => {
     if (!navigatorReady) return;
-    const userData = getLoggedInUser();
-    console.log('member dashboard', userData);
+    getUserProfile().then((profile) => {
+      console.log('member dashboard', profile);
 
-    if (!userData.user) {
-      router.push('/login');
-    } else if (userData.profile?.onboarding_status != "completed") {
-      router.push('./onboarding', {relativeToDirectory: true});
-    }
-    
-    setUserData(userData);
-    refreshSessions();
-    console.log('sessions: ', sessions);
+      if (!profile) {
+        console.log('Redirecting to login');
+        router.push('/login');
+      } else if (profile.onboarding_status != "completed") {
+        router.push('./onboarding', {relativeToDirectory: true});
+      }
+      setUserProfile(profile);
+      refreshSessions();
+      console.log('sessions: ', sessions);
+    });
   }, [navigatorReady])
-
-  const CURRENT_DATE = new Date();
-  const [selectedDate, setSelectedDate] = useState(CURRENT_DATE);
-  const [userData, setUserData] = useState<{
-    user?: { id: string };
-    profile: { display_name: string };
-  }>({profile: {display_name: 'Guest'}});
-  const [userVotes, setUserVotes] = useState<{
-    mvp: string | null;
-    toughest: string | null;
-  }>({
-    mvp: null,
-    toughest: null,
-  });
 
   const userSessionsToday = sessions.filter((session: any) => 
     new Date(session.start_time).toDateString() === selectedDate.toDateString());
@@ -244,12 +233,12 @@ export default function Home() {
     <ScrollView style={styles.container}>
       <View style={styles.headerBarNew}>
         <Image
-          source={{ uri: getProfilePicThumbNailURL(userData?.user?.id) }}
+          source={{ uri: getProfilePicThumbNailURL(userProfile?.id) }}
           style={styles.profileImageNew}
         />
         <View style={styles.headerTextGroupNew}>
           <Text style={styles.greetingNew} numberOfLines={1}>
-            Hello {userData?.profile?.display_name || 'Guest'}
+            Hello {userProfile?.display_name || 'Guest'}
           </Text>
           <Text style={styles.subtitleNew} numberOfLines={1}>
             Let's crush today's goals!

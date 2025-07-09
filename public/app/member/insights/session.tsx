@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getProfilePicThumbNailURL } from '@/utils/mediaUtils';
-import { getLoggedInUser } from '@/utils/auth';
+import { getUserProfile } from '@/utils/storage';
 
 interface TrainerInputsProps {
   loading: boolean;
@@ -27,10 +27,10 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
   }, [sessions]);
 
   const getTrainerInputsFromSessions = async () => {
-    const loggedInUser = await getLoggedInUser();
+    const profile = await getUserProfile();
     const defaultTrainer = {
-      name: loggedInUser.profile.display_name,
-      image: getProfilePicThumbNailURL(loggedInUser.profile.id),
+      name: profile.display_name,
+      image: getProfilePicThumbNailURL(profile.id),
       verified: true
     }
     return sessions.map(session => ({

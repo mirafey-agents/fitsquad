@@ -1,15 +1,28 @@
 import { Redirect } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { getLoggedInUser } from '@/utils/auth';
+import { getUserProfile } from '@/utils/storage';
+import { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 
 const Index = () => {
   useFrameworkReady();
-  const user = getLoggedInUser();
-  if (!user?.user) {
-    return <Redirect href="/login"/>
-  }
+  const [profile, setProfile] = useState({role: '', id: ''});
+  
+  useEffect(() => {
+    getUserProfile().then((profile) => {
+        setProfile(profile);
+    });
+  }, []);
 
-  if (user.profile && user.profile.role === 'trainer') {
+  if (profile?.role === '') {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  } else if (profile == null) {
+    return <Redirect href="/login"/>
+  } else if (profile.role === 'trainer') {
     return <Redirect href="/trainer"/>
   } else {
     return <Redirect href="/member"/>

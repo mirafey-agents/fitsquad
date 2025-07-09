@@ -1,3 +1,4 @@
+import { clearStorage } from "./storage";
 import { supabase } from "./supabase";
 
 export async function getAuthToken() {
@@ -9,11 +10,11 @@ export async function getAuthToken() {
       }
       return session.access_token;
 }
-
-export function getLoggedInUser() {
-    return JSON.parse(localStorage.getItem('loggedinUser'));
-  }
   
-export function logout() {
-    return localStorage.setItem('loggedinUser', null);
-  }
+export async function logout() {
+    try {
+        await clearStorage();
+    } catch (error) {
+        console.error('Error logging out:', error);
+    }
+}

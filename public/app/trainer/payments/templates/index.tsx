@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '../../../../constants/theme';
-import { supabase } from '../../../../utils/supabase';
+import { supabase } from '@/utils/supabase';
 
 interface Template {
   id: string;

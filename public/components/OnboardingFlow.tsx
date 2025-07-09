@@ -54,11 +54,11 @@ interface OnboardingFlowProps {
 export default function OnboardingFlow({ onComplete, initialData = {} }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('basics');
   const [formData, setFormData] = useState({
-    name: initialData.display_name || '',
+    display_name: initialData.display_name || '',
     gender: initialData.gender || '',
     age: initialData.age ? String(initialData.age) : '',
     goals: initialData.goals || [],
-    activity_level: initialData.experience_level || '',
+    experience_level: initialData.experience_level || '',
     medical_conditions: initialData.medical_conditions || '',
     dietary_restrictions: initialData.dietary_restrictions || [],
     preferred_workout_times: initialData.preferred_workout_times || [],
@@ -129,8 +129,8 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
         <Text style={styles.label}>Your Name</Text>
         <TextInput
           style={styles.input}
-          value={formData.name}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+          value={formData.display_name}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, display_name: text }))}
           placeholder="Enter your name"
           placeholderTextColor="#94A3B8"
         />
@@ -226,13 +226,13 @@ export default function OnboardingFlow({ onComplete, initialData = {} }: Onboard
               key={level}
               style={[
                 styles.optionButton,
-                formData.activity_level === level && styles.selectedOption
+                formData.experience_level === level && styles.selectedOption
               ]}
-              onPress={() => setSingleSelection('activity_level', level)}
+              onPress={() => setSingleSelection('experience_level', level)}
             >
               <Text style={[
                 styles.optionText,
-                formData.activity_level === level && styles.selectedOptionText
+                formData.experience_level === level && styles.selectedOptionText
               ]}>{level}</Text>
             </Pressable>
           ))}

@@ -1,7 +1,8 @@
 import { httpsCallable } from 'firebase/functions';
-import { getAuthToken, getLoggedInUser } from '../auth';
+import { getAuthToken } from '../auth';
 import { generateVideoThumbnail } from '../mediaUtils';
 import { functions } from './config';
+import { getUserProfile } from '../storage';
 
 export async function uploadMedia(
   asset: any,
@@ -12,7 +13,7 @@ export async function uploadMedia(
   const authToken = await getAuthToken();
   try {
     if (!userId) {
-      userId = getLoggedInUser().user.id;
+      userId = (await getUserProfile()).id;
     }
     const {url, mediaId} = (await httpsCallable(functions, 'getUploadUrl')({
       authToken, userId, category, categoryId,
@@ -78,7 +79,7 @@ export async function deleteMedia(
 ) {
   const authToken = await getAuthToken();
   if (!userId) {
-    userId = getLoggedInUser().user.id;
+    userId = (await getUserProfile()).id;
   }
   return (await httpsCallable(functions, 'deleteMedia')({
     userId, category, categoryId, objectId, authToken
@@ -92,7 +93,7 @@ export async function listMedia(
   const authToken = await getAuthToken();
 
   return (await httpsCallable(functions, 'listMedia')({
-    userId: getLoggedInUser().user.id, category, categoryId, authToken
+    userId: (await getUserProfile()).id, category, categoryId, authToken
   })).data;
 }
 

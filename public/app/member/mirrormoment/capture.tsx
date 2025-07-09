@@ -4,7 +4,7 @@ import { CameraView, Camera } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { uploadMedia } from '@/utils/firebase';
-import { getLoggedInUser } from '@/utils/auth';
+import { getUserProfile } from '@/utils/storage';
 
 export default function MirrorMomentCapture() {
   const cameraRef = useRef(null);
@@ -156,7 +156,7 @@ export default function MirrorMomentCapture() {
       cleanupCamera();
       
       // Upload the photo directly
-      const userId = getLoggedInUser().user.id;
+      const userId = (await getUserProfile()).id;
       await uploadMedia(
         asset,
         userId,

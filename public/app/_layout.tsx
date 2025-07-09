@@ -3,7 +3,7 @@ import { Stack, router } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { SessionsProvider } from '@/app/context/SessionsContext';
 import { HabitsProvider } from '@/app/context/HabitsContext';
-import { getLoggedInUser } from '@/utils/auth';
+import { getLoggedInUser } from '@/utils/storage';
 
 declare global {
   interface Window {
@@ -13,14 +13,15 @@ declare global {
 
 export default function RootLayout() {
   useFrameworkReady();
-  console.log('loggedInUser: ', getLoggedInUser());
 
   useEffect(() => {
     window.frameworkReady?.();
-    if (getLoggedInUser() == null) {
-      console.log('logged in user is null');
-      router.push('/login');
-    }
+    getLoggedInUser().then((user) => {
+      if (user == null) {
+        console.log('No logged in user, redirecting to login');
+        router.push('/login');
+      }
+    });
   }, []);
 
   return (

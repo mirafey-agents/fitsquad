@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { Buffer } from 'buffer';
 import { getMedia, uploadMedia, updateUserProfile } from '@/utils/firebase';
-import { getLoggedInUser } from '@/utils/auth';
+import { getUserProfile } from '@/utils/storage';
 
 const CERTIFICATIONS = [
   'NASM (National Academy of Sports Medicine)',
@@ -69,8 +69,10 @@ export default function EditTrainerProfile() {
   }
 
   useEffect(() => {
-    setUserData(getLoggedInUser().profile);
-    getProfilePic(getLoggedInUser().user.id);
+    getUserProfile().then((profile) => {
+      setUserData(profile);
+      getProfilePic(profile.id);
+    });
   }, []);
 
   const pickImage = async () => {
@@ -111,7 +113,9 @@ export default function EditTrainerProfile() {
     if (!userData?.id) return;
     await updateUserProfile({ display_name: userData.display_name, bio: userData.bio });
     // Refresh userData after update
-    setUserData(getLoggedInUser().profile);
+    getUserProfile().then((profile) => {
+      setUserData(profile);
+    });
     router.back();
   };
 

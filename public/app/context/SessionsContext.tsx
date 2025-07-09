@@ -73,10 +73,6 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
   const value = {
     sessions,
     loading,

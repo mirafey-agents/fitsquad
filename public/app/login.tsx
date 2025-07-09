@@ -35,10 +35,10 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const data = await login(email, password);
-      await cacheUserProfile(data.user.id);
+      const user = await login(email, password);
+      await cacheUserProfile(user.id);
 
-      if (data?.user) {
+      if (user) {
         router.replace('/');
       }
     } catch (error: any) {

@@ -26,7 +26,7 @@ export const updateUserProfile = onCall(
     }
     const allowedFields = [
       "display_name", "gender", "age", "goals",
-      "activity_level", "medical_conditions", "dietary_restrictions",
+      "experience_level", "medical_conditions", "dietary_restrictions",
       "preferred_workout_times", "available_equipment",
       // trainer fields
       "bio", "certifications", "specializations",

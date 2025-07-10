@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Image, Modal, Dimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { colors, typography, spacing, borderRadius } from '@/constants/theme';
 import { useSessions } from '@/app/context/SessionsContext';
 import { getMediaThumbnailURL, getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 import { getMediaFetchURL } from '@/utils/firebase';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const renderFormattedText = (text: string) => {
   if (!text) return null;
@@ -81,7 +79,8 @@ export default function WorkoutSessionDetails() {
         feedback: foundSession.trainer_comments,
         session_media: foundSession.session_media,
         start_time: foundSession.start_time,
-        exercises: foundSession.exercises
+        exercises: foundSession.exercises,
+        status: foundSession.status,
       };
       
       setSession(newSession);
@@ -149,144 +148,110 @@ export default function WorkoutSessionDetails() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
+      {/* Header Section */}
+      <View style={styles.headerSection}>
+        <Pressable style={styles.backButton} onPress={() => router.replace('/member/insights')}>
           <Ionicons name="arrow-back" size={24} color={colors.gray[200]} />
         </Pressable>
-        <Text style={styles.headerTitle}>Workout Details</Text>
+        <Text style={styles.headerTitleSmall}>Workout Insights</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.trainerInfo}>
-          <Image 
-            source={{ uri: session.trainer.image }}
-            style={styles.trainerImage}
-          />
-          <View>
-            <View style={styles.trainerNameRow}>
-              <Text style={styles.trainerName}>{session.trainer.name}</Text>
-              {session.trainer.verified && (
-                <BlurView intensity={80} style={styles.verifiedBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color={colors.semantic.success} />
-                </BlurView>
-              )}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Add more vertical space below title */}
+        <View style={{ marginBottom: 16, alignItems: 'center' }}>
+          <Text style={[styles.sessionSubtitle, { textAlign: 'center' }]}>{session.title || 'Complex Movements'}</Text>
+          <Text style={[styles.sessionDate, { textAlign: 'center' }]}> 
+            {new Date(session.date).toLocaleDateString('en-US', {
+              weekday: 'short', month: 'short', day: '2-digit',
+            })} at {new Date(session.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} with {session.trainer.name || 'Trainer'}
+          </Text>
+          <View style={styles.completedBadgeRow}>
+            <View style={styles.completedBadge}>
+              <Text style={styles.completedBadgeText}>{session.status ? session.status.charAt(0).toUpperCase() + session.status.slice(1) : 'Completed'}</Text>
             </View>
-            <Text style={styles.inputDate}>
-              {new Date(session.date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </Text>
           </View>
         </View>
-
-        <View style={styles.performance}>
+        {/* Session Type Badges */}
+        <View style={styles.sessionTypeRow}>
+          <View style={[styles.sessionTypeBadge, { backgroundColor: '#1DCB6B20' }]}> {/* Green */}
+            <Ionicons name="barbell" size={20} color="#1DCB6B" />
+          </View>
+          <View style={[styles.sessionTypeBadge, { backgroundColor: '#FFD60020' }]}> {/* Yellow */}
+            <Text style={styles.sessionTypeBadgeTextYellow}>2</Text>
+          </View>
+          <View style={[styles.sessionTypeBadge, { backgroundColor: '#A259FF20' }]}> {/* Purple */}
+            <Ionicons name="body" size={20} color="#A259FF" />
+          </View>
+          <View style={[styles.sessionTypeBadge, { backgroundColor: '#00C2FF20' }]}> {/* Blue */}
+            <Ionicons name="flash" size={20} color="#00C2FF" />
+          </View>
+        </View>
+        {/* Performance Score */}
+        <View style={styles.performanceScoreSection}>
           <Text style={styles.sectionTitle}>Performance Score</Text>
-          <LinearGradient
-            colors={[colors.gray[900], colors.gray[800]]}
-            style={styles.card}
-          >
-            <View style={styles.starsContainer}>
+          <View style={styles.performanceScoreBar}>
+            <View style={styles.starsContainerBig}>
               {renderStars(session.performance_score)}
             </View>
-            <Text style={styles.performanceScore}>
-              {session.performance_score}/5
-            </Text>
-          </LinearGradient>
-        </View>
-
-        <View style={styles.feedback}>
-          <Text style={styles.sectionTitle}>Trainer's Feedback</Text>
-          <LinearGradient
-            colors={[colors.gray[900], colors.gray[800]]}
-            style={styles.textCard}
-          >
-            <View style={styles.feedbackTextContainer}>
-              {renderFormattedText(session.feedback)}
-            </View>
-          </LinearGradient>
-        </View>
-
-        {session.exercises && session.exercises.length > 0 && (
-          <View style={styles.session}>
-            <Text style={styles.sectionTitle}>Exercises</Text>
-            <LinearGradient
-              colors={[colors.gray[900], colors.gray[800]]}
-              style={styles.exerciseCard}
-            >
-              <View style={styles.exerciseList}>
-                {session.exercises.map((exercise, i) => (
-                  <View key={i} style={styles.exerciseItem}>
-                    <Text style={styles.exerciseItemName}>{exercise.name}</Text>
-                    <Text style={styles.exerciseItemDetails}>
-                      {exercise.sets} × {exercise.reps}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </LinearGradient>
+            <Text style={styles.performanceScoreText}>{session.performance_score}/5</Text>
           </View>
-        )}
-  
-        <View style={styles.exerciseFeedback}>
-          {session.best_exercise && (
-            <View style={styles.exerciseHighlight}>
-              <BlurView intensity={80} style={[styles.exerciseBadge, styles.bestExercise]}>
-                <Ionicons name="star" size={20} color={colors.semantic.success} />
-                <View style={styles.exerciseContent}>
-                  <Text style={styles.exerciseLabel}>Best Performance</Text>
-                  <Text style={[styles.exerciseName, styles.bestExerciseText]}>
-                    {session.best_exercise}
-                  </Text>
-                </View>
-              </BlurView>
-            </View>
-          )}
-          {session.needs_improvement && (
-            <View style={styles.exerciseHighlight}>
-              <BlurView intensity={80} style={[styles.exerciseBadge, styles.improvementExercise]}>
-                <Ionicons name="fitness" size={20} color={colors.semantic.warning} />
-                <View style={styles.exerciseContent}>
-                  <Text style={styles.exerciseLabel}>Needs Improvement</Text>
-                  <Text style={[styles.exerciseName, styles.improvementExerciseText]}>
-                    {session.needs_improvement}
-                  </Text>
-                </View>
-              </BlurView>
-            </View>
-          )}
         </View>
-
-        {session.session_media && session.session_media.length > 0 && (
-          <View style={styles.media}>
-            <Text style={styles.sectionTitle}>Analysis</Text>
-            <View style={styles.mediaGrid}>
-              {session.session_media.map((media, index) => (
-                <Pressable 
-                  key={`media-${index}`}
-                  style={styles.mediaGridItem} 
-                  onPress={() => handleMediaPress(media)}
-                >
-                  <View style={styles.mediaImageContainer}>
-                    <Image 
-                      source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_trainers_id, media.media_id) }}
-                      style={styles.mediaGridImage}
-                    />
-                    <View style={styles.videoIconOverlay}>
-                      <Ionicons name="analytics" size={24} color="white" />
-                      <Text style={styles.videoIconText}>Analyse</Text>
-                    </View>
+        {/* Trainer's Feedback */}
+        <View style={styles.feedbackSection}>
+          <Text style={styles.sectionTitle}>Trainer's Feedback</Text>
+          <View style={styles.feedbackCard}>
+            <Text style={styles.feedbackTextBig}>{session.feedback}</Text>
+          </View>
+        </View>
+        {/* Exercises Section */}
+        {session.exercises && session.exercises.length > 0 && (
+          <View style={styles.exercisesSection}>
+            <Text style={styles.sectionTitle}>Exercises</Text>
+            <View style={styles.exerciseCardGrid}>
+              {session.exercises.map((exercise, i) => (
+                <View key={i} style={styles.exerciseCardItem}>
+                  <View style={styles.exerciseImagePlaceholder}>
+                    <Ionicons name="barbell" size={24} color="#FFD600" />
                   </View>
-                </Pressable>
+                  <View style={styles.exerciseCardTextCol}>
+                    <Text style={styles.exerciseCardName}>{exercise.name}</Text>
+                    <Text style={styles.exerciseCardSetsReps}>{exercise.sets} x {exercise.reps}</Text>
+                  </View>
+                </View>
               ))}
             </View>
           </View>
         )}
-
-        {/* Media Modal */}
+        {/* Analysis Section */}
+        {session.session_media && session.session_media.length > 0 && (
+          <View style={styles.media}>
+            <Text style={styles.sectionTitle}>Analysis</Text>
+            <View style={{backgroundColor: '#22262F', borderRadius: 16, padding: 12, marginTop: 6}}>
+              <View style={styles.mediaGrid}>
+                {session.session_media.map((media, index) => (
+                  <Pressable 
+                    key={`media-${index}`}
+                    style={styles.mediaGridItem} 
+                    onPress={() => handleMediaPress(media)}
+                  >
+                    <View style={styles.mediaImageContainer}>
+                      <Image 
+                        source={{ uri: getMediaThumbnailURL(session.user_id, 'session', session.session_trainers_id, media.media_id) }}
+                        style={styles.mediaGridImage}
+                      />
+                      <View style={styles.videoIconOverlay}>
+                        <Ionicons name="analytics" size={24} color="white" />
+                        <Text style={styles.videoIconText}>Analyse</Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
+        {/* Media Modal (unchanged) */}
         <Modal
           visible={modalVisible}
           transparent={true}
@@ -301,7 +266,6 @@ export default function WorkoutSessionDetails() {
                   <Ionicons name="close" size={24} color={colors.gray[200]} />
                 </Pressable>
               </View>
-              
               <ScrollView style={styles.modalBody}>
                 {selectedMedia && (
                   <>
@@ -325,11 +289,10 @@ export default function WorkoutSessionDetails() {
                         )
                       ) : (
                         <View style={styles.loadingContainer}>
-                           <Text>Loading Media...</Text>
+                          <Text>Loading Media...</Text>
                         </View>
                       )}
                     </View>
-                    
                     <View style={styles.modalAnalysisContainer}>
                       <Text style={styles.modalAnalysisTitle}>Analysis</Text>
                       <View>
@@ -343,7 +306,6 @@ export default function WorkoutSessionDetails() {
           </View>
         </Modal>
       </ScrollView>
-
     </View>
   );
 }
@@ -351,140 +313,193 @@ export default function WorkoutSessionDetails() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary.dark,
+    backgroundColor: '#070713',
   },
-  header: {
+  headerSection: {
+    backgroundColor: '#070713',
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    alignItems: 'center',
+    borderBottomWidth: 0,
+    marginBottom: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  headerTitleBig: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 0,
+    fontFamily: 'System',
+  },
+  headerTitleSmall: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#fff',
+    fontFamily: 'System',
+  },
+  sessionSubtitle: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: '600',
+    marginBottom: 2,
+    fontFamily: 'System',
+  },
+  sessionDate: {
+    fontSize: 13,
+    color: '#B0B0B0',
+    fontWeight: '400',
+    marginBottom: 6,
+    fontFamily: 'System',
+  },
+  completedBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  completedBadge: {
+    backgroundColor: '#14532D', // darker green
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  completedBadgeText: {
+    color: '#A7F3D0', // light green text
+    fontWeight: '600',
+    fontSize: 13,
+    fontFamily: 'System',
+  },
+  sessionTypeRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+    marginTop: 8,
+    gap: 16, // more horizontal gap
+  },
+  sessionTypeBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sessionTypeBadgeTextYellow: {
+    color: '#FFD600',
+    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'System',
+  },
+  performanceScoreSection: {
+    marginBottom: spacing.xl,
+  },
+  performanceScoreBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FFD60020',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginTop: 6,
     justifyContent: 'space-between',
-    padding: spacing.sm,
-    paddingTop: spacing.md,
-    backgroundColor: colors.gray[800],
+  },
+  starsContainerBig: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  performanceScoreText: {
+    color: '#fff',
+    fontWeight: '400', // less bold
+    fontSize: 14, // smaller
+    marginLeft: 8,
+    fontFamily: 'System',
+  },
+  feedbackSection: {
+    marginBottom: spacing.xl,
+  },
+  feedbackCard: {
+    backgroundColor: '#22262F',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 6,
+  },
+  feedbackTextBig: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '400',
+    fontFamily: 'System',
+    lineHeight: 22,
+  },
+  exercisesSection: {
+    marginBottom: spacing.xl,
+  },
+  exerciseCardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    backgroundColor: '#22262F',
+    borderRadius: 16,
+    padding: 12,
+    marginTop: 6,
+    justifyContent: 'space-between',
+  },
+  exerciseCardItem: {
+    width: '47%',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginBottom: 8,
+    gap: 10,
+    backgroundColor: 'transparent', // remove separate background
+  },
+  exerciseImagePlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#23232A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  exerciseCardTextCol: {
+    flex: 1,
+  },
+  exerciseCardName: {
+    color: '#fff',
+    fontWeight: '500', // less bold
+    fontSize: 13, // smaller
+    fontFamily: 'System',
+    marginBottom: 2,
+  },
+  exerciseCardSetsReps: {
+    color: '#B0B0B0', // light gray
+    fontWeight: '400',
+    fontSize: 11, // smaller
+    fontFamily: 'System',
   },
   backButton: {
     padding: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.gray[200],
   },
   content: {
     flex: 1,
     padding: spacing.md,
   },
-  trainerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  trainerImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-  trainerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
-  },
-  trainerName: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
-    color: colors.gray[200],
-  },
-  verifiedBadge: {
-    padding: spacing.xs,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.semantic.success + '20',
-  },
-  inputDate: {
-    fontSize: typography.size.md,
-    color: colors.gray[400],
-  },
-  performance: {
-    marginBottom: spacing.xl,
-  },
   sectionTitle: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
+    fontSize: typography.size.md, // slightly smaller
+    fontWeight: '400', // not bold
     color: colors.gray[200],
     marginBottom: spacing.md,
-  },
-  performanceContent: {
-    // This style is now unused, can be removed but leaving for safety
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-  },
-  textCard: {
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    width: '100%',
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  performanceScore: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.bold as any,
-    color: colors.gray[200],
-  },
-  feedback: {
-    marginBottom: spacing.xl,
-  },
-  feedbackTextContainer: {
-    flex: 1,
-    width: '100%',
-  },
-  feedbackText: {
-    fontSize: typography.size.md,
-    color: colors.gray[200],
-    lineHeight: typography.lineHeight.relaxed,
-  },
-  exerciseFeedback: {
-    marginBottom: spacing.xl,
-  },
-  exerciseHighlight: {
-    marginBottom: spacing.md,
-  },
-  exerciseBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-  },
-  bestExercise: {
-    backgroundColor: colors.semantic.success + '20',
-  },
-  improvementExercise: {
-    backgroundColor: colors.semantic.warning + '20',
-  },
-  exerciseContent: {
-    flex: 1,
-  },
-  exerciseLabel: {
-    fontSize: typography.size.sm,
-    color: colors.gray[400],
-    marginBottom: spacing.xs,
-  },
-  exerciseName: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.semibold as any,
-  },
-  bestExerciseText: {
-    color: colors.semantic.success,
-  },
-  improvementExerciseText: {
-    color: colors.semantic.warning,
   },
   media: {
     marginBottom: spacing.xl,
@@ -510,37 +525,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: '#334155',
-  },
-  session: {
-    marginBottom: spacing.xl,
-  },
-  sessionTime: {
-    fontSize: typography.size.md,
-    color: colors.gray[400],
-    marginBottom: spacing.md,
-  },
-  exerciseCard: {
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-  },
-  exerciseList: {
-    gap: spacing.sm,
-  },
-  exerciseItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.gray[700],
-  },
-  exerciseItemName: {
-    fontSize: typography.size.md,
-    color: colors.gray[200],
-  },
-  exerciseItemDetails: {
-    fontSize: typography.size.sm,
-    color: colors.gray[400],
   },
   loadingText: {
     fontSize: typography.size.md,

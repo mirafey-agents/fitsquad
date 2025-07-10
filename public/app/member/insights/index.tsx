@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, ImageBackground, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useEffect, useState } from 'react';
 import { spacing } from '@/constants/theme';
 import { useSessions } from '@/app/context/SessionsContext';
@@ -17,14 +17,10 @@ export default function Insights() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.row}>
-          <View style={styles.row3}>
-            <Text style={styles.title2}>Workouts</Text>
-          </View>
-        </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Workouts</Text>
         <View style={styles.content}>
-          <TrainerInputs loading={loading} error={error} cardGradient={["#21262F", "#353D45"]} />
+          <TrainerInputs loading={loading} error={error} />
         </View>
       </ScrollView>
     </View>
@@ -34,11 +30,14 @@ export default function Insights() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#181C23',
+    backgroundColor: '#070713',
   },
   scrollView: {
     flex: 1,
-    backgroundColor: '#181C23',
+    backgroundColor: '#070713',
+  },
+  scrollContent: {
+    paddingBottom: 32,
   },
   row: {
     flexDirection: 'row',
@@ -60,13 +59,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: spacing.sm,
   },
-  title2: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
+  title: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 40,
+    marginBottom: 32,
+    fontFamily: 'System',
   },
   content: {
     flex: 1,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: 16,
   },
 }); 

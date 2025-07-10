@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { getUserSessions } from '@/utils/firebase';
 
 interface Session {
@@ -8,7 +8,6 @@ interface Session {
   start_time: string;
   status: string;
   performance_score: number;
-  total_energy_points: number;
   trainer_comments: string;
   session_media: Array<{
     media_id: string;
@@ -26,6 +25,8 @@ interface Session {
     reps: string;
     energy_points: number;
     module_type: string;
+    level: string;
+    type: string;
   }>;
   participants: Array<{
     id: string;
@@ -34,6 +35,12 @@ interface Session {
   }>;
   mvpUserId?: string;
   vote_mvp_user_id?: string;
+
+
+  total_energy_points: number;
+  module_type: string;
+  type: string;
+  level: string;
 }
 
 interface SessionsContextType {
@@ -62,7 +69,27 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
           (acc, exercise) => {
             return acc + exercise.energy_points * parseInt(exercise.sets || exercise.reps);
            }, 0);
+
+        
+        const label_scores = {
+          module_type: {},
+          level: {},
+          type: {},
+        }
+        session.exercises.map((exercise) => {
+          const ep = exercise.energy_points * parseInt(exercise.sets || exercise.reps);
+          const mt = exercise.module_type || "Barbell";
+          const l = exercise.level || "Intermediate";
+          const t = exercise.type || "Strength";
+          label_scores.module_type[mt] = (label_scores.module_type[mt] || 0) + ep;
+          label_scores.level[l] = (label_scores.level[l] || 0) + ep;
+          label_scores.type[t] = (label_scores.type[t] || 0) + ep;
+        });
+        session.module_type = Object.keys(label_scores.module_type).reduce((a, b) => label_scores.module_type[a] > label_scores.module_type[b] ? a : b);
+        session.level = Object.keys(label_scores.level).reduce((a, b) => label_scores.level[a] > label_scores.level[b] ? a : b);
+        session.type = Object.keys(label_scores.type).reduce((a, b) => label_scores.type[a] > label_scores.type[b] ? a : b);
       });
+      
       console.log('sessionsData', sessionsData);
       setSessions(sessionsData as Session[]);
       setError(null);

@@ -1,12 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
 import { useSessions } from '@/app/context/SessionsContext';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 import { getUserProfile } from '@/utils/storage';
 
@@ -41,7 +39,10 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
         image: getProfilePicThumbNailURL((session.session.trainer as any).id),
         verified: true
       }: defaultTrainer,
-      type: 'workout',
+      type: session.type,
+      module_type: session.module_type,
+      level: session.level,
+      total_energy_points: session.total_energy_points,
       title: session.session?.title || session.exercises[0].name,
       performance_score: session.performance_score,
       feedback: session.trainer_comments,
@@ -106,11 +107,8 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
           key={input.id}
           entering={FadeInUp.delay(index * 100)}
         >
-          <Pressable 
-            style={{ marginBottom: spacing.md, borderRadius: borderRadius.lg, ...shadows.sm }}
-            onPress={() => router.push(`./${input.id}`, {relativeToDirectory: true})}
-          >
-            <LinearGradient colors={["#21262F", "#353D45"]} style={styles.inputCard}>
+            <View style={[styles.inputCard, { marginBottom: spacing.md, borderRadius: borderRadius.lg, ...shadows.sm }]}>
+              {/* Trainer Info Row */}
               <View style={styles.inputHeader}>
                 <View style={styles.trainerInfo}>
                   <Image 
@@ -120,27 +118,85 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
                   <View>
                     <View style={styles.trainerNameRow}>
                       <Text style={styles.trainerName}>{input.trainer?.name}</Text>
-                      {input.trainer?.verified && (
-                        <BlurView intensity={80} style={styles.verifiedBadge}>
-                          <Ionicons name="checkmark-circle" size={14} color={colors.semantic.success} />
-                        </BlurView>
-                      )}
                     </View>
                     <Text style={styles.inputDate}>
-                      {new Date(input.date).toLocaleDateString()}
+                      {new Date(input.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: '2-digit' })} at {new Date(input.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </View>
                 </View>
-                {input.media && input.media.length > 0 && (
-                  <View style={styles.mediaCountContainer}>
-                    <Ionicons name="film-outline" size={16} color={colors.gray[300]} />
-                    <Text style={styles.mediaCountText}>{input.media.length}</Text>
-                  </View>
-                )}
+                {/* Arrow */}
+                <Pressable 
+                  style={styles.arrowButton}
+                  onPress={() => router.push(`./${input.id}`, {relativeToDirectory: true})}
+                >
+                  <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
+                </Pressable>
               </View>
 
-              <Text style={styles.inputTitle}>{input.title}</Text>
+              {/* Session Title with Status Badge */}
+              <View style={styles.titleRow}>
+                <Text style={styles.inputTitle}>{input.title}</Text>
+                <View style={[styles.statusBadge, getStatusBadgeStyle(input.session?.status)]}>
+                  <Text style={[styles.statusBadgeText, getStatusBadgeTextStyle(input.session?.status)]}>{getStatusText(input.session?.status)}</Text>
+                </View>
+              </View>
 
+              {/* Session Badges Grid */}
+              <View style={styles.sessionTypeGrid}>
+                {/* Module */}
+                <View style={styles.gridItem}>
+                  <View style={styles.badgeRow}>
+                    <View style={[styles.sessionTypeBadge, { backgroundColor: '#1DCB6B20' }]}>
+                      <Ionicons name="barbell" size={20} color="#1DCB6B" />
+                    </View>
+                    <View style={styles.badgeTextContainer}>
+                      <Text style={styles.badgeLabel}>Module</Text>
+                      <Text style={styles.badgeValue}>{input.module_type || '-'}</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                {/* Level */}
+                <View style={styles.gridItem}>
+                  <View style={styles.badgeRow}>
+                    <View style={[styles.sessionTypeBadge, { backgroundColor: '#FFD60020' }]}>
+                      <Text style={styles.sessionTypeBadgeTextYellow}>{2}</Text>
+                    </View>
+                    <View style={styles.badgeTextContainer}>
+                      <Text style={styles.badgeLabel}>Level</Text>
+                      <Text style={styles.badgeValue}>{input.level || '-'}</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                {/* Type */}
+                <View style={styles.gridItem}>
+                  <View style={styles.badgeRow}>
+                    <View style={[styles.sessionTypeBadge, { backgroundColor: '#A259FF20' }]}>
+                      <Ionicons name="body" size={20} color="#A259FF" />
+                    </View>
+                    <View style={styles.badgeTextContainer}>
+                      <Text style={styles.badgeLabel}>Type</Text>
+                      <Text style={styles.badgeValue}>{input.type || '-'}</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                {/* Energy Points */}
+                <View style={styles.gridItem}>
+                  <View style={styles.badgeRow}>
+                    <View style={[styles.sessionTypeBadge, { backgroundColor: '#00C2FF20' }]}>
+                      <Ionicons name="flash" size={20} color="#00C2FF" />
+                    </View>
+                    <View style={styles.badgeTextContainer}>
+                      <Text style={styles.badgeLabel}>Energy Points</Text>
+                      <Text style={styles.badgeValue}>{input.total_energy_points || '-'}</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Performance Score */}
               <View style={styles.performanceSection}>
                 <Text style={styles.sectionLabel}>Performance Score</Text>
                 <View style={styles.performanceContent}>
@@ -150,36 +206,30 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
                   <Text style={styles.performanceScore}>{input.performance_score}/5</Text>
                 </View>
               </View>
-
-              <View style={styles.exerciseFeedback}>
-                {input.best_exercise && (
-                  <View style={styles.exerciseHighlight}>
-                    <BlurView intensity={80} style={[styles.exerciseBadge, styles.bestExercise]}>
-                      <Ionicons name="star" size={16} color={colors.semantic.success} />
-                      <Text style={[styles.exerciseBadgeText, styles.bestExerciseText]}>
-                        Best: {input.best_exercise}
-                      </Text>
-                    </BlurView>
-                  </View>
-                )}
-                
-                {input.needs_improvement && (
-                  <View style={styles.exerciseHighlight}>
-                    <BlurView intensity={80} style={[styles.exerciseBadge, styles.improvementExercise]}>
-                      <Ionicons name="fitness" size={16} color={colors.semantic.warning} />
-                      <Text style={[styles.exerciseBadgeText, styles.improvementExerciseText]}>
-                        Focus on: {input.needs_improvement}
-                      </Text>
-                    </BlurView>
-                  </View>
-                )}
-              </View>
-            </LinearGradient>
-          </Pressable>
+            </View>
         </Animated.View>
       ))}
     </View>
   );
+}
+
+function getStatusText(status) {
+  if (!status) return 'Completed';
+  if (status.toLowerCase() === 'skipped') return 'Skipped';
+  if (status.toLowerCase() === 'incomplete') return 'Incomplete';
+  return 'Completed';
+}
+function getStatusBadgeStyle(status) {
+  if (!status) return { backgroundColor: '#14532D' };
+  if (status.toLowerCase() === 'skipped') return { backgroundColor: '#7C2D12' };
+  if (status.toLowerCase() === 'incomplete') return { backgroundColor: '#78350F' };
+  return { backgroundColor: '#14532D' };
+}
+function getStatusBadgeTextStyle(status) {
+  if (!status) return { color: '#A7F3D0' };
+  if (status.toLowerCase() === 'skipped') return { color: '#FECACA' };
+  if (status.toLowerCase() === 'incomplete') return { color: '#FDE68A' };
+  return { color: '#A7F3D0' };
 }
 
 const styles = StyleSheet.create({
@@ -189,12 +239,25 @@ const styles = StyleSheet.create({
   inputCard: {
     borderRadius: borderRadius.lg,
     padding: spacing.md,
+    backgroundColor: '#22262F',
   },
   inputHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.sm,
+  },
+
+  arrowButton: {
+    padding: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
   trainerInfo: {
     flexDirection: 'row',
@@ -222,12 +285,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.semantic.success + '20',
   },
   inputDate: {
-    fontSize: typography.size.sm,
-    color: colors.gray[400],
+    fontSize: typography.size.xs,
+    color: colors.gray[500],
   },
   inputTitle: {
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.semibold as any,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.regular as any,
     color: colors.gray[200],
     marginBottom: spacing.sm,
   },
@@ -244,7 +307,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.gray[700],
+    backgroundColor: '#FFD60020',
     padding: spacing.sm,
     borderRadius: borderRadius.md,
   },
@@ -351,4 +414,75 @@ const styles = StyleSheet.create({
     color: colors.gray[300],
     fontWeight: typography.weight.medium as any,
   },
+  statusBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginLeft: 8,
+    minWidth: 80,
+    marginTop: 2,
+  },
+  statusBadgeText: {
+    fontWeight: '600',
+    fontSize: 13,
+    fontFamily: 'System',
+    textAlign: 'center',
+  },
+  sessionTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+    marginTop: 8,
+  },
+  gridItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '48%', // Two columns
+    marginBottom: 16,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  badgeTextContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  sessionTypeBadge: {
+    width: 60, // Smaller badges since labels are outside
+    height: 60, // Smaller badges since labels are outside
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sessionTypeBadgeTextYellow: {
+    color: '#FFD600',
+    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'System',
+  },
+  badgeLabel: {
+    fontSize: 10,
+    color: '#B0B0B0',
+    fontWeight: '400',
+    marginTop: 1,
+    textAlign: 'center',
+    fontFamily: 'System',
+  },
+  badgeValue: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: '400',
+    textAlign: 'center',
+    fontFamily: 'System',
+    marginTop: 1,
+  },
+
 }); 

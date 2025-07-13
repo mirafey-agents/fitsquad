@@ -18,7 +18,6 @@ export function HabitsPreview() {
     return (
       <Animated.View entering={FadeInUp.delay(200)}>
         <View style={styles.habitsContainer}>
-          <Text style={styles.habitsTitle}>Daily Habits</Text>
           <View style={styles.habitsCard}>
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colors.accent.coral} />
@@ -33,7 +32,6 @@ export function HabitsPreview() {
   return (
     <Animated.View entering={FadeInUp.delay(200)}>
       <View style={styles.habitsContainer}>
-        <Text style={styles.habitsTitle}>Daily Habits</Text>
         <View style={styles.habitsCard}>
           <ScrollView 
             horizontal 
@@ -71,14 +69,9 @@ export function HabitsPreview() {
 
 const styles = StyleSheet.create({
   habitsContainer: {
-    marginBottom: 40,
+    // marginBottom: 40, // Removed for uniform dashboard spacing
   },
-  habitsTitle: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+
   habitsCard: {
     borderRadius: 24,
     paddingVertical: 20,
@@ -114,7 +107,7 @@ const styles = StyleSheet.create({
   habitName: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "500",
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -130,7 +123,7 @@ const styles = StyleSheet.create({
   streakText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "500",
     marginLeft: 4,
   },
   logHabitsButton: {

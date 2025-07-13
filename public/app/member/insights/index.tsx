@@ -1,8 +1,10 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useEffect, useState } from 'react';
 import { spacing } from '@/constants/theme';
 import { useSessions } from '@/app/context/SessionsContext';
 import TrainerInputs from './session';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function Insights() {
   const { refreshSessions } = useSessions();
@@ -17,6 +19,14 @@ export default function Insights() {
 
   return (
     <View style={styles.container}>
+      {/* Back Button */}
+      <Pressable 
+        style={styles.backButton}
+        onPress={() => router.replace("/member")}
+      >
+        <Ionicons name="arrow-back" size={24} color="#fff" />
+      </Pressable>
+      
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Workouts</Text>
         <View style={styles.content}>
@@ -31,6 +41,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#070713',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1,
+    padding: 8,
   },
   scrollView: {
     flex: 1,

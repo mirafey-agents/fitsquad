@@ -37,7 +37,6 @@ export default function MirrorPreview() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mirror Moments</Text>
       <View style={styles.card}>
         <View style={styles.row}>
           {photos.map((photo, idx) => (
@@ -73,14 +72,14 @@ export default function MirrorPreview() {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 18,
+    // marginBottom: 18, // Removed for uniform dashboard spacing
   },
   card: {
     backgroundColor: '#23262F',
     borderRadius: 24,
     padding: 20,
     marginHorizontal: 16,
-    marginBottom: 24,
+    marginBottom: 12,
     marginTop: 8,
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
@@ -89,12 +88,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
+
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',

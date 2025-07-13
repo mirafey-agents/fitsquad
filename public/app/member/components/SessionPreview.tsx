@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   workoutName: {
     color: "#FFFFFF",
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: '500',
     marginBottom: 2,
   },
   workoutTime: {
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginTop: 16,
     marginBottom: 12,
   },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   summaryPillLabel: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   summaryPillLevelNumber: {
     color: '#FFD600',

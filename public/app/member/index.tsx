@@ -72,7 +72,7 @@ const renderEnergyPoints = (session_users: Array<any>) => {
     <Animated.View entering={FadeInUp.delay(200)}>
       <View style={styles.energyContainer}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Text style={styles.energyTitle}>Fitness Goal</Text>
+          <Text style={styles.sectionTitle}>Fitness Goal</Text>
           <Ionicons
             name="help-circle-outline"
             size={20}
@@ -135,13 +135,6 @@ const renderEnergyPoints = (session_users: Array<any>) => {
   );
 };
 
-
-
-function getInitials(name) {
-  if (!name) return '';
-  const parts = name.split(' ');
-  return parts[0][0] + (parts[1]?.[0] || '');
-}
 
 export default function Home() {
 
@@ -299,7 +292,7 @@ export default function Home() {
       <View style={styles.content}>
         {renderEnergyPoints(userSessionsToday)}
         <View style={styles.workoutReviewHeader}>
-          <Text style={styles.workoutReviewTitle}>Workout Review</Text>
+          <Text style={styles.sectionTitle}>Workout Review</Text>
           <Pressable
             style={styles.addButton}
             onPress={() => router.push('./insights/add', { relativeToDirectory: true })}
@@ -323,8 +316,18 @@ export default function Home() {
             </View>
           </View>
         )}
-        <MirrorPreview />
-        <HabitsPreview />
+        <View style={{marginBottom: 24}}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Mirror Moments</Text>
+          </View>
+          <MirrorPreview />
+        </View>
+        <View style={{marginBottom: 24}}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Daily Habits</Text>
+          </View>
+          <HabitsPreview />
+        </View>
       </View>
 
       {showConfirmModal && pendingVote && (
@@ -375,7 +378,7 @@ const styles = StyleSheet.create({
   subtitleNew: {
     color: "#9AAABD",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   menuIconNew: {
     marginLeft: 12,
@@ -397,7 +400,7 @@ const styles = StyleSheet.create({
   monthText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "500",
     marginLeft: 21,
     marginBottom: 8,
   },
@@ -407,11 +410,11 @@ const styles = StyleSheet.create({
   },
   calendarDayPill: {
     width: 44,
-    height: 56,
-    borderRadius: 22,
+    height: 76,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: 6,
     backgroundColor: 'transparent',
     paddingVertical: 2,
   },
@@ -484,11 +487,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 18,
   },
-  workoutReviewTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
   workoutReviewCard: {
     backgroundColor: '#23262F',
     borderRadius: 24,
@@ -509,8 +507,8 @@ const styles = StyleSheet.create({
   habitsTitle: {
     color: "#FFFFFF",
     fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+    fontWeight: "500",
+    marginBottom: 16,
   },
   habitsCard: {
     borderRadius: 24,
@@ -539,7 +537,7 @@ const styles = StyleSheet.create({
   habitName: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "500",
     marginBottom: 12,
   },
   habitStreak: {
@@ -559,7 +557,7 @@ const styles = StyleSheet.create({
   streakText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   logHabitsButton: {
     alignItems: "center",
@@ -572,7 +570,7 @@ const styles = StyleSheet.create({
   logHabitsText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   noWorkout: {
     alignItems: 'center',
@@ -581,7 +579,7 @@ const styles = StyleSheet.create({
   noWorkoutText: {
     color: "#FFFFFF",
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "500",
     marginTop: 12,
     textAlign: 'center',
   },
@@ -595,18 +593,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     position: 'relative',
   },
-  energyTitle: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
   energyCard: {
     alignItems: "center",
     borderRadius: 24,
     paddingVertical: 20,
     backgroundColor: "#23262F",
-    marginBottom: 8,
+    marginBottom: 2,
   },
   energyCircle: {
     width: 120,
@@ -646,7 +638,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     color: '#fff',
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '500',
     fontFamily: 'System',
     includeFontPadding: false,
     lineHeight: 120,
@@ -661,7 +653,7 @@ const styles = StyleSheet.create({
   energyDateText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   energyInfoTooltip: {
     position: 'absolute',
@@ -694,13 +686,15 @@ const styles = StyleSheet.create({
     zIndex: 9,
   },
   outerPill: {
-    backgroundColor: '#181A20',
-    borderRadius: 14,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: '#22262F',
+    borderRadius: 24,
+    paddingHorizontal: 4,
+    paddingVertical: 12,
+    height: 66,
     alignItems: 'center',
-    marginHorizontal: 4,
-    minWidth: 38,
+    marginHorizontal: 2,
+    minWidth: 36,
+    width: 36,
   },
   outerPillSelected: {
     backgroundColor: '#2563FF',
@@ -708,20 +702,21 @@ const styles = StyleSheet.create({
   outerPillDayText: {
     color: '#9BA9BE',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginBottom: 2,
   },
   outerPillDayTextSelected: {
     color: '#fff',
   },
   innerDatePill: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#23262F',
+    backgroundColor: '#686B70',
     marginBottom: 2,
+    marginTop: 4,
   },
   innerDatePillCompleted: {
     backgroundColor: '#1CE90E',
@@ -735,7 +730,7 @@ const styles = StyleSheet.create({
   innerDateText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   innerDateTextCompleted: {
     color: '#060712',
@@ -766,7 +761,7 @@ const styles = StyleSheet.create({
   mvpTitle: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginRight: 8,
   },
   mvpSubtitle: {
@@ -830,13 +825,17 @@ const styles = StyleSheet.create({
   mvpAvatarInitials: {
     color: '#fff',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '500',
+  },
+  sectionHeader: {
+    marginTop: 8,
+    marginBottom: 8,
   },
   sectionTitle: {
-    color: '#9AAABD',
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 18,
-    marginBottom: 8,
+      color: '#fff',
+    fontSize: 24,
+    fontWeight: '500',
+    marginTop: 8,
+    marginBottom: 4,
   },
 });

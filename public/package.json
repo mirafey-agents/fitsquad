@@ -5,14 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start --no-dev --minify",
+    "dev:android": "expo run:android",
+    "dev:ios": "expo run:ios",
     "build:web": "expo export --platform web",
-    "build:android": "eas build --platform android --profile preview",
-    "build:android-dev": "eas build --platform android --profile development",
-    "prebuild:android": "npx expo prebuild --platform android",
-    "lint": "expo lint",
-    "supabase:migration:up": "supabase migration up",
-    "android": "expo run:android",
-    "ios": "expo run:ios"
+    "build:android": "./android/gradlew assembleRelease",
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo/vector-icons": "~14.0.4",

@@ -8,7 +8,7 @@ export default function Logo({ size = 'medium' }: { size?: 'small' | 'medium' | 
   
   return (
     <View style={styles.container}>
-      <Image source={require('@/assets/images/logo_with_text_1024.svg')}
+      <Image source={require('@/images/logo_with_text_1024.svg')}
       style={{ width: 240, height: 80 }} />
     </View>
   );

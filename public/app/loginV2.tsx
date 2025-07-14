@@ -51,7 +51,7 @@ export default function LoginV2() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Image 
-          source={require('@/assets/images/logo_with_text_1024.svg')}
+          source={require('@/images/logo_with_text_1024.svg')}
           style={styles.logo}
           resizeMode="contain"
         />

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import FilterableList from './FilterableList';
+import FilterableList from '../../components/FilterableList';
 import { getExercises } from '@/utils/firebase';
 
 interface Exercise {
@@ -27,7 +27,6 @@ export default function ExercisePicker({
   selectedExercises,
   onDone,
 }: ExercisePickerProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [localSelectedExercises, setLocalSelectedExercises] = useState<Exercise[]>(selectedExercises);

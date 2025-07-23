@@ -38,7 +38,7 @@ const QUICK_ACTIONS = [
     title: 'Workout Plans',
     icon: 'calendar',
     color: '#FF9500',
-    route: './workout-plans',
+    route: './workout_plans',
   },
   {
     id: 'payments',

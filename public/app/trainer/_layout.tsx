@@ -43,6 +43,7 @@ export default function TrainerLayout() {
       />
       <Tabs.Screen name="edit-profile" options={{href: null}}/>
       <Tabs.Screen name="components/SchedulePicker" options={{href: null}}/>
+      <Tabs.Screen name="components/FilterableList" options={{href: null}}/>
       <Tabs.Screen name="members" options={{href: null}}/>
       <Tabs.Screen name="members/[id]" options={{href: null}}/>
       <Tabs.Screen name="members/create" options={{href: null}}/>
@@ -54,7 +55,6 @@ export default function TrainerLayout() {
       <Tabs.Screen name="payments/delete" options={{href: null}}/>
       <Tabs.Screen name="sessions/index" options={{href: null}}/>
       <Tabs.Screen name="sessions/[id]/index" options={{href: null}}/>
-      <Tabs.Screen name="sessions/components/FilterableList" options={{href: null}}/>
       <Tabs.Screen name="sessions/components/ExercisePicker" options={{href: null}}/>
       <Tabs.Screen name="sessions/create" options={{href: null}}/>
       <Tabs.Screen name="sessions/edit" options={{href: null}}/>
@@ -68,12 +68,9 @@ export default function TrainerLayout() {
       <Tabs.Screen name="squads/create" options={{href: null}}/>
       <Tabs.Screen name="squads/edit" options={{href: null}}/>
       <Tabs.Screen name="squads/delete" options={{href: null}}/>
-      <Tabs.Screen name="workout-plans/index" options={{href: null}}/>
-      <Tabs.Screen name="workout-plans/[id]" options={{href: null}}/>
-      <Tabs.Screen name="workout-plans/[id]/assign" options={{href: null}}/>
-      <Tabs.Screen name="workout-plans/create" options={{href: null}}/>
-      <Tabs.Screen name="workout-plans/edit" options={{href: null}}/>
-      <Tabs.Screen name="workout-plans/delete" options={{href: null}}/>
+      <Tabs.Screen name="workout_plans/index" options={{href: null}}/>
+      <Tabs.Screen name="workout_plans/[id]/index" options={{href: null}}/>
+      <Tabs.Screen name="workout_plans/create" options={{href: null}}/>
     </Tabs>
   );
 }

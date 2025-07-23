@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { getSquads, getMembers, getExercises, createSessionTrainer } from '@/utils/firebase';
-import FilterableList from './components/FilterableList';
+import FilterableList from '../components/FilterableList';
 
 interface Squad {
   id: string;

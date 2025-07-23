@@ -64,6 +64,12 @@ export {
   getSubscriptionPlans,
 } from "./payments";
 
+export {
+  createWorkoutPlan,
+  getWorkoutPlans,
+  deleteWorkoutPlan,
+} from "./workout_plans";
+
 export const helloWorld = onRequest(
   {cors: true},
   (request, response) => {

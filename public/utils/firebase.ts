@@ -54,7 +54,6 @@ export const {
 
 export const {
   updateUserProfile,
-  getUserProfile,
   cacheUserProfile
 } = Profile;
 

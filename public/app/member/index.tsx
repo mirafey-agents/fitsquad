@@ -162,15 +162,13 @@ export default function Home() {
     getUserProfile().then((profile) => {
       console.log('member dashboard', profile);
 
-      if (!profile) {
-        console.log('Redirecting to login');
-        router.push('/login');
-      } else if (profile.onboarding_status != "completed") {
+      if (!profile || profile.onboarding_status != "completed") {
         router.push('./onboarding', {relativeToDirectory: true});
+      } else {
+        setUserProfile(profile);
+        refreshSessions();
+        console.log('sessions: ', sessions);
       }
-      setUserProfile(profile);
-      refreshSessions();
-      console.log('sessions: ', sessions);
     });
   }, [navigatorReady])
 

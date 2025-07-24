@@ -2,7 +2,6 @@ import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Database } from '../types/supabase';
-import { setLoggedInUser } from './storage';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
@@ -12,27 +11,27 @@ const customStorage = {
   getItem: async (key: string) => {
     try {
       const value = await AsyncStorage.getItem(key);
-      console.log('Supabase Storage: Getting', key, value ? 'Found' : 'Not found');
+      // console.log('Supabase Storage: Getting', key, value ? 'Found' : 'Not found');
       return value;
     } catch (error) {
-      console.error('Supabase Storage: Error getting item from storage:', error);
+      // console.error('Supabase Storage: Error getting item from storage:', error);
       return null;
     }
   },
   setItem: async (key: string, value: string) => {
     try {
       await AsyncStorage.setItem(key, value);
-      console.log('Supabase Storage: Setting', key, 'Success');
+      // console.log('Supabase Storage: Setting', key, 'Success');
     } catch (error) {
-      console.error('Supabase Storage: Error setting item in storage:', error);
+      // console.error('Supabase Storage: Error setting item in storage:', error);
     }
   },
   removeItem: async (key: string) => {
     try {
       await AsyncStorage.removeItem(key);
-      console.log('Supabase Storage: Removing', key, 'Success');
+      // console.log('Supabase Storage: Removing', key, 'Success');
     } catch (error) {
-      console.error('Supabase Storage: Error removing item from storage:', error);
+      // console.error('Supabase Storage: Error removing item from storage:', error);
     }
   },
 };
@@ -66,7 +65,6 @@ export async function login(email, password) {
 
   if (data.user) {
     console.log('Supabase: Login successful for', data.user.email);
-    await setLoggedInUser(data.user);
   }
 
   return data.user;

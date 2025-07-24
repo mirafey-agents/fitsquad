@@ -1,7 +1,8 @@
 import { httpsCallable } from 'firebase/functions';
 import { getAuthToken } from '../auth';
 import { functions } from './config';
-import { setUserProfile, getLoggedInUser } from '../storage';
+import { setUserProfile } from '../storage';
+import { getLoggedInUser } from '../auth';
 
 export async function updateUserProfile(profileData: any) {
   const authToken = await getAuthToken();
@@ -21,4 +22,5 @@ export async function cacheUserProfile(userId: string) {
   });
 
   await setUserProfile(profile);
+  return profile
 }

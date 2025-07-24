@@ -69,7 +69,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       const habitsWithHistory = habitsData?.map(habit => {
         // Generate expected schedule dates based on crontab
         const history = generateScheduleFromCrontab(habit.schedule);
-        console.log("history", history);
+        // console.log("history", history);
         // Mark expected dates based on schedule
         for (const item of history) {
           const itemDate = item.date.toISOString().split('T')[0];

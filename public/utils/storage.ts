@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEYS = {
-  LOGGED_IN_USER: 'LOGGED_IN_USER',
   USER_PROFILE: 'USER_PROFILE',
 };
 
@@ -16,14 +15,6 @@ async function setStorageItem(key: string, value: any) {
 
 export async function clearStorage() {
   return await AsyncStorage.clear();
-}
-
-export async function getLoggedInUser() {
-  return await getStorageItem(STORAGE_KEYS.LOGGED_IN_USER);
-}
-
-export async function setLoggedInUser(user: any) {
-  return await setStorageItem(STORAGE_KEYS.LOGGED_IN_USER, user);
 }
 
 export async function getUserProfile() {

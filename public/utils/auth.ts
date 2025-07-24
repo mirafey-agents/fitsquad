@@ -22,3 +22,10 @@ export async function logout() {
         console.error('Error logging out:', error);
     }
 }
+
+export async function getLoggedInUser() {
+    const { data: { session }, error: userError } = await supabase.auth.getSession();
+    console.log('logged in user: ',session?.user);
+    if (userError) throw userError;
+    return session?.user;
+}

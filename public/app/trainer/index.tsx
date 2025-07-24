@@ -56,9 +56,11 @@ export default function TrainerDashboard() {
   const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    fetchSessions();
     getUserProfile().then((profile) => {
       setUserData(profile);
+      if (profile) {  
+        fetchSessions();
+      }
     });
   }, []);
 

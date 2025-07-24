@@ -28,9 +28,11 @@ export default function SubscriptionModal({ visible, onClose, userId, role }: Su
   const [plans, setPlans] = useState([]);
   
   useEffect(() => {
-    getSubscriptionPlans({role}).then(plans => {
-      setPlans(plans as []);
-    });
+    if (userId && role) {
+      getSubscriptionPlans({role}).then(plans => {
+        setPlans(plans as []);
+      });
+    }
   }, []);
 
   const handlePurchase = async (billingPlan: string) => {

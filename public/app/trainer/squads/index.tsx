@@ -11,13 +11,9 @@ interface Squad {
   id: string;
   name: string;
   description: string;
-  is_private: boolean;
-  schedule: any;
-  squad_members: any[];
-  member_count: {
-    count: number;
-  };
-  created_at: string;
+  schedule: string[];
+  members: any[];
+  createdAt: string;
 }
 
 export default function ManageSquads() {
@@ -103,7 +99,7 @@ export default function ManageSquads() {
                   </View>
                   <BlurView intensity={80} style={styles.memberCount}>
                     <Ionicons name="people" size={16} color="#000000" />
-                    <Text style={styles.memberCountText}>{squad.squad_members.length}</Text>
+                    <Text style={styles.memberCountText}>{squad.members.length}</Text>
                   </BlurView>
                 </View>
               </Pressable>

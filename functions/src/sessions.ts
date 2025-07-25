@@ -1,6 +1,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getAdmin} from "./supabase";
 import {verifySupabaseToken} from "./auth";
+import * as admin from "firebase-admin";
 
 export const getUserSessions = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
@@ -79,34 +80,6 @@ export const getUserSessions = onCall(
       throw new HttpsError("internal", error.message);
     }
   });
-
-// export const getSessionParticipants = onCall(
-//   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
-//   async (request: any) => {
-//     try {
-//       const {sessionId, authToken} = request.data;
-//       const {userId} = verifySupabaseToken(authToken);
-//       if (!userId) {
-//         throw new HttpsError(
-//            "unauthenticated",
-//            "Invalid authentication token"
-//         );
-//       }
-//       const {data, error: fetchError} = await getAdmin()
-//         .from("session_users")
-//         .select("partcipants:users!user_id(id, display_name)")
-//         .eq("session_trainers_id", sessionTrainersId);
-//       if (fetchError) throw fetchError;
-//       return data;
-//     } catch (error: any) {
-//       console.error("Function error:", error);
-//       if (error instanceof HttpsError) {
-//         throw error;
-//       }
-//       throw new HttpsError("internal", error.message);
-//     }
-//   }
-// );
 
 export const getTrainerSessions = onCall(
   {secrets: ["SUPABASE_JWT_SECRET", "SUPABASE_SERVICE_KEY"], cors: true},
@@ -227,15 +200,11 @@ export const createSessionTrainer = onCall(
       // Get all users from participant squads
       let allUsers = [...userIds];
       if (squadId) {
-        const {data: squadMembers, error: squadError} = await getAdmin()
-          .from("squad_members")
-          .select("user_id")
-          .eq("squad_id", squadId);
-
-        if (squadError) throw squadError;
+        const squadMembers = (await admin.firestore()
+          .collection("squads").doc(squadId).get()).data()?.members || [];
 
         // Add unique users from squads
-        const squadUserIds = squadMembers.map((member: any) => member.user_id);
+        const squadUserIds = squadMembers.map((member: any) => member.userId);
         allUsers = [...new Set([...allUsers, ...squadUserIds])];
       }
 
@@ -418,84 +387,6 @@ export const voteSession = onCall(
       throw new HttpsError("internal", error.message);
     }
   });
-
-// export const sessionFeedback = onCall(
-//   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
-//   async (request: any) => {
-//     try {
-//       const {sessionTrainersId, authToken, userFeedbacks} = request.data;
-//       if (!sessionTrainersId || !authToken || !userFeedbacks) {
-//         throw new HttpsError(
-//            "invalid-argument",
-//            "Missing required parameters"
-//         );
-//       }
-//       const {error: tokenError} = verifySupabaseToken(authToken);
-//       if (tokenError) {
-//         throw new HttpsError(
-//            "unauthenticated",
-//            "Invalid authentication token"
-//         );
-//       }
-
-//       for (const userFeedback of userFeedbacks) {
-//         const {error: updateError} = await getAdmin()
-//           .from("session_users")
-//           .update(
-//             {status: userFeedback.status,
-//               trainer_comment: userFeedback.trainerComment,
-//             })
-//           .eq("session_trainers_id", sessionTrainersId)
-//           .eq("user_id", userFeedback.userId);
-
-//         if (updateError) throw updateError;
-//       }
-//       return {success: true};
-//     } catch (error: any) {
-//       console.error("Function error:", error);
-//       if (error instanceof HttpsError) {
-//         throw error;
-//       }
-//       throw new HttpsError("internal", error.message);
-//     }
-//   });
-
-// export const sessionStatus = onCall(
-//   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
-//   async (request: any) => {
-//     try {
-//       const {sessionTrainersId, authToken, userFeedbacks} = request.data;
-//       if (!sessionTrainersId || !authToken || !userFeedbacks) {
-//         throw new HttpsError(
-//            "invalid-argument",
-//            "Missing required parameters"
-//         );
-//       }
-//       const {userId, error: tokenError} = verifySupabaseToken(authToken);
-//       if (tokenError) {
-//         throw new HttpsError(
-//            "unauthenticated",
-//            "Invalid authentication token"
-//         );
-//       }
-
-//       const {error: updateError} = await getAdmin()
-//         .from("session_trainers")
-//         .update({status: "completed"})
-//         .eq("id", sessionTrainersId)
-//         .eq("trainer_id", userId);
-
-//       if (updateError) throw updateError;
-
-//       return {success: true};
-//     } catch (error: any) {
-//       console.error("Function error:", error);
-//       if (error instanceof HttpsError) {
-//         throw error;
-//       }
-//       throw new HttpsError("internal", error.message);
-//     }
-//   });
 
 export const deleteSessionTrainer = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},

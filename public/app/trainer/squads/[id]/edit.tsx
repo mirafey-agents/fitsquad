@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch } from
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { getMembers, getSquads, createOrEditSquad, deleteSquad } from '@/utils/firebase';
@@ -43,7 +42,7 @@ export default function EditSquad() {
         setSelectedDays(squad.schedule);
       }
       
-      setSelectedMembers(squad.squad_members.map((member: any) => member?.users?.id));
+      setSelectedMembers(squad.members.map((member: any) => member?.userId));
     } catch (error) {
       console.error('Error fetching squad:', error);
     } finally {

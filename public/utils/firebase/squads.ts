@@ -10,14 +10,13 @@ export async function getSquads(squadId: string | null) {
   });
 }
 
-export async function createOrEditSquad(name, description, isPrivate, schedule, members, id=null) {
+export async function createOrEditSquad(name, description, schedule, members, id=null) {
   const authToken = await getAuthToken();
   
   return httpsCallable(functions, 'createOrEditSquad')({
     id,
     name,
     description,
-    isPrivate,
     schedule,
     members,
     authToken

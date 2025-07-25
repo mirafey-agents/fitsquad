@@ -55,9 +55,8 @@ export default function CreateSquad() {
     
     setIsLoading(true);
     try {
-      const id = crypto.randomUUID();
       const ack = await createOrEditSquad(
-        squadName, squadDescription, isPrivate, selectedDays, selectedMembers, id);
+        squadName, squadDescription, selectedDays, selectedMembers, null);
       console.log("Squad created:", ack);
       alert("Squad created successfully");
       router.back();

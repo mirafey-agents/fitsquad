@@ -104,7 +104,7 @@ export default function TrainerDashboard() {
                 >
                   <Pressable 
                     style={styles.actionCard}
-                    onPress={() => router.push(action.route, {relativeToDirectory: true})}
+                    onPress={() => router.push(action.route as any, {relativeToDirectory: true})}
                   >
                     <BlurView intensity={80} style={[styles.actionIcon, { backgroundColor: `${action.color}20` }]}>
                       <Ionicons name={action.icon as any} size={24} color={action.color} />

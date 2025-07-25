@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -60,8 +60,6 @@ export default function EditSquad() {
     }
   };
 
-
-
   const toggleMember = (memberId: string) => {
     setSelectedMembers(prev => 
       prev.includes(memberId)
@@ -80,11 +78,13 @@ export default function EditSquad() {
 
   const handleEdit = async () => {
     try {
+      setIsLoading(true);
       const ack = await createOrEditSquad(
-        squadName, squadDescription, false, selectedDays, selectedMembers, id);
+        squadName, squadDescription, selectedDays, selectedMembers, id);
       console.log("Squad Edited:", ack);
       alert("Squad Saved successfully");
-      router.back();
+      setIsLoading(false);
+      router.push('/trainer/squads');
     } catch (error) {
       console.error('Error creating squad:', error);
     }
@@ -119,13 +119,13 @@ export default function EditSquad() {
               onPress={handleEdit}
               disabled={!squadName || selectedMembers.length === 0}
             >
-              <Ionicons name="save-outline" size={20} color="#FFFFFF" />
+              {isLoading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Ionicons name="save-outline" size={20} color="#FFFFFF" />}
             </Pressable>
             <Pressable 
               style={[styles.saveButton, styles.deleteButton]}
               onPress={() => setShowDeleteModal(true)}
             >
-              <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+              {isLoading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Ionicons name="trash-outline" size={20} color="#FFFFFF" />}
             </Pressable>
           </View>
         </View>

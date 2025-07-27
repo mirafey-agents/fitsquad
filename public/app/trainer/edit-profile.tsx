@@ -3,9 +3,11 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { Buffer } from 'buffer';
-import { getMedia, uploadMedia, updateUserProfile } from '@/utils/firebase';
+import { uploadMedia, updateUserProfile } from '@/utils/firebase';
 import { getUserProfile } from '@/utils/storage';
+import { getProfilePicThumbNailURL } from '@/utils/mediaUtils';
+import Dropdown from '@/components/ui/Dropdown';
+import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
 
 const CERTIFICATIONS = [
   'NASM (National Academy of Sports Medicine)',
@@ -22,8 +24,8 @@ const CERTIFICATIONS = [
 const EXPERIENCE_LEVELS = [
   '1-2 years',
   '3-5 years',
-  '5-10 years',
-  '10+ years',
+  '6-10 years',
+  '11+ years',
 ];
 
 const SPECIALIZATIONS = [
@@ -49,29 +51,21 @@ const SPECIALIZATIONS = [
   'Online Coaching',
 ];
 
-const sampleBio = 'Certified personal trainer with 8 years of experience helping clients achieve their fitness goals through personalized training programs. Students include The Furious Five & the dragon warrior, Po Ping.';
+const sampleBio = 'Certified fitness trainer with 8 years of experience helping clients achieve their fitness goals through personalized training programs.';
 
 export default function EditTrainerProfile() {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [userData, setUserData] = useState(null);
-  const [showCertDropdown, setShowCertDropdown] = useState(false);
-  const [showExpDropdown, setShowExpDropdown] = useState(false);
-  const [selectedCert, setSelectedCert] = useState('NASM (National Academy of Sports Medicine)');
-  const [selectedExp, setSelectedExp] = useState('5-10 years');
-  const [selectedSpecs, setSelectedSpecs] = useState<string[]>(['HIIT', 'Strength Training', 'Nutrition']);
-
-  const getProfilePic = async (id: string) => {
-    if (id) {
-      const data = await getMedia(id, 'profilepic', null, null);
-      const b64 = Buffer.from(Object.values(data.data)).toString('base64');
-      setProfileImage(b64);
-    }
-  }
+  const [selectedCerts, setSelectedCerts] = useState<string[]>([]);
+  const [selectedExp, setSelectedExp] = useState(EXPERIENCE_LEVELS[2]);
+  const [selectedSpecs, setSelectedSpecs] = useState<string[]>([SPECIALIZATIONS[0], SPECIALIZATIONS[1], SPECIALIZATIONS[6]]);
 
   useEffect(() => {
     getUserProfile().then((profile) => {
       setUserData(profile);
-      getProfilePic(profile.id);
+      if (profile?.id) {
+        setProfileImageUrl(getProfilePicThumbNailURL(profile.id));
+      }
     });
   }, []);
 
@@ -97,21 +91,23 @@ export default function EditTrainerProfile() {
         'profilepic',
         null
       );
-      getProfilePic(userData.id);
+      setProfileImageUrl(getProfilePicThumbNailURL(userData.id));
     }
   };
 
-  const toggleSpecialization = (spec: string) => {
-    setSelectedSpecs(prev => 
-      prev.includes(spec)
-        ? prev.filter(s => s !== spec)
-        : [...prev, spec]
-    );
-  };
+  
 
   const handleSave = async () => {
     if (!userData?.id) return;
-    await updateUserProfile({ display_name: userData.display_name, bio: userData.bio });
+    await updateUserProfile({ 
+      display_name: userData.display_name,
+      age: userData.age,
+      gender: userData.gender,
+      bio: userData.bio,
+      certifications: selectedCerts,
+      experience_level: selectedExp,
+      specializations: selectedSpecs
+    });
     // Refresh userData after update
     getUserProfile().then((profile) => {
       setUserData(profile);
@@ -139,17 +135,20 @@ export default function EditTrainerProfile() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Profile Photo</Text>
             <Pressable style={styles.imageUpload} onPress={pickImage}>
-              {profileImage ? (
-                <Image 
-                  source={{uri:`data:image/jpeg;base64,${profileImage}`}}
-                  style={styles.profileImage} 
-                />
-              ) : (
-                <View style={styles.imagePlaceholder}>
-                  <Ionicons name="camera" size={32} color="#94A3B8" />
-                  <Text style={styles.uploadText}>Change Photo</Text>
-                </View>
-              )}
+              <View style={styles.profileImageContainer}>
+                {profileImageUrl ? (
+                  <Image 
+                    source={{uri: profileImageUrl}}
+                    style={styles.profileImage}
+                    onError={() => setProfileImageUrl(null)}
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Ionicons name="camera" size={32} color="#94A3B8" />
+                    <Text style={styles.uploadText}>Change Photo</Text>
+                  </View>
+                )}
+              </View>
             </Pressable>
           </View>
 
@@ -163,6 +162,22 @@ export default function EditTrainerProfile() {
               placeholderTextColor="#94A3B8"
             />
             <TextInput
+              style={[styles.input, { marginTop: 12 }]}
+              value={userData?.age?.toString() || ''}
+              onChangeText={(text) => setUserData(prev => ({ ...prev, age: parseInt(text) || undefined }))}
+              placeholder="Age"
+              placeholderTextColor="#94A3B8"
+              keyboardType="numeric"
+            />
+            <View style={{ marginTop: 12 }}>
+              <Dropdown
+                value={userData?.gender || ''}
+                options={['Male', 'Female', 'Other', 'Prefer not to say']}
+                onValueChange={(value) => setUserData(prev => ({ ...prev, gender: value }))}
+                placeholder="Select your gender"
+              />
+            </View>
+            <TextInput
               style={[styles.input, styles.textArea]}
               value={userData?.bio || sampleBio}
               onChangeText={(text) => setUserData(prev => ({ ...prev, bio: text }))}
@@ -174,115 +189,38 @@ export default function EditTrainerProfile() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Credentials</Text>
-            <View style={styles.dropdownContainer}>
-              <Pressable 
-                style={styles.dropdown}
-                onPress={() => {
-                  setShowCertDropdown(!showCertDropdown);
-                  setShowExpDropdown(false);
-                }}
-              >
-                <Text style={styles.dropdownText}>{selectedCert}</Text>
-                <Ionicons name="chevron-down" size={20} color="#94A3B8" />
-              </Pressable>
-              {showCertDropdown && (
-                <ScrollView 
-                  style={styles.dropdownOverlay}
-                  nestedScrollEnabled={true}
-                  contentContainerStyle={styles.dropdownScrollContent}
-                >
-                  <View style={styles.dropdownList}>
-                    {CERTIFICATIONS.map((cert) => (
-                      <Pressable
-                        key={cert}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedCert(cert);
-                          setShowCertDropdown(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownItemText}>{cert}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-            </View>
-
-            <View style={[styles.dropdownContainer, { marginTop: 12 }]}>
-              <Pressable 
-                style={styles.dropdown}
-                onPress={() => {
-                  setShowExpDropdown(!showExpDropdown);
-                  setShowCertDropdown(false);
-                }}
-              >
-                <Text style={styles.dropdownText}>{selectedExp}</Text>
-                <Ionicons name="chevron-down" size={20} color="#94A3B8" />
-              </Pressable>
-              {showExpDropdown && (
-                <ScrollView 
-                  style={styles.dropdownOverlay}
-                  nestedScrollEnabled={true}
-                  contentContainerStyle={styles.dropdownScrollContent}
-                >
-                  <View style={styles.dropdownList}>
-                    {EXPERIENCE_LEVELS.map((exp) => (
-                      <Pressable
-                        key={exp}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedExp(exp);
-                          setShowExpDropdown(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownItemText}>{exp}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-            </View>
+            <Text style={styles.label}>Experience</Text>
+            <Dropdown
+              value={selectedExp}
+              options={EXPERIENCE_LEVELS}
+              onValueChange={setSelectedExp}
+              placeholder="Select your experience level"
+            />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Specializations</Text>
-            <Text style={styles.subtitle}>Select all that apply</Text>
-            <View style={styles.specializationsGrid}>
-              {SPECIALIZATIONS.map((specialization) => (
-                <Pressable
-                  key={specialization}
-                  style={[
-                    styles.specializationChip,
-                    selectedSpecs.includes(specialization) && styles.selectedChip
-                  ]}
-                  onPress={() => toggleSpecialization(specialization)}
-                >
-                  <Text 
-                    style={[
-                      styles.specializationText,
-                      selectedSpecs.includes(specialization) && styles.selectedChipText
-                    ]}
-                  >
-                    {specialization}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <Text style={styles.label}>Certifications</Text>
+            <MultiSelectDropdown
+              value={selectedCerts}
+              options={CERTIFICATIONS}
+              onValueChange={setSelectedCerts}
+              placeholder="Select your certifications"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Specializations </Text>
+            <MultiSelectDropdown
+              value={selectedSpecs}
+              options={SPECIALIZATIONS}
+              onValueChange={setSelectedSpecs}
+              placeholder="Select your specializations"
+            />
           </View>
         </View>
       </ScrollView>
 
-      {(showCertDropdown || showExpDropdown) && (
-        <Pressable 
-          style={styles.backdrop}
-          onPress={() => {
-            setShowCertDropdown(false);
-            setShowExpDropdown(false);
-          }}
-        />
-      )}
+
     </View>
   );
 }
@@ -353,6 +291,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 20,
   },
+  profileImageContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
   profileImage: {
     width: '100%',
     height: '100%',
@@ -381,88 +324,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     marginTop: 12,
   },
-  dropdownContainer: {
-    position: 'relative',
-    zIndex: 1000,
-  },
-  dropdown: {
-    backgroundColor: '#21262F',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#353D45',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  dropdownOverlay: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    maxHeight: 200,
-    zIndex: 1001,
-  },
-  dropdownScrollContent: {
-    flexGrow: 1,
-  },
-  dropdownList: {
-    backgroundColor: '#21262F',
-    borderRadius: 12,
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: '#353D45',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  dropdownItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#353D45',
-    backgroundColor: '#21262F',
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  specializationsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  specializationChip: {
-    backgroundColor: '#21262F',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#353D45',
-  },
-  selectedChip: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
-  },
-  specializationText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  selectedChipText: {
-    color: '#FFFFFF',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
+
+
+
 });

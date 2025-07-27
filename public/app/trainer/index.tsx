@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { getTrainerSessions } from '@/utils/firebase';
 import SubscriptionModal from '@/app/components/SubscriptionModal';
+import AlertModal from '@/app/components/AlertModal';
 import { getUserProfile } from '@/utils/storage';
 
 // Demo data
@@ -53,6 +54,7 @@ const QUICK_ACTIONS = [
 export default function TrainerDashboard() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
@@ -60,6 +62,11 @@ export default function TrainerDashboard() {
       setUserData(profile);
       if (profile) {  
         fetchSessions();
+        
+        // Check if trainer needs to complete onboarding
+        if (profile.onboarding_status === 'pending') {
+          setShowOnboardingModal(true);
+        }
       }
     });
   }, []);
@@ -78,6 +85,11 @@ export default function TrainerDashboard() {
     const date = new Date(time);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
+
+  const handleOnboardingComplete = () => {
+    setShowOnboardingModal(false);
+    router.push('./edit-profile', {relativeToDirectory: true});
+  };
 
   return (
     <>
@@ -204,6 +216,13 @@ export default function TrainerDashboard() {
         onClose={() => setShowSubscriptionModal(false)}
         userId={userData?.id || ''}
         role="trainer"
+      />
+
+      <AlertModal
+        visible={showOnboardingModal}
+        title="Welcome to MyFitWave!"
+        message="We're excited to have you on board! Let's get your profile set up so you can start managing your clients and sessions."
+        onOk={handleOnboardingComplete}
       />
 
       <Tabs.Screen

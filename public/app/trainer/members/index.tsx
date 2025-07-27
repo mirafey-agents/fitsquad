@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { getMembers } from '@/utils/firebase';
@@ -19,18 +18,17 @@ interface Member {
   created_at: string;
 }
 
-type Filter = 'all' | 'personal' | 'group' | 'pending' | 'active';
-
 export default function MemberManagement() {
   const [members, setMembers] = useState<Member[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchMembers();
+    }, [])
+  );
 
   const fetchMembers = async () => {
     try {
@@ -54,33 +52,8 @@ export default function MemberManagement() {
       member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.phone_number?.includes(searchQuery);
     
-    let matchesFilter = true;
-    if (filter === 'personal') {
-      matchesFilter = member.service_type === 'Personal Training';
-    } else if (filter === 'group') {
-      matchesFilter = member.service_type === 'Group Training';
-    } else if (filter === 'pending') {
-      matchesFilter = member.onboarding_status === 'pending';
-    } else if (filter === 'active') {
-      matchesFilter = member.onboarding_status === 'completed';
-    }
-    
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return '#FFA500';
-      case 'completed':
-        return '#22C55E';
-      case 'invited':
-        return '#4F46E5';
-      default:
-        return '#64748B';
-    }
-  };
-
 
   return (
     <View style={styles.container}>
@@ -118,78 +91,6 @@ export default function MemberManagement() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(150)}>
-          <View style={styles.filterSection}>
-            <Text style={styles.sectionTitle}>Filter Members</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filterContainer}
-            >
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  filter === 'all' && styles.selectedFilter
-                ]}
-                onPress={() => setFilter('all')}
-              >
-                <Text style={[
-                  styles.filterText,
-                  filter === 'all' && styles.selectedFilterText
-                ]}>All</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  filter === 'personal' && styles.selectedFilter
-                ]}
-                onPress={() => setFilter('personal')}
-              >
-                <Text style={[
-                  styles.filterText,
-                  filter === 'personal' && styles.selectedFilterText
-                ]}>Personal</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  filter === 'group' && styles.selectedFilter
-                ]}
-                onPress={() => setFilter('group')}
-              >
-                <Text style={[
-                  styles.filterText,
-                  filter === 'group' && styles.selectedFilterText
-                ]}>Group</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  filter === 'pending' && styles.selectedFilter
-                ]}
-                onPress={() => setFilter('pending')}
-              >
-                <Text style={[
-                  styles.filterText,
-                  filter === 'pending' && styles.selectedFilterText
-                ]}>Pending</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  filter === 'active' && styles.selectedFilter
-                ]}
-                onPress={() => setFilter('active')}
-              >
-                <Text style={[
-                  styles.filterText,
-                  filter === 'active' && styles.selectedFilterText
-                ]}>Active</Text>
-              </Pressable>
-            </ScrollView>
-          </View>
-        </Animated.View>
-
         {loading ? (
           <Animated.View entering={FadeInUp.delay(200)}>
             <View style={styles.centerContainer}>
@@ -207,9 +108,7 @@ export default function MemberManagement() {
             <View style={styles.emptyContainer}>
               <Ionicons name="people" size={48} color="#94A3B8" />
               <Text style={styles.emptyText}>No members found</Text>
-              <Text style={styles.emptySubtext}>
-                Add your first member by clicking the "Add Member" button above.
-              </Text>
+              {members.length === 0 && (
               <Pressable 
                 style={styles.addFirstMemberButton}
                 onPress={() => router.push('./add', {relativeToDirectory: true})}
@@ -217,6 +116,7 @@ export default function MemberManagement() {
                 <Ionicons name="person-add" size={20} color="#FFFFFF" />
                 <Text style={styles.addFirstMemberText}>Add First Member</Text>
               </Pressable>
+              )}
             </View>
           </Animated.View>
         ) : (
@@ -225,10 +125,7 @@ export default function MemberManagement() {
               key={member.id}
               entering={FadeInUp.delay(index * 100)}
             >
-              <Pressable 
-                style={styles.memberCard}
-                onPress={() => router.push(`./${member.id}`, {relativeToDirectory: true})}
-              >
+              <View style={styles.memberCard}>
                 <View style={styles.memberHeader}>
                   <View>
                     <Text style={styles.memberName}>{member.display_name}</Text>
@@ -237,7 +134,13 @@ export default function MemberManagement() {
                       <Text style={styles.memberPhone}>{member.phone_number}</Text>
                     )}
                   </View>
-                  <View style={styles.memberBadges}>
+                  <Pressable 
+                    style={styles.chevronButton}
+                    onPress={() => router.push(`./${member.id}`, {relativeToDirectory: true})}
+                  >
+                    <Ionicons name="chevron-forward" size={24} color="#94A3B8" />
+                  </Pressable>
+                  {/* <View style={styles.memberBadges}>
                     <BlurView intensity={80} style={[styles.statusBadge, { backgroundColor: `${getStatusColor(member.onboarding_status)}20` }]}>
                       <Text style={[styles.statusText, { color: getStatusColor(member.onboarding_status) }]}>
                         {member.onboarding_status === 'pending' ? 'Pending' : 
@@ -249,9 +152,9 @@ export default function MemberManagement() {
                         {member.service_type === 'Personal Training' ? 'Personal' : 'Group'}
                       </Text>
                     </BlurView>
-                  </View>
+                  </View> */}
                 </View>
-              </Pressable>
+              </View>
             </Animated.View>
           ))
         )}
@@ -428,6 +331,11 @@ const styles = StyleSheet.create({
   memberPhone: {
     fontSize: 14,
     color: '#94A3B8',
+  },
+  chevronButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   memberBadges: {
     alignItems: 'flex-end',

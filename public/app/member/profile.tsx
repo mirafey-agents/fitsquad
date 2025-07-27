@@ -265,6 +265,7 @@ export default function Profile() {
         onClose={() => setShowSubscriptionModal(false)}
         userId={userData?.id || ''}
         role="member"
+        key={userData?.id || 'no-user'}
       />
     </ScrollView>
   );

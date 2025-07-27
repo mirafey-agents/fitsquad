@@ -216,6 +216,7 @@ export default function TrainerDashboard() {
         onClose={() => setShowSubscriptionModal(false)}
         userId={userData?.id || ''}
         role="trainer"
+        key={userData?.id || 'no-user'}
       />
 
       <AlertModal

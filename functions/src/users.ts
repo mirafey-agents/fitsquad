@@ -4,6 +4,7 @@ import {getAdmin, getRole} from "./supabase";
 import {getAuthInfo} from "./auth";
 import * as admin from "firebase-admin";
 import {randomUUID} from "crypto";
+import {FirebaseAuthError} from "firebase-admin/auth";
 
 export const updateUserProfile = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
@@ -84,6 +85,22 @@ export const getUserProfile = onCall(
   }
 );
 
+const newUser = async (
+  email: string, password: string, name: string, role: string
+) => {
+  const user = await admin.auth().createUser({
+    uid: randomUUID(),
+    email,
+    password,
+    displayName: name,
+    emailVerified: true,
+  });
+
+  await admin.auth().setCustomUserClaims(user.uid, {role: role});
+
+  return user;
+};
+
 export const createUser = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
@@ -116,42 +133,42 @@ export const createUser = onCall(
           "Only trainer can create users");
       }
 
+      let user = null;
       const role = "member";
-      const customUid = randomUUID(); // Stop after moving to firestore
 
-      // Create user in Firebase Auth with custom UID
-      await admin.auth().createUser({
-        uid: customUid,
-        email,
-        password,
-        displayName: name,
-        // phoneNumber,
-        emailVerified: true,
-      });
+      try {
+        // Create user in Firebase Auth with custom UID
+        user = await newUser(email, password, name, role);
 
-      // Set custom claims based on role
-      await admin.auth().setCustomUserClaims(customUid, {role: role});
+        // Create user record in users table
+        const {error: dbError} = await getAdmin()
+          .from("users")
+          .insert({
+            id: user.uid,
+            email,
+            display_name: name,
+            phone_number: phoneNumber,
+            role: role,
+            created_at: new Date().toISOString(),
+            onboarding_status: "pending",
+          });
 
-      // Create user record in users table
-      const {error: dbError} = await getAdmin()
-        .from("users")
-        .insert({
-          id: customUid,
-          email,
-          display_name: name,
-          phone_number: phoneNumber,
-          role: role,
-          created_at: new Date().toISOString(),
-        });
+        if (dbError) throw dbError;
+      } catch (error) {
+        if (error instanceof FirebaseAuthError &&
+          error.code === "auth/email-already-exists") {
+          user = await admin.auth().getUserByEmail(email);
+        } else {
+          throw error;
+        }
+      }
 
-      if (dbError) throw dbError;
-
-      if (authRole === "trainer") {
+      if (authRole === "trainer" && role === "member") {
         // Create user record in trainer_users table
         const {error: dbError2} = await getAdmin()
           .from("trainer_users")
           .insert({
-            user_id: customUid,
+            user_id: user.uid,
             trainer_id: trainerId,
             created_at: new Date().toISOString(),
           });
@@ -159,7 +176,7 @@ export const createUser = onCall(
         if (dbError2) throw dbError2;
       }
 
-      return {success: true, userId: customUid};
+      return {success: true, userId: user.uid};
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {

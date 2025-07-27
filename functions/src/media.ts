@@ -313,6 +313,9 @@ export const getMedia = onCall(
       const data = await file.download();
       return data[0];
     } catch (error: any) {
+      if (error.code == 404) {
+        throw new HttpsError("not-found", "Media not found");
+      }
       console.error("Function error:", error);
       if (error instanceof HttpsError) {
         throw error;

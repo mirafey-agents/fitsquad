@@ -1,7 +1,6 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getAdmin} from "./supabase";
 import {getAuthInfo} from "./auth";
-import * as admin from "firebase-admin";
 
 export const getMembers = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
@@ -75,22 +74,18 @@ export const deleteMember = onCall(
 
       if (dbError) throw dbError;
 
-      const {error: dbError2} = await getAdmin()
-        .from("squad_members")
-        .delete()
-        .eq("user_id", memberId);
+      // TODO: Delete user Squads of this trainer.
 
-      if (dbError2) throw dbError2;
+      // ---- HARD DELETE ----
+      // const {error: dbError3} = await getAdmin()
+      //   .from("users")
+      //   .delete()
+      //   .eq("id", memberId);
 
-      const {error: dbError3} = await getAdmin()
-        .from("users")
-        .delete()
-        .eq("id", memberId);
+      // if (dbError3) throw dbError3;
 
-      if (dbError3) throw dbError3;
-
-      // Delete user from Firebase Auth
-      await admin.auth().deleteUser(memberId);
+      // // Delete user from Firebase Auth
+      // await admin.auth().deleteUser(memberId);
 
       return {success: true};
     } catch (error: any) {

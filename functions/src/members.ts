@@ -17,26 +17,28 @@ export const getMembers = onCall(
       }
 
       // Verify Supabase JWT
-      const {error: tokenError} = getAuthInfo(authToken, request.auth);
+      const {
+        userId: trainerId, error: tokenError,
+      } = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
 
       // Fetch all members
       let query = getAdmin()
-        .from("users")
-        .select("*")
-        .eq("role", "member");
+        .from("trainer_users")
+        .select("*, users!user_id(id, display_name, email, phone_number)")
+        .eq("trainer_id", trainerId);
 
       if (memberId) {
-        query = query.eq("id", memberId);
+        query = query.eq("user_id", memberId);
       }
 
       const {data, error: fetchError} = await query;
 
       if (fetchError) throw fetchError;
 
-      return data;
+      return data.map((m:any) => m.users);
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {

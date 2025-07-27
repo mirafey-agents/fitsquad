@@ -2,11 +2,23 @@ import { clearStorage } from "./storage";
 import { auth } from "./firebase/config";
 import { 
   signInWithEmailAndPassword, 
-  signOut
+  signOut,
+  onAuthStateChanged,
+  User
 } from "firebase/auth";
 
+// Helper function to await auth state initialization
+async function waitForAuthUser(): Promise<User | null> {
+    return new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            unsubscribe(); // Unsubscribe after first call
+            resolve(user);
+        });
+    });
+}
+
 export async function getAuthToken() {
-    const user = auth.currentUser;
+    const user = await waitForAuthUser();
     if (!user) {
         throw new Error('No active session');
     }
@@ -45,8 +57,8 @@ export async function login(email: string, password: string) {
     }
 }
 
-export async function getLoggedInUser() {
-    const user = auth.currentUser;
+export async function getLoggedInUser(): Promise<{id: string} | null> {
+    const user = await waitForAuthUser();
     if (!user) {
         return null;
     }

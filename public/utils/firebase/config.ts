@@ -1,6 +1,6 @@
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -18,4 +18,6 @@ const functions = getFunctions(app, 'asia-south1');
 // connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 
 export const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence);
+
 export { functions }; 

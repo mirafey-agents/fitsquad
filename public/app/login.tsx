@@ -41,7 +41,7 @@ export default function Login() {
         router.replace('/');
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to login');
+      alert('Username or password is incorrect');
     } finally {
       setLoading(false);
     }

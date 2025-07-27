@@ -1,6 +1,8 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getAdmin, getRole} from "./supabase";
-import {verifySupabaseToken} from "./auth";
+import {getAuthInfo} from "./auth";
+import * as admin from "firebase-admin";
+import {randomUUID} from "crypto";
 
 export const getMembers = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
@@ -16,7 +18,7 @@ export const getMembers = onCall(
       }
 
       // Verify Supabase JWT
-      const {error: tokenError} = verifySupabaseToken(authToken);
+      const {error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -46,11 +48,13 @@ export const getMembers = onCall(
   }
 );
 
-export const createMember = onCall(
+export const createUser = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     try {
-      const {email, password, name, phoneNumber, authToken} = request.data;
+      const {
+        email, password, name, phoneNumber,
+        role, uid, authToken} = request.data;
 
       if (!email || !password || !name || !phoneNumber || !authToken) {
         throw new HttpsError(
@@ -62,54 +66,67 @@ export const createMember = onCall(
       // Verify Supabase JWT
       const {
         userId: trainerId, error: tokenError,
-      } = verifySupabaseToken(authToken);
+      } = getAuthInfo(authToken, request.auth);
 
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
 
-      const role = await getRole(trainerId);
-      if (role !== "admin" && role !== "trainer") {
+      const authRole = await getRole(trainerId);
+
+      // Role permission validation
+      if (authRole === "admin" && role!=="trainer") {
         throw new HttpsError("permission-denied",
-          "Only admin or trainer can create members, role: " + role);
+          "Admin cannot create: " + role);
+      } else if (authRole === "trainer" && role !== "member") {
+        throw new HttpsError("permission-denied",
+          "Trainer user cannot create role: " + role);
       }
 
-      // Create user in Supabase Auth
-      const {
-        data: authData, error: authError,
-      } = await getAdmin().auth.admin.createUser({
+      // Generate custom UUID for the user
+      const customUid = uid || randomUUID();
+
+      // Create user in Firebase Auth with custom UID
+      await admin.auth().createUser({
+        uid: customUid,
         email,
         password,
-        email_confirm: true,
+        displayName: name,
+        phoneNumber,
+        emailVerified: true,
       });
 
-      if (authError) throw authError;
+      // Set custom claims based on role
+      await admin.auth().setCustomUserClaims(customUid, {role: role});
 
       // Create user record in users table
       const {error: dbError} = await getAdmin()
         .from("users")
         .insert({
-          id: authData.user.id,
+          id: customUid,
           email,
           display_name: name,
           phone_number: phoneNumber,
+          role: role,
           created_at: new Date().toISOString(),
         });
 
       if (dbError) throw dbError;
 
-      // Create user record in users table
-      const {error: dbError2} = await getAdmin()
-        .from("trainer_users")
-        .insert({
-          user_id: authData.user.id,
-          trainer_id: trainerId,
-          created_at: new Date().toISOString(),
-        });
+      if (authRole === "trainer") {
+        // Create user record in trainer_users table
+        const {error: dbError2} = await getAdmin()
+          .from("trainer_users")
+          .insert({
+            user_id: customUid,
+            trainer_id: trainerId,
+            created_at: new Date().toISOString(),
+          });
 
-      if (dbError2) throw dbError2;
+        if (dbError2) throw dbError2;
+      }
 
-      return {success: true, userId: authData.user.id};
+      return {success: true, userId: customUid};
     } catch (error: any) {
       console.error("Function error:", error);
       if (error instanceof HttpsError) {
@@ -132,7 +149,7 @@ export const deleteMember = onCall(
 
       const {
         userId: trainerId, error: tokenError,
-      } = verifySupabaseToken(authToken);
+      } = getAuthInfo(authToken, request.auth);
 
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
@@ -160,12 +177,8 @@ export const deleteMember = onCall(
 
       if (dbError3) throw dbError3;
 
-      // Create user in Supabase Auth
-      const {
-        error: authError,
-      } = await getAdmin().auth.admin.deleteUser(memberId);
-
-      if (authError) throw authError;
+      // Delete user from Firebase Auth
+      await admin.auth().deleteUser(memberId);
 
       return {success: true};
     } catch (error: any) {

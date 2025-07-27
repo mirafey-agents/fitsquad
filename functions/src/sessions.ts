@@ -1,6 +1,6 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getAdmin} from "./supabase";
-import {verifySupabaseToken} from "./auth";
+import {getAuthInfo} from "./auth";
 import * as admin from "firebase-admin";
 
 export const getUserSessions = onCall(
@@ -35,7 +35,7 @@ export const getUserSessions = onCall(
       }
 
       // Verify Supabase JWT and get user ID
-      const {userId} = verifySupabaseToken(auTkn);
+      const {userId} = getAuthInfo(auTkn, request.auth);
       const {data, error: fetchError} = await getAdmin()
         .from("session_users")
         .select("*,session:session_trainers(id, title, start_time, status,"+
@@ -98,7 +98,7 @@ export const getTrainerSessions = onCall(
         throw new HttpsError("invalid-argument", "Missing required parameters");
       }
 
-      const {userId} = verifySupabaseToken(auTkn);
+      const {userId} = getAuthInfo(auTkn, request.auth);
 
       const queryStr = fetchUsers ?
         ("*, session_users!session_trainers_id(*, " +
@@ -151,7 +151,7 @@ export const getTrainerSessions = onCall(
 //       const {authToken} = request.data;
 
 //       // Verify Supabase JWT and get user ID
-//       const {userId} = verifySupabaseToken(authToken);
+//       const {userId} = getAuthInfo(authToken, request.auth);
 //       if (!userId) {
 //         throw new HttpsError("invalid-argument", "Invalid auth token");
 //       }
@@ -192,7 +192,7 @@ export const createSessionTrainer = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -263,7 +263,7 @@ export const createSessionUser = onCall(
           "Missing required parameters"
         );
       }
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError(
           "unauthenticated",
@@ -311,7 +311,7 @@ export const updateSession = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -365,7 +365,7 @@ export const voteSession = onCall(
       if (!sessionTrainersId || !voteMvpId || !authToken) {
         throw new HttpsError("invalid-argument", "Missing required parameters");
       }
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -402,7 +402,7 @@ export const deleteSessionTrainer = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -461,7 +461,7 @@ export const deleteSessionUser = onCall(
           "Missing required parameters"
         );
       }
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError(
           "unauthenticated",

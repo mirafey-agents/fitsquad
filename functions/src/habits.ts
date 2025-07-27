@@ -1,7 +1,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import {getAdmin} from "./supabase";
-import {verifySupabaseToken} from "./auth";
+import {getAuthInfo} from "./auth";
 
 const authenticate = (request: any) => {
   try {
@@ -10,7 +10,7 @@ const authenticate = (request: any) => {
       throw new HttpsError("invalid-argument", "authToken missing");
     }
 
-    const {userId: aUId, error} = verifySupabaseToken(authToken);
+    const {userId: aUId, error} = getAuthInfo(authToken, request.auth);
 
     if (error) {
       throw new HttpsError("unauthenticated", "Invalid authToken");
@@ -113,7 +113,7 @@ export const getHabitIdeas = onCall(
       }
 
       // Verify Supabase JWT
-      const {error: tokenError} = verifySupabaseToken(authToken);
+      const {error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }

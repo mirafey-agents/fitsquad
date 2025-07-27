@@ -1,5 +1,5 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {verifySupabaseToken} from "./auth";
+import {getAuthInfo} from "./auth";
 import * as admin from "firebase-admin";
 
 export const getSquads = onCall(
@@ -16,7 +16,7 @@ export const getSquads = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -65,7 +65,7 @@ export const createOrEditSquad = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -119,7 +119,7 @@ export const deleteSquad = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId, error: tokenError} = verifySupabaseToken(authToken);
+      const {userId, error: tokenError} = getAuthInfo(authToken, request.auth);
       if (tokenError) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }

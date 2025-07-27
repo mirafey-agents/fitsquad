@@ -32,11 +32,11 @@ export const verifySupabaseToken = (token: string): any => {
 };
 
 export const getAuthInfo = (authToken: string, firebaseAuth: any): any => {
-  if (firebaseAuth) {
-    return {
-      userId: firebaseAuth.token.external_user_id || firebaseAuth.token.uid,
-    };
-  }
+  // if (firebaseAuth) {
+  //   return {
+  //     userId: firebaseAuth.token.external_user_id || firebaseAuth.token.uid,
+  //   };
+  // }
 
   return verifySupabaseToken(authToken);
 };

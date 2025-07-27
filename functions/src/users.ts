@@ -1,7 +1,7 @@
 import {onCall} from "firebase-functions/v2/https";
 import {HttpsError} from "firebase-functions/v2/https";
 import {getAdmin} from "./supabase";
-import {verifySupabaseToken} from "./auth";
+import {getAuthInfo} from "./auth";
 
 export const updateUserProfile = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
@@ -15,7 +15,7 @@ export const updateUserProfile = onCall(
     const {
       userId: authUserId,
       error: tokenError,
-    } = verifySupabaseToken(authToken);
+    } = getAuthInfo(authToken, request.auth);
 
     if (tokenError) {
       throw new HttpsError("unauthenticated", "Invalid authentication token");
@@ -55,7 +55,7 @@ export const getUserProfile = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
   async (request: any) => {
     const {userId, authToken} = request.data;
-
+    // console.log("getUserProfile", request.auth);
     if (!userId) {
       throw new HttpsError("invalid-argument", "Missing required parameters");
     }
@@ -63,7 +63,7 @@ export const getUserProfile = onCall(
     const {
       userId: authUserId,
       error: tokenError,
-    } = verifySupabaseToken(authToken);
+    } = getAuthInfo(authToken, request.auth);
 
     if (tokenError) {
       throw new HttpsError("unauthenticated", "Invalid authentication token");

@@ -1,5 +1,5 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {verifySupabaseToken} from "./auth";
+import {getAuthInfo} from "./auth";
 import {storageBucket} from "./fs";
 import * as crypto from "crypto";
 import {getRole} from "./supabase";
@@ -39,7 +39,7 @@ export const getUploadUrl = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId: authUId, error} = verifySupabaseToken(authToken);
+      const {userId: authUId, error} = getAuthInfo(authToken, request.auth);
       if (error) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -108,7 +108,7 @@ export const processUploadedMedia = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId: authUId, error} = verifySupabaseToken(authToken);
+      const {userId: authUId, error} = getAuthInfo(authToken, request.auth);
       if (error) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -187,7 +187,7 @@ export const getMediaFetchUrl = onCall(
       }
 
       // Verify Supabase JWT
-      const {userId: authUId, error} = verifySupabaseToken(authToken);
+      const {userId: authUId, error} = getAuthInfo(authToken, request.auth);
       if (error) {
         throw new HttpsError("unauthenticated", "Invalid authentication token");
       }
@@ -237,7 +237,7 @@ export const listMedia = onCall(
       }
 
       // Verify Sought (in promise)pabase JWT
-      const {userId: authUId, error} = verifySupabaseToken(authToken);
+      const {userId: authUId, error} = getAuthInfo(authToken, request.auth);
       if (error) {
         throw new HttpsError(
           "unauthenticated",
@@ -292,7 +292,7 @@ export const getMedia = onCall(
       }
 
       // Verify Sought (in promise)pabase JWT
-      const {userId: authUId, error} = verifySupabaseToken(authToken);
+      const {userId: authUId, error} = getAuthInfo(authToken, request.auth);
       if (error) {
         throw new HttpsError(
           "unauthenticated",
@@ -339,7 +339,7 @@ export const deleteMedia = onCall(
       }
 
       // Verify Sought (in promise)pabase JWT
-      const {userId: authUId, error} = verifySupabaseToken(authToken);
+      const {userId: authUId, error} = getAuthInfo(authToken, request.auth);
       if (error) {
         throw new HttpsError(
           "unauthenticated",

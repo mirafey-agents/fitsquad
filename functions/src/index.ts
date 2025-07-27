@@ -11,7 +11,7 @@ setGlobalOptions({region: "asia-south1"});
 // Import functions from their respective files
 export {
   getMembers,
-  createMember,
+  createUser,
   deleteMember,
 } from "./members";
 

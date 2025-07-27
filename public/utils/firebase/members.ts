@@ -2,11 +2,11 @@ import { httpsCallable } from 'firebase/functions';
 import { getAuthToken } from '../auth';
 import { functions } from './config';
 
-export async function createMember(member: any) {
+export async function createUser(member: any) {
   const authToken = await getAuthToken();
   const {email, password, name, phone_number} = member;
   try {
-    const result = await httpsCallable(functions, 'createMember')({
+    const result = await httpsCallable(functions, 'createUser')({
       email,
       password,
       name,

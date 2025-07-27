@@ -16,8 +16,7 @@ import {
   typography,
   spacing,
 } from '../constants/theme';
-import { login } from '@/utils/supabase';
-import { logout } from '@/utils/auth';
+import { logout, login } from '@/utils/auth';
 import Logo from '../components/Logo';
 import { cacheUserProfile } from '@/utils/firebase';
 

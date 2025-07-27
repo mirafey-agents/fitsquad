@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { createMember, getSquads } from '@/utils/firebase';
+import { createUser, getSquads } from '@/utils/firebase';
 import * as Yup from 'yup';
 
 interface Squad {
@@ -87,7 +87,7 @@ export default function AddMember() {
       const invitationCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
       // Create the member in the database
-      const {data, error} = await createMember({
+      const {data, error} = await createUser({
         email: formData.email,
         password: formData.phoneNumber,
         name: formData.fullName,

@@ -25,7 +25,7 @@ export const {
 } = Sessions;
 
 export const {
-  createMember,
+  createUser,
   getMembers,
   deleteMember
 } = Members;

@@ -75,12 +75,13 @@ export const createUser = onCall(
       const authRole = await getRole(trainerId);
 
       // Role permission validation
-      if (authRole === "admin" && role!=="trainer") {
+      if (authRole !== "trainer") {
         throw new HttpsError("permission-denied",
-          "Admin cannot create: " + role);
-      } else if (authRole === "trainer" && role !== "member") {
+          "Only trainer can create users");
+      }
+      if (role !== "member") {
         throw new HttpsError("permission-denied",
-          "Trainer user cannot create role: " + role);
+          "Invalid role: " + role);
       }
 
       // Generate custom UUID for the user
@@ -92,7 +93,7 @@ export const createUser = onCall(
         email,
         password,
         displayName: name,
-        phoneNumber,
+        // phoneNumber,
         emailVerified: true,
       });
 

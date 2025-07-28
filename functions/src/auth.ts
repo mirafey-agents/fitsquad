@@ -32,5 +32,9 @@ export const verifySupabaseToken = (token: string): any => {
 };
 
 export const getAuthInfo = (authToken: string, firebaseAuth: any): any => {
-  return {userId: firebaseAuth.token.uid};
+  return {
+    userId: firebaseAuth.token.uid,
+    email: firebaseAuth.token.email,
+    name: firebaseAuth.token.name,
+  };
 };

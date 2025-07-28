@@ -102,3 +102,124 @@ export const sendEmail = async function({
 //   return sendMessage(message, numbers);
 // }
 
+export const sendWelcomeEmailToMember = async function(
+  memberName: string,
+  memberEmail: string,
+  memberPassword: string,
+  trainerName: string,
+) {
+  const body = `<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Welcome to MyfitWave!</title>
+    <style>
+      body { 
+        font-family: Arial, sans-serif; 
+        color: #333; 
+        background-color: #f7f7f7; 
+        margin: 0; 
+        padding: 0; 
+      }
+      .container { 
+        width: 100%; 
+        max-width: 600px; 
+        margin: auto; 
+        background-color: #ffffff; 
+        padding: 20px; 
+        border-radius: 10px; 
+      }
+      .header { text-align: center; }
+      .header img { 
+        width: 100px; 
+        margin-bottom: 10px; 
+      }
+      .button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 14px 20px;
+        margin: 20px 0;
+        border: none;
+        border-radius: 5px;
+        text-align: center;
+        display: inline-block;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      .features, .bonus { margin-top: 20px; }
+      .footer { 
+        text-align: center; 
+        font-size: 12px; 
+        color: #888; 
+        margin-top: 30px; 
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="https://www.myfitwave.com/assets/images/logo_with_text_1024.png" 
+             alt="MyfitWave Logo">
+        <h2>Welcome to <span style="color:#4CAF50;">MyFitWave</span>!</h2>
+        <p>You're officially on board</p>🎉
+      </div>
+
+      <p>Hi <strong>${memberName}</strong>,</p>
+
+      <p>Your personal trainer <strong>${trainerName}</strong> has invited
+         you to join <strong>MyFitWave</strong> – your all-in-one app for
+         tracking workouts, chatting with your trainer, and staying on top
+         of your progress.</p>
+
+      <h3>Your Login Details</h3>
+      <p><strong>Username:</strong> ${memberEmail} <br>
+         <strong>Password:</strong> ${memberPassword}</p>
+
+      <a class="button" href="https://app.myfitwave.com/login" target="_blank">
+        Log In Now
+      </a>
+
+      <div class="features">
+        <h3>🔥 Core Features</h3>
+        <ul>
+          <li>💬 <strong>Trainer Chat</strong> – Stay connected & ask questions 
+              anytime</li>
+          <li>📅 <strong>Workout Plan</strong> – View and track your daily 
+              workouts</li>
+          <li>📷 <strong>AI Form Feedback</strong> – Upload videos/images and
+              get posture tips</li>
+          <li>📊 <strong>Personal Progress Reports</strong> – Track what's 
+              improving</li>
+        </ul>
+      </div>
+
+      <div class="bonus">
+        <h3>🎁 Bonus Features</h3>
+        <ul>
+          <li>🪞 <strong>Mirror Moment</strong> – Upload your best mirror selfies
+              & track visual gains</li>
+          <li>📈 <strong>Habit Tracker</strong> – Build habits that power your 
+              transformation</li>
+        </ul>
+      </div>
+
+      <p>If you have any questions, just reply to this email. We're excited to 
+         support you every rep of the way 💪</p>
+
+      <div class="footer">
+        <p>Made with ❤️ by MyFitWave • 
+           <a href="https://myfitwave.com">myfitwave.com</a></p>
+        <p>Follow us on 
+           <a href="https://instagram.com/yourapp">Instagram</a> | 
+           <a href="mailto:support@myfitwave.com">Support</a></p>
+      </div>
+    </div>
+  </body>
+  </html>`;
+
+  return sendEmail({
+    to: memberEmail,
+    subject: "Welcome to MyFitWave!",
+    body,
+    from: "MyFitWave Support<support@myfitwave.com>",
+  });
+};

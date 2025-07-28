@@ -5,6 +5,7 @@ import {getAuthInfo} from "./auth";
 import * as admin from "firebase-admin";
 import {randomUUID} from "crypto";
 import {FirebaseAuthError} from "firebase-admin/auth";
+import {sendWelcomeEmailToMember} from "./notifications";
 
 export const updateUserProfile = onCall(
   {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
@@ -119,6 +120,7 @@ export const createUser = onCall(
       // Verify Supabase JWT
       const {
         userId: trainerId, error: tokenError,
+        name: trainerName,
       } = getAuthInfo(authToken, request.auth);
 
       if (tokenError) {
@@ -174,6 +176,8 @@ export const createUser = onCall(
           });
 
         if (dbError2) throw dbError2;
+        await sendWelcomeEmailToMember(
+          name, email, password, trainerName);
       }
 
       return {success: true, userId: user.uid};

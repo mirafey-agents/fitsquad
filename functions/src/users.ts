@@ -103,7 +103,12 @@ const newUser = async (
 };
 
 export const createUser = onCall(
-  {secrets: ["SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET"], cors: true},
+  {
+    secrets: [
+      "SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET", "SMTP_KEY",
+    ],
+    cors: true,
+  },
   async (request: any) => {
     try {
       const {

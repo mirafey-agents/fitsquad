@@ -1,9 +1,12 @@
-import { View, Text, StyleSheet, TextInput, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Modal, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useState } from 'react';
 import { updateUserProfile } from '@/utils/firebase';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadMedia } from '@/utils/firebase';
+import { getLoggedInUser } from '@/utils/auth';
 
 const EXPERIENCE_LEVELS = [
   {
@@ -25,6 +28,8 @@ const GOALS = [
   'Flexibility', 'Overall Health', 'Strength',
 ];
 
+const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'];
+
 export default function MemberOnboarding() {
   const [stats, setStats] = useState({
     weight: '',
@@ -34,16 +39,38 @@ export default function MemberOnboarding() {
   const [selectedExperience, setSelectedExperience] = useState('');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [displayName, setDisplayName] = useState('');
+  const [selectedGender, setSelectedGender] = useState('');
+  const [showGenderModal, setShowGenderModal] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+
+  const handleImagePick = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setProfileImage(result.assets[0]);
+    }
+  };
 
   const handleStartJourney = async () => {
     try {
+      const user = await getLoggedInUser();
       const profileData = {
         name: displayName,
         age: stats.age,
         goals: selectedGoals,
         activityLevel: selectedExperience,
-        // Add other required fields with default values
-        gender: 'not_specified',
+        gender: selectedGender || 'not_specified',
         medicalConditions: null,
         dietaryRestrictions: [],
         preferredWorkoutTimes: [],
@@ -51,6 +78,12 @@ export default function MemberOnboarding() {
       };
       
       await updateUserProfile(profileData);
+      
+      // Upload profile image if selected
+      if (profileImage && user) {
+        await uploadMedia(profileImage, user.id, 'profilepic', null);
+      }
+      
       router.push('/');
     } catch (error) {
       console.error('Error completing onboarding:', error);
@@ -66,30 +99,48 @@ export default function MemberOnboarding() {
 
       <Animated.View entering={FadeInDown.delay(200)} style={styles.form}>
         <View style={styles.inputGroup}>
+          <Text style={styles.label}>Profile Picture</Text>
+          <View style={styles.profileImageContainer}>
+            <View style={styles.profileImageWrapper}>
+              {profileImage ? (
+                <Image source={{ uri: profileImage.uri }} style={styles.profileImage} />
+              ) : (
+                <View style={styles.profileImagePlaceholder}>
+                  <Ionicons name="person" size={48} color="#9AAABD" />
+                </View>
+              )}
+              <TouchableOpacity style={styles.editAvatarButton} onPress={handleImagePick}>
+                <Ionicons name="camera" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Basic Information</Text>
           <TextInput
             style={styles.input}
             placeholder="Display Name"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#9AAABD"
             value={displayName}
             onChangeText={setDisplayName}
           />
           <View style={styles.statsGrid}>
             <TextInput
               style={[styles.input, styles.statInput]}
-              placeholder="Weight (kg)"
+              placeholder="Weight"
               keyboardType="numeric"
               value={stats.weight}
               onChangeText={(text) => setStats(prev => ({ ...prev, weight: text }))}
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#9AAABD"
             />
             <TextInput
               style={[styles.input, styles.statInput]}
-              placeholder="Height (cm)"
+              placeholder="Height"
               keyboardType="numeric"
               value={stats.height}
               onChangeText={(text) => setStats(prev => ({ ...prev, height: text }))}
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#9AAABD"
             />
             <TextInput
               style={[styles.input, styles.statInput]}
@@ -97,9 +148,22 @@ export default function MemberOnboarding() {
               keyboardType="numeric"
               value={stats.age}
               onChangeText={(text) => setStats(prev => ({ ...prev, age: text }))}
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#9AAABD"
             />
           </View>
+          
+          <Pressable 
+            style={styles.dropdown}
+            onPress={() => setShowGenderModal(true)}
+          >
+            <Text style={[
+              styles.dropdownText,
+              !selectedGender && styles.dropdownPlaceholder
+            ]}>
+              {selectedGender || 'Select Gender'}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color="#9AAABD" />
+          </Pressable>
         </View>
 
         <View style={styles.inputGroup}>
@@ -115,9 +179,11 @@ export default function MemberOnboarding() {
                 onPress={() => setSelectedExperience(level.id)}
               >
                 <View style={styles.experienceIcon}>
-                  <Ionicons name={level.icon as any} size={24} color="#4F46E5" />
+                  <Ionicons name={level.icon as any} size={24} color="#2563FF" />
                 </View>
-                <Text style={styles.experienceTitle}>{level.title}</Text>
+                <View style={styles.experienceContent}>
+                  <Text style={styles.experienceTitle}>{level.title}</Text>
+                </View>
                 <Text style={styles.experienceDescription}>{level.description}</Text>
               </Pressable>
             ))}
@@ -158,6 +224,36 @@ export default function MemberOnboarding() {
         <Text style={styles.joinButtonText}>Start Your Journey</Text>
         </Pressable>
       </Animated.View>
+
+      <Modal
+        visible={showGenderModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Gender</Text>
+            {GENDER_OPTIONS.map((option) => (
+              <Pressable
+                key={option}
+                style={styles.modalOption}
+                onPress={() => {
+                  setSelectedGender(option);
+                  setShowGenderModal(false);
+                }}
+              >
+                <Text style={styles.modalOptionText}>{option}</Text>
+              </Pressable>
+            ))}
+            <Pressable
+              style={styles.modalCancel}
+              onPress={() => setShowGenderModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -165,7 +261,7 @@ export default function MemberOnboarding() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#060712',
   },
   header: {
     padding: 20,
@@ -175,12 +271,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: '#64748B',
+    color: '#9AAABD',
   },
   form: {
     padding: 20,
@@ -191,55 +287,161 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#353D45',
     marginBottom: 12,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   statInput: {
     flex: 1,
     marginBottom: 0,
+    minWidth: 80,
+  },
+  dropdown: {
+    backgroundColor: '#21262F',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#353D45',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  dropdownPlaceholder: {
+    color: '#9AAABD',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#21262F',
+    borderRadius: 16,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#353D45',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  modalCancel: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    color: '#9AAABD',
+  },
+  profileImageContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  profileImageWrapper: {
+    position: 'relative',
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  profileImagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#21262F',
+    borderWidth: 2,
+    borderColor: '#353D45',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#2563FF',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#060712',
   },
   experienceLevels: {
     gap: 12,
   },
   experienceCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     borderRadius: 16,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: '#353D45',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  experienceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   experienceIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    backgroundColor: '#F8FAFC',
+    marginRight: 12,
+    backgroundColor: '#23262F',
+  },
+  experienceContent: {
+    flex: 1,
+    marginRight: 12,
   },
   experienceTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 4,
+    color: '#FFFFFF',
   },
   experienceDescription: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#9AAABD',
+    flex: 1,
   },
   goalsGrid: {
     flexDirection: 'row',
@@ -247,20 +449,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   goalChip: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#21262F',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: '#353D45',
   },
   goalText: {
     fontSize: 14,
-    color: '#1E293B',
+    color: '#FFFFFF',
     fontWeight: '500',
   },
   joinButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#2563FF',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -272,14 +474,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   selectedExperienceCard: {
-    borderColor: '#4F46E5',
-    backgroundColor: '#F5F3FF',
+    borderColor: '#2563FF',
+    backgroundColor: '#23262F',
   },
   selectedGoalChip: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
+    backgroundColor: '#2563FF',
+    borderColor: '#2563FF',
   },
   selectedGoalText: {
     color: '#FFFFFF',
   },
+
 });

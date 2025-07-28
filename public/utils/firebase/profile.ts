@@ -10,7 +10,7 @@ export async function updateUserProfile(profileData: any) {
   const result = await httpsCallable(functions, 'updateUserProfile')({
     userId, profileData, authToken
   });
-  cacheUserProfile(userId);
+  await cacheUserProfile(userId);
   return result;
 }
 

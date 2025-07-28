@@ -12,11 +12,9 @@ export default function CreateSquad() {
   const [members, setMembers] = useState([]);
   const [squadName, setSquadName] = useState('');
   const [squadDescription, setSquadDescription] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -46,8 +44,7 @@ export default function CreateSquad() {
   const filteredMembers = members.filter(member => {
     const matchesSearch = member.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = !selectedServiceType || member.serviceType === selectedServiceType;
-    return matchesSearch && matchesType;
+    return matchesSearch;
   });
 
   const handleCreate = async () => {
@@ -142,49 +139,6 @@ export default function CreateSquad() {
               />
             </View>
 
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filterContainer}
-            >
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  !selectedServiceType && styles.selectedFilter
-                ]}
-                onPress={() => setSelectedServiceType(null)}
-              >
-                <Text style={[
-                  styles.filterText,
-                  !selectedServiceType && styles.selectedFilterText
-                ]}>All</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  selectedServiceType === 'Personal Training' && styles.selectedFilter
-                ]}
-                onPress={() => setSelectedServiceType('Personal Training')}
-              >
-                <Text style={[
-                  styles.filterText,
-                  selectedServiceType === 'Personal Training' && styles.selectedFilterText
-                ]}>Personal Training</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.filterChip,
-                  selectedServiceType === 'Group Training' && styles.selectedFilter
-                ]}
-                onPress={() => setSelectedServiceType('Group Training')}
-              >
-                <Text style={[
-                  styles.filterText,
-                  selectedServiceType === 'Group Training' && styles.selectedFilterText
-                ]}>Group Training</Text>
-              </Pressable>
-            </ScrollView>
-
             {filteredMembers.map((member, index) => (
               <Animated.View
                 key={member.id}
@@ -202,13 +156,6 @@ export default function CreateSquad() {
                       <Text style={styles.memberName}>{member.display_name}</Text>
                       <Text style={styles.memberEmail}>{member.email}</Text>
                     </View>
-                    <BlurView intensity={80} style={styles.serviceTypeBadge}>
-                      <Text style={styles.serviceTypeText}>{member.serviceType}</Text>
-                    </BlurView>
-                  </View>
-                  <View style={styles.memberPerformance}>
-                    <Text style={styles.performanceLabel}>Performance</Text>
-                    <Text style={styles.performanceValue}>{member.performance}%</Text>
                   </View>
                   {selectedMembers.includes(member.id) && (
                     <View style={styles.selectedIndicator}>

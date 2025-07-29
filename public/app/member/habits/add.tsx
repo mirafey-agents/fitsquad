@@ -138,8 +138,6 @@ const Step1View = ({
             />
           </View>
 
-
-
           <View style={styles.predefinedSection}>
             <Text style={styles.sectionTitle}>Or choose from presets</Text>
             {predefinedHabits.map((habit, index) => (
@@ -205,8 +203,8 @@ const Step2View = ({
     }
   };
 
-  const canProceed = habitData.description.trim() !== '' && 
-    (habitData.frequency === 'daily' || (habitData.selectedDays && habitData.selectedDays.length > 0));
+  const canProceed = habitData.title.trim() !== '' &&
+  (habitData.frequency === 'daily' || (habitData.selectedDays && habitData.selectedDays.length > 0));
 
   return (
     <View style={styles.stepContainer}>
@@ -430,8 +428,6 @@ export default function AddHabitPage() {
     frequency: 'daily',
   });
   const [loading, setLoading] = useState(false);
-
-
 
   const handleSave = async () => {
     setLoading(true);

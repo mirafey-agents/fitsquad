@@ -111,7 +111,7 @@ export default function CreateSession() {
       const result = await createSessionTrainer({
         title: formData.title,
         startTime: formData.date.toISOString(),
-        squadId: formData.selectedSquads?.[0].id || null,
+        squadId: formData.selectedSquads?.[0]?.id || null,
         userIds: formData.selectedUsers.map(u => u.id),
         exercises: formData.selectedExercises
       });

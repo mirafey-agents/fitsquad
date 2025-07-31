@@ -16,7 +16,7 @@ import {
   typography,
   spacing,
 } from '../constants/theme';
-import { logout, login } from '@/utils/auth';
+import { logout, login, loginWithGoogle } from '@/utils/auth';
 import Logo from '../components/Logo';
 import { cacheUserProfile } from '@/utils/firebase';
 
@@ -42,6 +42,22 @@ export default function Login() {
       }
     } catch (error: any) {
       alert('Username or password is incorrect');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const user = await loginWithGoogle();
+      await cacheUserProfile(user.id);
+
+      if (user) {
+        router.replace('/');
+      }
+    } catch (error: any) {
+      alert('Google sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -119,6 +135,21 @@ export default function Login() {
               />
             </>
           )}
+        </Pressable>
+
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <Pressable
+          style={[styles.googleButton, loading && styles.googleButtonDisabled]}
+          onPress={handleGoogleLogin}
+          disabled={loading}
+        >
+          <Ionicons name="logo-google" size={20} color="#FFFFFF" />
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
         </Pressable>
 
         <View style={styles.footer}>
@@ -226,5 +257,37 @@ const styles = StyleSheet.create({
     fontSize: typography.size.md,
     fontWeight: 'bold',
     color: '#4A90E2',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.xl,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#353D45',
+  },
+  dividerText: {
+    fontSize: typography.size.sm,
+    color: '#9AAABD',
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
+    backgroundColor: '#DB4437',
+    borderRadius: 24,
+    padding: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  googleButtonDisabled: {
+    opacity: 0.7,
+  },
+  googleButtonText: {
+    color: '#FFFFFF',
+    fontSize: typography.size.lg,
+    fontWeight: 'bold',
   },
 });

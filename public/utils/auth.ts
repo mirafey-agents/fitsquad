@@ -4,7 +4,9 @@ import {
   signInWithEmailAndPassword, 
   signOut,
   onAuthStateChanged,
-  User
+  User,
+  GoogleAuthProvider,
+  signInWithPopup
 } from "firebase/auth";
 
 // Helper function to await auth state initialization
@@ -53,6 +55,22 @@ export async function login(email: string, password: string) {
 
     } catch (error: any) {
         console.error('Firebase login error:', error);
+        throw error;
+    }
+}
+
+export async function loginWithGoogle() {
+    try {
+        const provider = new GoogleAuthProvider();
+        const userCredential = await signInWithPopup(auth, provider);
+        const user = userCredential.user;
+        
+        console.log('Firebase: Google login successful for', user.email);
+        
+        return {id: user.uid};
+
+    } catch (error: any) {
+        console.error('Firebase Google login error:', error);
         throw error;
     }
 }

@@ -30,7 +30,7 @@ export interface CreateWorkoutPlanData {
   }>;
 }
 
-export async function getWorkoutPlans(ids: string[]) {
+export async function getWorkoutPlans(ids: string[] = null) {
     const authToken = await getAuthToken();
 
     const {data: plans} = await httpsCallable(functions, 'getWorkoutPlans')({

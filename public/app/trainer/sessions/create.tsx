@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Platform, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { TabView, TabBar } from 'react-native-tab-view';
 import { getSquads, getMembers, getExercises, createSessionTrainer } from '@/utils/firebase';
+import { getWorkoutPlans } from '@/utils/firebase/workoutPlans';
 import FilterableList from '../components/FilterableList';
 
 interface Squad {
@@ -25,32 +25,56 @@ interface Exercise {
   level: string;
   sets?: number;
   reps?: string;
+  energy_points?: number;
+}
+
+interface WorkoutPlanExercise {
+  name: string;
+  sets: number;
+  reps: number;
+  module_type: string;
+  type: string;
+  energy_points: number;
+}
+
+interface WorkoutPlan {
+  id: string;
+  name: string;
+  exercises: WorkoutPlanExercise[];
+  created_at: { _seconds: number };
 }
 
 export default function CreateSession() {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     title: '',
     date: new Date(),
     selectedSquads: [] as Squad[],
     selectedUsers: [] as User[],
     selectedExercises: [] as Exercise[],
+    workoutPlanId: null as string | null,
+    isAdhoc: false,
   });
   const [squads, setSquads] = useState<Squad[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [index, setIndex] = useState(0);
-  const [routes] = useState([
-    { key: 'squads', title: 'Squads' },
-    { key: 'members', title: 'Members' },
-    { key: 'exercises', title: 'Exercises' },
-  ]);
+
+  const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [newExercise, setNewExercise] = useState({ name: '', sets: '', reps: '' });
+  const [activeTab, setActiveTab] = useState<'squads' | 'members'>('squads');
+  const [showExerciseDropdown, setShowExerciseDropdown] = useState(false);
+  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
+
+  const totalSteps = 5;
 
   useEffect(() => {
     fetchSquads();
     fetchUsers();
     fetchExercises();
+    fetchWorkoutPlans();
   }, []);
 
   const fetchSquads = async () => {
@@ -89,6 +113,30 @@ export default function CreateSession() {
     }
   };
 
+  const fetchWorkoutPlans = async () => {
+    try {
+      setLoading(true);
+      const data = await getWorkoutPlans();
+      setWorkoutPlans(data as WorkoutPlan[] || []);
+    } catch (error) {
+      console.error('Error fetching workout plans:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleCreate = async () => {
     if (!formData.title.trim()) {
       Alert.alert('Error', 'Session title is required');
@@ -107,7 +155,6 @@ export default function CreateSession() {
 
     try {
       setLoading(true);
-      setError(null);
       const result = await createSessionTrainer({
         title: formData.title,
         startTime: formData.date.toISOString(),
@@ -123,28 +170,187 @@ export default function CreateSession() {
       router.back();
     } catch (error) {
       console.log('Error creating session:', error);
-      setError('Failed to create session');
       alert('Some error occurred while creating the session');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExerciseUpdate = useCallback((exerciseId: string, field: 'sets' | 'reps', value: string) => {
+  const handleAddExercise = () => {
+    if (!newExercise.name.trim() || !newExercise.sets || !newExercise.reps) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    const exercise: Exercise = {
+      id: Date.now().toString(), // Temporary ID for new exercises
+      name: newExercise.name,
+      module_type: 'Custom',
+      level: 'Beginner',
+      sets: parseInt(newExercise.sets),
+      reps: newExercise.reps
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      selectedExercises: [...prev.selectedExercises, exercise]
+    }));
+
+    setNewExercise({ name: '', sets: '', reps: '' });
+    setShowAddExerciseModal(false);
+    setShowExerciseDropdown(false);
+    setFilteredExercises([]);
+  };
+
+  const handleEditExercise = (exercise: Exercise) => {
+    setEditingExercise(exercise);
+    setNewExercise({
+      name: exercise.name,
+      sets: exercise.sets?.toString() || '',
+      reps: exercise.reps || ''
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingExercise || !newExercise.name.trim() || !newExercise.sets || !newExercise.reps) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       selectedExercises: prev.selectedExercises.map(ex => 
-        ex.id === exerciseId 
-          ? { ...ex, [field]: value || "" }
+        ex.id === editingExercise.id 
+          ? { 
+              ...ex, 
+              name: newExercise.name,
+              sets: parseInt(newExercise.sets),
+              reps: newExercise.reps
+            }
           : ex
       )
     }));
-  }, []);
 
-  const renderScene = useCallback(({ route }: { route: { key: string } }) => {
-    switch (route.key) {
-      case 'squads':
-        return (
+    setEditingExercise(null);
+    setNewExercise({ name: '', sets: '', reps: '' });
+    setShowExerciseDropdown(false);
+    setFilteredExercises([]);
+  };
+
+  const handleDeleteExercise = (exerciseId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedExercises: prev.selectedExercises.filter(e => e.id !== exerciseId)
+    }));
+  };
+
+  const handleWorkoutPlanSelect = (plan: WorkoutPlan) => {
+    const mappedExercises = plan.exercises.map(ex => ({
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // Generate unique ID
+      name: ex.name,
+      module_type: ex.module_type,
+      level: 'Beginner',
+      sets: ex.sets,
+      reps: ex.reps.toString(),
+      energy_points: ex.energy_points
+    }));
+    
+    setFormData(prev => ({
+      ...prev,
+      workoutPlanId: plan.id,
+      isAdhoc: false,
+      selectedExercises: mappedExercises
+    }));
+  };
+
+  const filterExercises = (query: string) => {
+    if (!query.trim()) {
+      setFilteredExercises([]);
+      return;
+    }
+    
+    const filtered = exercises.filter(exercise =>
+      exercise.name.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredExercises(filtered);
+  };
+
+  const handleExerciseNameChange = (text: string) => {
+    setNewExercise(prev => ({ ...prev, name: text }));
+    filterExercises(text);
+    setShowExerciseDropdown(true);
+  };
+
+  const handleExerciseNameFocus = () => {
+    if (newExercise.name.trim()) {
+      filterExercises(newExercise.name);
+      setShowExerciseDropdown(true);
+    } else {
+      // Show recent exercises when focusing on empty input
+      setFilteredExercises(exercises.slice(0, 3));
+      setShowExerciseDropdown(true);
+    }
+  };
+
+  const handleExerciseSelect = (exerciseName: string) => {
+    setNewExercise(prev => ({ ...prev, name: exerciseName }));
+    setShowExerciseDropdown(false);
+    setFilteredExercises([]);
+  };
+
+  const renderStep1 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Session Details</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Session Title"
+        value={formData.title}
+        onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
+        placeholderTextColor="#64748B"
+      />
+      <View style={styles.datePickerContainer}>
+        <input
+          type="datetime-local"
+          value={formData.date.toLocaleString('sv', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(' ', 'T')}
+          onChange={(e) => {
+            const date = new Date(e.target.value);
+            setFormData(prev => ({ ...prev, date }));
+          }}
+          style={{
+            padding: '12px',
+            borderRadius: '12px',
+            border: '1px solid #21262F',
+            fontSize: '16px',
+            color: '#FFFFFF',
+            backgroundColor: '#21262F',
+          }}
+        />
+      </View>
+    </View>
+  );
+
+  const renderStep2 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Select Participants</Text>
+      <View style={styles.tabContainer}>
+        <View style={styles.tabHeader}>
+          <Pressable 
+            style={[styles.tab, activeTab === 'squads' && styles.tabActive]}
+            onPress={() => setActiveTab('squads')}
+          >
+            <Ionicons name="people" size={20} color={activeTab === 'squads' ? "#4F46E5" : "#64748B"} />
+            <Text style={[styles.tabText, activeTab === 'squads' && styles.tabTextActive]}>Squads</Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.tab, activeTab === 'members' && styles.tabActive]}
+            onPress={() => setActiveTab('members')}
+          >
+            <Ionicons name="person" size={20} color={activeTab === 'members' ? "#4F46E5" : "#64748B"} />
+            <Text style={[styles.tabText, activeTab === 'members' && styles.tabTextActive]}>Members</Text>
+          </Pressable>
+        </View>
+        
+        {activeTab === 'squads' ? (
           <FilterableList
             tabKey="squads"
             placeholder="Search squads"
@@ -155,9 +361,7 @@ export default function CreateSession() {
             getItemName={(squad) => squad.name}
             getItemDescription={(squad) => squad.description}
           />
-        );
-      case 'members':
-        return (
+        ) : (
           <FilterableList
             tabKey="members"
             placeholder="Search members"
@@ -168,35 +372,200 @@ export default function CreateSession() {
             getItemName={(user) => user.display_name}
             getItemDescription={(user) => user.email}
           />
-        );
-      case 'exercises':
-        return (
-          <FilterableList
-            tabKey="exercises"
-            placeholder="Search exercises"
-            items={exercises}
-            selectedItems={formData.selectedExercises}
-            onSelectionChange={(selectedExercises) => setFormData(prev => ({ ...prev, selectedExercises }))}
-            getItemId={(exercise) => exercise.id}
-            getItemName={(exercise) => exercise.name}
-            getItemDescription={(exercise) => exercise.module_type}
-          />
-        );
-      default:
-        return null;
-    }
-  }, [squads, users, exercises, formData.selectedSquads, formData.selectedUsers, formData.selectedExercises]);
+        )}
+      </View>
+    </View>
+  );
 
-  const renderTabBar = useCallback((props: any) => (
-    <TabBar
-      {...props}
-      indicatorStyle={styles.tabIndicator}
-      style={styles.tabBar}
-      labelStyle={styles.tabLabel}
-      activeColor="#4F46E5"
-      inactiveColor="#64748B"
-    />
-  ), []);
+  const renderStep3 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Select Workout Plan</Text>
+      <View style={styles.tabContainer}>
+        <View style={styles.tabHeader}>
+          <Pressable 
+            style={[styles.tab, !formData.isAdhoc && styles.tabActive]}
+            onPress={() => setFormData(prev => ({ ...prev, isAdhoc: false, workoutPlanId: null }))}
+          >
+            <Ionicons name="list" size={20} color={!formData.isAdhoc ? "#4F46E5" : "#64748B"} />
+            <Text style={[styles.tabText, !formData.isAdhoc && styles.tabTextActive]}>My Plans</Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.tab, formData.isAdhoc && styles.tabActive]}
+            onPress={() => setFormData(prev => ({ ...prev, isAdhoc: true, workoutPlanId: null }))}
+          >
+            <Ionicons name="add-circle" size={20} color={formData.isAdhoc ? "#4F46E5" : "#64748B"} />
+            <Text style={[styles.tabText, formData.isAdhoc && styles.tabTextActive]}>Custom</Text>
+          </Pressable>
+        </View>
+        
+        {!formData.isAdhoc ? (
+          <View style={styles.workoutPlansList}>
+            {workoutPlans.map((plan) => (
+              <Pressable
+                key={plan.id}
+                style={[
+                  styles.workoutPlanCard,
+                  formData.workoutPlanId === plan.id && styles.selectedWorkoutPlan
+                ]}
+                onPress={() => handleWorkoutPlanSelect(plan)}
+              >
+                <View style={styles.workoutPlanInfo}>
+                  <Text style={styles.workoutPlanName}>{plan.name}</Text>
+                  <Text style={styles.workoutPlanDate}>
+                    Created {new Date(plan.created_at._seconds * 1000).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </Text>
+                  <View style={styles.workoutPlanStats}>
+                    <View style={styles.stat}>
+                      <Ionicons name="fitness" size={16} color="#4A90E2" />
+                      <Text style={styles.statText}>{plan.exercises.length} Exercises</Text>
+                    </View>
+                    <View style={styles.stat}>
+                      <Ionicons name="flash" size={16} color="#FF9500" />
+                      <Text style={styles.statText}>
+                        {plan.exercises.reduce((total, ex) => total + ex.energy_points, 0)} Energy Points
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={24} 
+                  color={formData.workoutPlanId === plan.id ? "#4F46E5" : "#64748B"} 
+                />
+              </Pressable>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.adhocContainer}>
+            <Text style={styles.adhocText}>You'll be able to add exercises in the next step</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderStep4 = () => {
+    return (
+      <View style={styles.stepContent}>
+        <Text style={styles.stepTitle}>Review Exercises</Text>
+        <View style={styles.exercisesHeader}>
+          <Pressable 
+            style={styles.addExerciseButton}
+            onPress={() => setShowAddExerciseModal(true)}
+          >
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+            <Text style={styles.addExerciseText}>Add Exercise</Text>
+          </Pressable>
+        </View>
+        
+        {formData.selectedExercises.length > 0 ? (
+        <View style={styles.exercisesList}>
+          {formData.selectedExercises.map((exercise, index) => (
+            <View key={exercise.id} style={styles.exerciseCard}>
+              <View style={styles.exerciseInfo}>
+                <Text style={styles.exerciseName}>{exercise.name}</Text>
+                <Text style={styles.exerciseDetails}>
+                  {exercise.sets || 0} × {exercise.reps || 0}
+                </Text>
+              </View>
+              <Pressable 
+                style={styles.editButton}
+                onPress={() => handleEditExercise(exercise)}
+              >
+                <Ionicons name="create" size={20} color="#64748B" />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.emptyExercises}>
+          <Text style={styles.emptyExercisesText}>No exercises added yet</Text>
+          <Text style={styles.emptyExercisesSubtext}>Tap "Add Exercise" to get started</Text>
+        </View>
+      )}
+    </View>
+    );
+  };
+
+  const renderStep5 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Review</Text>
+      
+      <View style={styles.reviewSection}>
+        <Text style={styles.reviewSectionTitle}>Session Details</Text>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Title:</Text>
+          <Text style={styles.reviewValue}>{formData.title}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Date & Time:</Text>
+          <Text style={styles.reviewValue}>
+            {formData.date.toLocaleDateString('en-IN', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.reviewSection}>
+        <Text style={styles.reviewSectionTitle}>Participants</Text>
+        {formData.selectedSquads.map(squad => (
+          <View key={squad.id} style={styles.reviewItem}>
+            <Text style={styles.reviewLabel}>Squad:</Text>
+            <Text style={styles.reviewValue}>{squad.name}</Text>
+          </View>
+        ))}
+        {formData.selectedUsers.map(user => (
+          <View key={user.id} style={styles.reviewItem}>
+            <Text style={styles.reviewLabel}>Member:</Text>
+            <Text style={styles.reviewValue}>{user.display_name}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.reviewSection}>
+        <Text style={styles.reviewSectionTitle}>Exercises</Text>
+        {formData.selectedExercises.map((exercise, index) => (
+          <View key={exercise.id} style={styles.reviewItem}>
+            <Text style={styles.reviewLabel}>{index + 1}.</Text>
+            <Text style={styles.reviewValue}>
+              {exercise.name} ({exercise.sets || 0} × {exercise.reps || 0})
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1: return renderStep1();
+      case 2: return renderStep2();
+      case 3: return renderStep3();
+      case 4: return renderStep4();
+      case 5: return renderStep5();
+      default: return null;
+    }
+  };
+
+  const canProceed = () => {
+    switch (currentStep) {
+      case 1: return formData.title.trim().length > 0;
+      case 2: return formData.selectedSquads.length > 0 || formData.selectedUsers.length > 0;
+      case 3: return formData.workoutPlanId || formData.isAdhoc;
+      case 4: return formData.selectedExercises.length > 0;
+      case 5: return true;
+      default: return false;
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -205,130 +574,198 @@ export default function CreateSession() {
           <ActivityIndicator size="large" color="#4F46E5" />
         </View>
       )}
+      
       <View style={[styles.header, loading && styles.disabled]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Text style={styles.backText}>Back</Text>
         </Pressable>
         <Text style={styles.title}>Create Session</Text>
-        <Pressable 
-          style={[
-            styles.createButton,
-            (!formData.title || (formData.selectedSquads.length === 0 && formData.selectedUsers.length === 0)) && styles.disabledButton
-          ]}
-          onPress={handleCreate}
-          disabled={!formData.title || (formData.selectedSquads.length === 0 && formData.selectedUsers.length === 0)}
-        >
-          <Text style={styles.createButtonText}>Create</Text>
-        </Pressable>
+        <View style={{ width: 80 }} />
       </View>
 
+
+
       <ScrollView style={[styles.content, loading && styles.disabled]}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Session Details</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Session Title"
-            value={formData.title}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
-            placeholderTextColor="#64748B"
-          />
-          <View style={styles.datePickerContainer}>
-            <input
-              type="datetime-local"
-              value={formData.date.toLocaleString('sv', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(' ', 'T')}
-              onChange={(e) => {
-                const date = new Date(e.target.value);
-                setFormData(prev => ({ ...prev, date }));
-              }}
-              style={{
-                padding: '12px',
-                borderRadius: '12px',
-                border: '1px solid #21262F',
-                fontSize: '16px',
-                color: '#FFFFFF',
-                backgroundColor: '#21262F',
-              }}
-            />
-          </View>
-
-          {(formData.selectedSquads.length > 0 || formData.selectedUsers.length > 0) && (
-            <View style={styles.selectedContainer}>
-              <Text style={styles.selectedTitle}>Selected Participants</Text>
-              {formData.selectedSquads.map(squad => (
-                <View key={squad.id} style={styles.selectedItem}>
-                  <Text style={styles.selectedItemText}>Squad: {squad.name}</Text>
-                  <Pressable onPress={() => setFormData(prev => ({ 
-                    ...prev, 
-                    selectedSquads: prev.selectedSquads.filter(s => s.id !== squad.id) 
-                  }))}>
-                    <Ionicons name="close-circle" size={20} color="#EF4444" />
-                  </Pressable>
-                </View>
-              ))}
-              {formData.selectedUsers.map(user => (
-                <View key={user.id} style={styles.selectedItem}>
-                  <Text style={styles.selectedItemText}>Member: {user.display_name}</Text>
-                  <Pressable onPress={() => setFormData(prev => ({ 
-                    ...prev, 
-                    selectedUsers: prev.selectedUsers.filter(u => u.id !== user.id) 
-                  }))}>
-                    <Ionicons name="close-circle" size={20} color="#EF4444" />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {formData.selectedExercises.length > 0 && (
-            <View style={styles.exercisesTable}>
-              <Text style={styles.selectedTitle}>Selected Exercises</Text>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, { flex: 2 }]}>Exercise</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Reps</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Sets</Text>
-                <View style={{ width: 20 }} />
-              </View>
-              {formData.selectedExercises.map(exercise => (
-                <View key={exercise.id} style={styles.tableRow}>
-                  <Text style={[styles.tableCell, { flex: 2 }]}>{exercise.name}</Text>
-                  <TextInput
-                    style={[styles.tableCell, styles.numberInput, { width: 80 }]}
-                    value={exercise.reps?.toString() || ''}
-                    onChangeText={(value) => handleExerciseUpdate(exercise.id, 'reps', value)}
-                    placeholder="0"
-                    placeholderTextColor="#64748B"
-                  />
-                  <TextInput
-                    style={[styles.tableCell, styles.numberInput, { width: 80 }]}
-                    value={exercise.sets?.toString() || ''}
-                    onChangeText={(value) => handleExerciseUpdate(exercise.id, 'sets', value)}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor="#64748B"
-                  />
-                  <Pressable onPress={() => setFormData(prev => ({ 
-                    ...prev, 
-                    selectedExercises: prev.selectedExercises.filter(e => e.id !== exercise.id) 
-                  }))}>
-                    <Ionicons name="close-circle" size={20} color="#EF4444" />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Participants & Exercises</Text>
-          <TabView
-            navigationState={{ index, routes }}
-            renderScene={renderScene}
-            onIndexChange={setIndex}
-            renderTabBar={renderTabBar}
-            style={styles.tabView}
-          />
-        </View>
+        {renderCurrentStep()}
       </ScrollView>
+
+      <View style={styles.footer}>
+        {currentStep > 1 ? (
+          <Pressable style={styles.backButtonFooter} onPress={handleBack}>
+            <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+        ) : (
+          <View style={{ width: 100 }} />
+        )}
+        
+        {currentStep < totalSteps ? (
+          <Pressable 
+            style={[styles.nextButton, !canProceed() && styles.disabledButton]}
+            onPress={handleNext}
+            disabled={!canProceed()}
+          >
+            <Text style={styles.nextButtonText}>Next</Text>
+            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+          </Pressable>
+        ) : (
+          <Pressable 
+            style={styles.createButton}
+            onPress={handleCreate}
+            disabled={!canProceed()}
+          >
+            <Text style={styles.createButtonText}>Create Session</Text>
+            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+          </Pressable>
+        )}
+      </View>
+
+      {/* Add Exercise Modal */}
+      {showAddExerciseModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add</Text>
+              <Pressable onPress={() => {
+                setShowAddExerciseModal(false);
+                setShowExerciseDropdown(false);
+                setFilteredExercises([]);
+              }}>
+                <Ionicons name="close" size={24} color="#64748B" />
+              </Pressable>
+            </View>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Type exercise name..."
+              value={newExercise.name}
+              onChangeText={handleExerciseNameChange}
+              onFocus={handleExerciseNameFocus}
+              placeholderTextColor="#64748B"
+            />
+            
+            {showExerciseDropdown && filteredExercises.length > 0 && (
+              <View style={styles.dropdownList}>
+                {filteredExercises.slice(0, 3).map((exercise) => (
+                  <Pressable
+                    key={exercise.id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setNewExercise(prev => ({ ...prev, name: exercise.name }));
+                      setShowExerciseDropdown(false);
+                      setFilteredExercises([]);
+                    }}
+                    android_ripple={{ color: '#4F46E5' }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={styles.dropdownItemText}>{exercise.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            <View style={styles.modalRow}>
+              <TextInput
+                style={[styles.modalInput, styles.modalInputHalf]}
+                placeholder="Sets"
+                value={newExercise.sets}
+                onChangeText={(text) => setNewExercise(prev => ({ ...prev, sets: text }))}
+                keyboardType="numeric"
+                placeholderTextColor="#64748B"
+              />
+              <TextInput
+                style={[styles.modalInput, styles.modalInputHalf]}
+                placeholder="Reps"
+                value={newExercise.reps}
+                onChangeText={(text) => setNewExercise(prev => ({ ...prev, reps: text }))}
+                placeholderTextColor="#64748B"
+              />
+            </View>
+            <Pressable style={styles.modalButton} onPress={handleAddExercise}>
+              <Text style={styles.modalButtonText}>Add</Text>
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* Edit Exercise Modal */}
+      {editingExercise && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Exercise</Text>
+              <Pressable onPress={() => {
+                setEditingExercise(null);
+                setShowExerciseDropdown(false);
+                setFilteredExercises([]);
+              }}>
+                <Ionicons name="close" size={24} color="#64748B" />
+              </Pressable>
+            </View>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Type exercise name..."
+              value={newExercise.name}
+              onChangeText={handleExerciseNameChange}
+              onFocus={handleExerciseNameFocus}
+              placeholderTextColor="#64748B"
+            />
+            
+            {showExerciseDropdown && filteredExercises.length > 0 && (
+              <View style={styles.dropdownList}>
+                {filteredExercises.slice(0, 3).map((exercise) => (
+                  <Pressable
+                    key={exercise.id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setNewExercise(prev => ({ ...prev, name: exercise.name }));
+                      setShowExerciseDropdown(false);
+                      setFilteredExercises([]);
+                    }}
+                    android_ripple={{ color: '#4F46E5' }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={styles.dropdownItemText}>{exercise.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            <View style={styles.modalRow}>
+              <TextInput
+                style={[styles.modalInput, styles.modalInputHalf]}
+                placeholder="Sets"
+                value={newExercise.sets}
+                onChangeText={(text) => setNewExercise(prev => ({ ...prev, sets: text }))}
+                keyboardType="numeric"
+                placeholderTextColor="#64748B"
+              />
+              <TextInput
+                style={[styles.modalInput, styles.modalInputHalf]}
+                placeholder="Reps"
+                value={newExercise.reps}
+                onChangeText={(text) => setNewExercise(prev => ({ ...prev, reps: text }))}
+                placeholderTextColor="#64748B"
+              />
+            </View>
+            <View style={styles.modalButtonRow}>
+              <Pressable 
+                style={styles.deleteButton}
+                onPress={() => {
+                  handleDeleteExercise(editingExercise.id);
+                  setEditingExercise(null);
+                }}
+              >
+                <Ionicons name="trash" size={20} color="#FFFFFF" />
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </Pressable>
+              <Pressable style={styles.modalButton} onPress={handleSaveEdit}>
+                <Text style={styles.modalButtonText}>Save</Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -349,38 +786,33 @@ const styles = StyleSheet.create({
     borderBottomColor: "#21262F",
   },
   backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 8,
+  },
+  backText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginLeft: 4,
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
     color: "#FFFFFF",
   },
-  createButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#4F46E5",
-    borderRadius: 20,
-  },
-  createButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
+
   content: {
+    flex: 1,
     padding: 20,
   },
-  section: {
+  stepContent: {
     marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  stepTitle: {
+    fontSize: 24,
+    fontWeight: '700',
     color: "#FFFFFF",
-    marginBottom: 12,
+    marginBottom: 24,
   },
   input: {
     backgroundColor: "#21262F",
@@ -397,136 +829,347 @@ const styles = StyleSheet.create({
     width: 'auto',
     alignSelf: 'flex-start',
   },
-  selectionList: {
-    gap: 12,
-  },
-  selectionCard: {
+  tabContainer: {
     backgroundColor: "#21262F",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: "#3C4148",
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  selectedCard: {
+  tabHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: "#3C4148",
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#4F46E5",
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: "#64748B",
+  },
+  tabTextActive: {
+    color: "#4F46E5",
+  },
+  workoutPlansList: {
+    padding: 16,
+  },
+  workoutPlanCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: "#1E293B",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: "#374151",
+  },
+  selectedWorkoutPlan: {
     borderColor: "#4F46E5",
   },
-  selectionInfo: {
+  workoutPlanInfo: {
     flex: 1,
   },
-  selectionName: {
+  workoutPlanName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  workoutPlanDate: {
+    fontSize: 14,
+    color: "#64748B",
+    marginBottom: 8,
+  },
+  workoutPlanStats: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  stat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+  adhocContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  adhocText: {
+    fontSize: 16,
+    color: "#64748B",
+    textAlign: 'center',
+  },
+  exercisesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  exercisesSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: "#FFFFFF",
+  },
+  addExerciseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#4F46E5",
+    borderRadius: 20,
+  },
+  addExerciseText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  exercisesList: {
+    gap: 12,
+  },
+  exerciseCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: "#1E293B",
+    borderRadius: 12,
+    padding: 16,
+  },
+  exerciseInfo: {
+    flex: 1,
+  },
+  exerciseName: {
     fontSize: 16,
     fontWeight: '600',
     color: "#FFFFFF",
     marginBottom: 4,
   },
-  selectionDescription: {
+  exerciseDetails: {
     fontSize: 14,
-    color: "#9AAABD",
+    color: "#64748B",
   },
-  selectedIndicator: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
+  editButton: {
+    padding: 8,
   },
-  tabView: {
-    height: 400,
-    zIndex: 1,
+  emptyExercises: {
+    padding: 32,
+    alignItems: 'center',
   },
-  tabBar: {
-    backgroundColor: "#060712",
-    elevation: 0,
-    shadowOpacity: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: "#21262F",
-  },
-  tabIndicator: {
-    backgroundColor: "#4F46E5",
-    height: 3,
-  },
-  tabLabel: {
-    textTransform: 'none',
-    fontWeight: '600',
-    color: "#FFFFFF",
-  },
-  tabContent: {
-    flex: 1,
-    backgroundColor: "#060712",
-  },
-  selectedContainer: {
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: "#21262F",
-    borderRadius: 12,
-  },
-  selectedTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: "#FFFFFF",
+  emptyExercisesText: {
+    fontSize: 18,
+    color: "#64748B",
     marginBottom: 8,
   },
-  selectedItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#3C4148",
-  },
-  selectedItemText: {
+  emptyExercisesSubtext: {
     fontSize: 14,
-    color: "#FFFFFF",
-  },
-  exercisesTable: {
-    marginTop: 16,
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    padding: 16,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#374151',
-  },
-  tableHeaderText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#94A3B8',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  tableCell: {
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
-  numberInput: {
-    backgroundColor: '#374151',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    color: "#64748B",
     textAlign: 'center',
-    marginHorizontal: 4,
   },
-  dateInput: {
+  reviewSection: {
+    backgroundColor: "#1E293B",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  reviewSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: "#FFFFFF",
+    marginBottom: 12,
+  },
+  reviewItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#374151",
+  },
+  reviewLabel: {
+    fontSize: 14,
+    color: "#64748B",
+    fontWeight: '500',
+  },
+  reviewValue: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: '500',
+  },
+  footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: "#21262F",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#3C4148",
+    padding: 20,
+    paddingBottom: 40,
+    backgroundColor: "#060712",
+    borderTopWidth: 1,
+    borderTopColor: "#21262F",
   },
-  dateText: {
+  backButtonFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: "#4F46E5",
+    borderRadius: 20,
+  },
+  backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: "#4F46E5",
+    borderRadius: 20,
+  },
+  nextButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: "#4F46E5",
+    borderRadius: 20,
+  },
+  createButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modal: {
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    alignSelf: 'center',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: "#FFFFFF",
+  },
+  modalInput: {
+    backgroundColor: "#374151",
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
     color: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#4B5563",
+    marginBottom: 12,
+  },
+  dropdownList: {
+    backgroundColor: "#374151",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#4B5563",
+    marginBottom: 12,
+    maxHeight: 200,
+    zIndex: 1000,
+    elevation: 5,
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#4B5563",
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: "#374151",
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+  },
+  modalInputHalf: {
+    flex: 1,
+    marginHorizontal: 4,
+    minWidth: 0, // Prevent overflow
+  },
+  modalRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+    width: '100%',
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: "#4F46E5",
+    borderRadius: 8,
+    padding: 12,
+    flex: 1,
+  },
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: "#EF4444",
+    borderRadius: 8,
+    padding: 12,
+    flex: 1,
+  },
+  deleteButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: '600',
   },
   loadingOverlay: {
     position: 'absolute',

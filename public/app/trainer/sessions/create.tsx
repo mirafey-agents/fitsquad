@@ -70,7 +70,28 @@ export default function CreateSession() {
 
   const totalSteps = 5;
 
+  // Function to reset all state variables to initial values
+  const resetAllState = () => {
+    setCurrentStep(1);
+    setFormData({
+      title: '',
+      date: new Date(),
+      selectedSquads: [],
+      selectedUsers: [],
+      selectedExercises: [],
+      workoutPlanId: null,
+      isAdhoc: false,
+    });
+    setShowAddExerciseModal(false);
+    setEditingExercise(null);
+    setNewExercise({ name: '', sets: '', reps: '' });
+    setActiveTab('squads');
+    setShowExerciseDropdown(false);
+    setFilteredExercises([]);
+  };
+
   useEffect(() => {
+    resetAllState(); // Reset state when component mounts
     fetchSquads();
     fetchUsers();
     fetchExercises();
@@ -167,6 +188,7 @@ export default function CreateSession() {
       }
       
       alert('Session created successfully');
+      resetAllState(); // Reset all state variables
       router.back();
     } catch (error) {
       console.log('Error creating session:', error);

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors, typography, spacing, borderRadius, shadows } from '@/constants/theme';
@@ -31,28 +31,30 @@ export default function TrainerInputs({ loading, error }: TrainerInputsProps) {
       image: getProfilePicThumbNailURL(profile.id),
       verified: true
     }
-    return sessions.map(session => ({
-      id: session.id,
-      date: session.start_time,
-      trainer: session.session? {
-        name: session.session.trainer.display_name,
-        image: getProfilePicThumbNailURL((session.session.trainer as any).id),
-        verified: true
-      }: defaultTrainer,
-      type: session.type,
-      module_type: session.module_type,
-      level: session.level,
-      total_energy_points: session.total_energy_points,
-      title: session.session?.title || session.exercises[0].name,
-      performance_score: session.performance_score,
-      feedback: session.trainer_comments,
-      media: session.session_media,
-      session: session.session ? {
-        title: session.session.title,
-        time: session.start_time,
-        exercises: session.exercises
-      }: null,
-    }));
+    return sessions
+      .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()) // Sort by date descending
+      .map(session => ({
+        id: session.id,
+        date: session.start_time,
+        trainer: session.session? {
+          name: session.session.trainer.display_name,
+          image: getProfilePicThumbNailURL((session.session.trainer as any).id),
+          verified: true
+        }: defaultTrainer,
+        type: session.type,
+        module_type: session.module_type,
+        level: session.level,
+        total_energy_points: session.total_energy_points,
+        title: session.session?.title || session.exercises[0].name,
+        performance_score: session.performance_score,
+        feedback: session.trainer_comments,
+        media: session.session_media,
+        session: session.session ? {
+          title: session.session.title,
+          time: session.start_time,
+          exercises: session.exercises
+        }: null,
+      }));
   };
 
   const renderStars = (score: number) => {

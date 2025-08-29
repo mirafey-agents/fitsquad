@@ -22,25 +22,17 @@ interface Exercise {
   id: string;
   name: string;
   module_type: string;
+  type: string;
   level: string;
   sets?: number;
   reps?: string;
   energy_points?: number;
 }
 
-interface WorkoutPlanExercise {
-  name: string;
-  sets: number;
-  reps: number;
-  module_type: string;
-  type: string;
-  energy_points: number;
-}
-
 interface WorkoutPlan {
   id: string;
   name: string;
-  exercises: WorkoutPlanExercise[];
+  exercises: Exercise[];
   created_at: { _seconds: number };
 }
 
@@ -63,7 +55,7 @@ export default function CreateSession() {
 
   const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-  const [newExercise, setNewExercise] = useState({ name: '', sets: '', reps: '' });
+  const [newExercise, setNewExercise] = useState<Exercise | null>(null);
   const [activeTab, setActiveTab] = useState<'squads' | 'members'>('squads');
   const [showExerciseDropdown, setShowExerciseDropdown] = useState(false);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
@@ -84,7 +76,7 @@ export default function CreateSession() {
     });
     setShowAddExerciseModal(false);
     setEditingExercise(null);
-    setNewExercise({ name: '', sets: '', reps: '' });
+    setNewExercise(null);
     setActiveTab('squads');
     setShowExerciseDropdown(false);
     setFilteredExercises([]);
@@ -200,17 +192,19 @@ export default function CreateSession() {
 
   const handleAddExercise = () => {
     if (!newExercise.name.trim() || !newExercise.sets || !newExercise.reps) {
-      Alert.alert('Error', 'Please fill in all fields');
+      alert('Please fill in all fields');
       return;
     }
 
     const exercise: Exercise = {
-      id: Date.now().toString(), // Temporary ID for new exercises
+      id: newExercise.id, // Temporary ID for new exercises
       name: newExercise.name,
-      module_type: 'Custom',
-      level: 'Beginner',
-      sets: parseInt(newExercise.sets),
-      reps: newExercise.reps
+      module_type: newExercise.module_type,
+      type: newExercise.type,
+      level: newExercise.level,
+      sets: newExercise.sets,
+      reps: newExercise.reps,
+      energy_points: newExercise.energy_points,
     };
 
     setFormData(prev => ({
@@ -218,7 +212,7 @@ export default function CreateSession() {
       selectedExercises: [...prev.selectedExercises, exercise]
     }));
 
-    setNewExercise({ name: '', sets: '', reps: '' });
+    setNewExercise(null);
     setShowAddExerciseModal(false);
     setShowExerciseDropdown(false);
     setFilteredExercises([]);
@@ -228,8 +222,13 @@ export default function CreateSession() {
     setEditingExercise(exercise);
     setNewExercise({
       name: exercise.name,
-      sets: exercise.sets?.toString() || '',
-      reps: exercise.reps || ''
+      sets: exercise.sets || 0,
+      reps: exercise.reps || '',
+      energy_points: exercise.energy_points || 0,
+      type: exercise.type || '',
+      module_type: exercise.module_type || '',
+      level: exercise.level || '',
+      id: exercise.id,
     });
   };
 
@@ -246,7 +245,7 @@ export default function CreateSession() {
           ? { 
               ...ex, 
               name: newExercise.name,
-              sets: parseInt(newExercise.sets),
+              sets: newExercise.sets,
               reps: newExercise.reps
             }
           : ex
@@ -254,7 +253,7 @@ export default function CreateSession() {
     }));
 
     setEditingExercise(null);
-    setNewExercise({ name: '', sets: '', reps: '' });
+    setNewExercise(null);
     setShowExerciseDropdown(false);
     setFilteredExercises([]);
   };
@@ -268,13 +267,14 @@ export default function CreateSession() {
 
   const handleWorkoutPlanSelect = (plan: WorkoutPlan) => {
     const mappedExercises = plan.exercises.map(ex => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // Generate unique ID
+      id: ex.id,
       name: ex.name,
       module_type: ex.module_type,
-      level: 'Beginner',
+      type: ex.type,
+      level: ex.level,
       sets: ex.sets,
-      reps: ex.reps.toString(),
-      energy_points: ex.energy_points
+      reps: ex.reps,
+      energy_points: ex.energy_points,
     }));
     
     setFormData(prev => ({
@@ -304,7 +304,7 @@ export default function CreateSession() {
   };
 
   const handleExerciseNameFocus = () => {
-    if (newExercise.name.trim()) {
+    if (newExercise?.name.trim()) {
       filterExercises(newExercise.name);
       setShowExerciseDropdown(true);
     } else {
@@ -312,12 +312,6 @@ export default function CreateSession() {
       setFilteredExercises(exercises.slice(0, 3));
       setShowExerciseDropdown(true);
     }
-  };
-
-  const handleExerciseSelect = (exerciseName: string) => {
-    setNewExercise(prev => ({ ...prev, name: exerciseName }));
-    setShowExerciseDropdown(false);
-    setFilteredExercises([]);
   };
 
   const renderStep1 = () => (
@@ -660,7 +654,7 @@ export default function CreateSession() {
             <TextInput
               style={styles.modalInput}
               placeholder="Type exercise name..."
-              value={newExercise.name}
+              value={newExercise?.name || ''}
               onChangeText={handleExerciseNameChange}
               onFocus={handleExerciseNameFocus}
               placeholderTextColor="#64748B"
@@ -673,7 +667,7 @@ export default function CreateSession() {
                     key={exercise.id}
                     style={styles.dropdownItem}
                     onPress={() => {
-                      setNewExercise(prev => ({ ...prev, name: exercise.name }));
+                      setNewExercise(exercise);
                       setShowExerciseDropdown(false);
                       setFilteredExercises([]);
                     }}
@@ -689,15 +683,15 @@ export default function CreateSession() {
               <TextInput
                 style={[styles.modalInput, styles.modalInputHalf]}
                 placeholder="Sets"
-                value={newExercise.sets}
-                onChangeText={(text) => setNewExercise(prev => ({ ...prev, sets: text }))}
+                value={newExercise?.sets?.toString() || ''}
+                onChangeText={(text) => setNewExercise(prev => ({ ...prev, sets: parseInt(text) }))}
                 keyboardType="numeric"
                 placeholderTextColor="#64748B"
               />
               <TextInput
                 style={[styles.modalInput, styles.modalInputHalf]}
                 placeholder="Reps"
-                value={newExercise.reps}
+                value={newExercise?.reps || ''}
                 onChangeText={(text) => setNewExercise(prev => ({ ...prev, reps: text }))}
                 placeholderTextColor="#64748B"
               />
@@ -756,8 +750,8 @@ export default function CreateSession() {
               <TextInput
                 style={[styles.modalInput, styles.modalInputHalf]}
                 placeholder="Sets"
-                value={newExercise.sets}
-                onChangeText={(text) => setNewExercise(prev => ({ ...prev, sets: text }))}
+                value={newExercise.sets.toString()}
+                onChangeText={(text) => setNewExercise(prev => ({ ...prev, sets: parseInt(text) }))}
                 keyboardType="numeric"
                 placeholderTextColor="#64748B"
               />

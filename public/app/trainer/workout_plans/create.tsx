@@ -25,6 +25,7 @@ interface SelectedExercise {
   reps: number;
   module_type: string;
   type: string;
+  level: string;
   goal: string;
   goal_specific: string;
   energy_points: number;
@@ -190,6 +191,7 @@ export default function CreateWorkoutPlan() {
                 reps: reps,
                 module_type: exercise.module_type,
                 type: exercise.type,
+                level: exercise.level,
                 goal: exercise.goal || '',
                 goal_specific: exercise.goal_specific || '',
                 energy_points: exercise.energy_points,

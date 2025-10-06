@@ -71,15 +71,24 @@ const renderEnergyPoints = (session_users: Array<any>) => {
   return (
     <Animated.View entering={FadeInUp.delay(200)}>
       <View style={styles.energyContainer}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Text style={styles.sectionTitle}>Fitness Goal</Text>
-          <Ionicons
-            name="help-circle-outline"
-            size={20}
-            color="#9AAABD"
-            style={{ marginLeft: 6, marginTop: 2, alignSelf: 'flex-start' }}
-            onPress={() => setShowInfo(true)}
-          />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.sectionTitle}>My Energy Goals</Text>
+            <Ionicons
+              name="help-circle-outline"
+              size={20}
+              color="#9AAABD"
+              style={{ marginLeft: 6, marginTop: 2, alignSelf: 'flex-start' }}
+              onPress={() => setShowInfo(true)}
+            />
+          </View>
+          <Pressable onPress={() => router.push('./energygoals', { relativeToDirectory: true })}>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#9AAABD"
+            />
+          </Pressable>
         </View>
         {showInfo && (
           <>
@@ -224,17 +233,9 @@ export default function Home() {
     <ScrollView style={styles.container}>
       <View style={styles.headerBarNew}>
         <Image
-          source={{ uri: getProfilePicThumbNailURL(userProfile?.id) }}
+          source={require('../../images/logo_with_text_1024.svg')}
           style={styles.profileImageNew}
         />
-        <View style={styles.headerTextGroupNew}>
-          <Text style={styles.greetingNew} numberOfLines={1}>
-            Hello {userProfile?.display_name || 'Guest'}
-          </Text>
-          <Text style={styles.subtitleNew} numberOfLines={1}>
-            Let's crush today's goals!
-          </Text>
-        </View>
       </View>
 
       <View style={styles.calendarContainer}>
@@ -351,17 +352,16 @@ const styles = StyleSheet.create({
   headerBarNew: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingTop: 44,
-    paddingBottom: 20,
+    paddingTop: 0,
+    paddingBottom: 0,
     backgroundColor: "#060712",
   },
   profileImageNew: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
   },
   headerTextGroupNew: {
     flex: 1,

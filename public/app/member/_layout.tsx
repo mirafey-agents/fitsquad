@@ -82,6 +82,7 @@ export default function TabLayout() {
       <Tabs.Screen name="progress" options={{href: null}}/>
       <Tabs.Screen name="onboarding" options={{href: null}}/>
       <Tabs.Screen name="_insights" options={{href: null}}/>
+      <Tabs.Screen name="energygoals" options={{ href: null }} />
       <Tabs.Screen name="insights/session" options={{href: null}}/>
       <Tabs.Screen name="insights/squad" options={{href: null}}/>
       <Tabs.Screen name="insights/[id]" options={{href: null}}/>

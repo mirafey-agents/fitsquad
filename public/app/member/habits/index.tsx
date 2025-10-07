@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHabits } from '@/app/context/HabitsContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,20 +7,9 @@ import { router } from 'expo-router';
 import { colors } from '@/constants/theme';
 import ConfirmModal from '@/components/ConfirmModal';
 import { BlurView } from 'expo-blur';
-import Animated, { 
-  useAnimatedStyle, 
-  withSequence, 
-  withTiming,
-  withSpring,
-  useSharedValue,
-  useAnimatedProps,
-  interpolate,
-  FadeInUp,
-} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
+import HabitCard from './components/HabitCard';
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function HabitsPage() {
   const { habits, loading, refreshHabits, removeHabit, toggleHabitCompletion } = useHabits();
@@ -31,20 +20,15 @@ export default function HabitsPage() {
     habitId: string;
     previousDate: Date;
   } | null>(null);
-  const [isCompletingHabit, setIsCompletingHabit] = useState(false);
 
   useEffect(() => {
     refreshHabits();
   }, []);
 
   useEffect(() => {
-    console.log('Habits',habits);
+    console.log('Habits', habits);
   }, [habits]);
 
-  // Helper to get icon for a habit (replace with your actual icon logic)
-  const getHabitIcon = (habit) => {
-    return <Ionicons name={habit.icon || "help-circle"} size={64} color="#fff" />;
-  };
 
   const handleDeleteHabit = (habitId: string) => {
     setHabitToDelete(habitId);
@@ -69,207 +53,15 @@ export default function HabitsPage() {
     setMissedHabitData(null);
   };
 
-  const handleComplete = async (habitId: string, date: Date, currentState: boolean, completionId: string) => {
-    setIsCompletingHabit(true);
+  const handleMissedHabitComplete = async (habitId: string, date: Date) => {
     try {
-      console.log('Habit Toggle', habitId, date, currentState, completionId);
-      const p1 = new Promise(resolve => setTimeout(resolve, 1000));
-      const p2 = await toggleHabitCompletion(habitId, date, currentState, completionId);
-      await Promise.all([p1, p2]);
+      await toggleHabitCompletion(habitId, date, false, '');
       await refreshHabits();
       setShowMissedHabitModal(false);
       setMissedHabitData(null);
-    } finally {
-      setIsCompletingHabit(false);
+    } catch (error) {
+      console.error('Error completing missed habit:', error);
     }
-  };
-
-  const CircularProgress = ({ progress, size = 112, strokeWidth = 4, children, isCompleted }) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * 2 * Math.PI;
-    
-    const animatedProps = useAnimatedProps(() => {
-      'worklet';
-      const progressValue = interpolate(
-        progress.value,
-        [0, 1],
-        [circumference, 0]
-      );
-      return {
-        strokeDashoffset: progressValue,
-      };
-    });
-
-    return (
-      <View style={{ width: size, height: size, position: 'relative' }}>
-        <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
-          <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke={isCompleted ? colors.semantic.success : "#353D45"}
-            strokeWidth={strokeWidth}
-            fill="transparent"
-          />
-        </Svg>
-        {!isCompleted && (
-          <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
-            <AnimatedCircle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke={colors.semantic.success}
-              strokeWidth={strokeWidth}
-              fill="transparent"
-              strokeDasharray={[circumference, circumference]}
-              animatedProps={animatedProps}
-              strokeLinecap="round"
-            />
-          </Svg>
-        )}
-        <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-          {children}
-        </View>
-      </View>
-    );
-  };
-
-  const HabitCard = ({ habit, onComplete }) => {
-    const scale = useSharedValue(1);
-    const progress = useSharedValue(0);
-    const [showCheckmark, setShowCheckmark] = useState(false);
-    const pressTimeout = useRef(null);
-    
-    useEffect(() => {
-      return () => {
-        if (pressTimeout.current) {
-          clearTimeout(pressTimeout.current);
-        }
-      };
-    }, []);
-
-    const checkForMissedHabit = (h) => {
-      if (
-        h.completionHistory &&
-        h.completionHistory.length >= 2 &&
-        h.completionHistory[0].completed === false &&
-        h.completionHistory[1].completed === false &&
-        h.completionHistory[2].completed === true
-      ) {
-        return h.completionHistory[1].date;
-      }
-      return null;
-    };
-
-    const handlePressIn = () => {
-      if (isEditMode) return;
-      
-      // Visual feedback
-      scale.value = withSpring(0.95);
-      progress.value = withTiming(1, { 
-        duration: 1500,
-      });
-      
-      // Start timer for completion
-      pressTimeout.current = setTimeout(() => {
-        // Check for missed habit before completing
-        const previousDate = checkForMissedHabit(habit);
-        if (previousDate) {
-          setShowMissedHabitModal(true);
-          setMissedHabitData({ habitId: habit.id, previousDate });
-        } else {
-          if (!habit.currentCompleted) {
-            setShowCheckmark(true);
-          }
-          onComplete(habit.id, new Date(), habit.currentCompleted, habit.currentCompletionId);
-          setShowCheckmark(false);
-        }
-        scale.value = withSpring(1);
-      }, 1500);
-    };
-
-    const handlePressOut = () => {
-      if (isEditMode) return;
-      
-      // Reset visual feedback
-      scale.value = withSpring(1);
-      progress.value = withTiming(0, { 
-        duration: 150,
-      });
-      
-      // Clear timer
-      if (pressTimeout.current) {
-        clearTimeout(pressTimeout.current);
-        pressTimeout.current = null;
-      }
-    };
-
-    const animatedStyle = useAnimatedStyle(() => {
-      return {
-        transform: [{ scale: scale.value }]
-      };
-    });
-
-    const cardStyle = useAnimatedStyle(() => {
-      if (!isEditMode) return {};
-      return {
-        transform: [
-          {
-            rotate: withSequence(
-              withTiming('-2deg', { duration: 100 }),
-              withTiming('2deg', { duration: 100 }),
-              withTiming('0deg', { duration: 100 })
-            ),
-          },
-        ],
-      };
-    });
-
-    return (
-      <Animated.View style={[styles.habitCard, cardStyle]}>
-        {isEditMode && (
-          <Pressable 
-            style={styles.deleteButton} 
-            onPress={() => handleDeleteHabit(habit.id)}
-          >
-            <View style={styles.deleteCircle}>
-              <Ionicons name="close" size={16} color="#fff" />
-            </View>
-          </Pressable>
-        )}
-        <Pressable 
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          onLongPress={() => {}} 
-          style={styles.iconWrapper}
-        >
-          <Animated.View style={animatedStyle}>
-            <CircularProgress progress={progress} isCompleted={habit.currentCompleted}>
-              <View style={[styles.iconCircle, habit.currentCompleted && styles.completedIconCircle]}>
-                {showCheckmark ? (
-                  <Animated.View
-                    entering={FadeInUp.duration(300)}
-                    style={styles.checkmarkContainer}
-                  >
-                    <Ionicons name="checkmark" size={64} color="#fff" />
-                  </Animated.View>
-                ) : (
-                  <>
-                    {getHabitIcon(habit)}
-                    <View style={styles.streakBadge}>
-                      <Ionicons name="flame" size={16} color={colors.accent.coral} />
-                      <Text style={styles.streakText} selectable={false}>{habit.streak || 0}</Text>
-                    </View>
-                  </>
-                )}
-              </View>
-            </CircularProgress>
-          </Animated.View>
-                    <Text style={styles.habitName} selectable={false}>{habit.title}</Text>
-          <Text style={styles.habitDesc} selectable={false}>{habit.description}</Text>
-        </Pressable>
-      </Animated.View>
-  );
   };
 
   // if (loading) {
@@ -299,8 +91,17 @@ export default function HabitsPage() {
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.grid}>
-        {habits.map((habit, idx) => (
-          <HabitCard key={habit.id || idx} habit={habit} onComplete={handleComplete} />
+        {Object.values(habits).map((habit, idx) => (
+          <HabitCard 
+            key={habit.id || idx} 
+            habit={habit} 
+            isEditMode={isEditMode}
+            onMissedHabit={(habitId, previousDate) => {
+              setShowMissedHabitModal(true);
+              setMissedHabitData({ habitId, previousDate });
+            }}
+            onDelete={handleDeleteHabit}
+          />
         ))}
         {/* Add Habit Button */}
         <Pressable style={styles.habitCard} onPress={() => router.navigate('./add', {relativeToDirectory: true})}>
@@ -331,30 +132,20 @@ export default function HabitsPage() {
               </Text>
               <View style={styles.modalButtons}>
                 <Pressable 
-                  style={[styles.modalButton, isCompletingHabit && styles.disabledButton]} 
-                  onPress={() => handleComplete(missedHabitData!.habitId, missedHabitData!.previousDate, false, '')}
-                  disabled={isCompletingHabit}
+                  style={styles.modalButton} 
+                  onPress={() => handleMissedHabitComplete(missedHabitData!.habitId, missedHabitData!.previousDate)}
                 >
-                  {isCompletingHabit ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.modalButtonText}>
-                      {missedHabitData?.previousDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
-                    </Text>
-                  )}
+                  <Text style={styles.modalButtonText}>
+                    {missedHabitData?.previousDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                  </Text>
                 </Pressable>
                 <Pressable 
-                  style={[styles.modalButton, isCompletingHabit && styles.disabledButton]} 
-                  onPress={() => handleComplete(missedHabitData!.habitId, new Date(), false, '')}
-                  disabled={isCompletingHabit}
+                  style={styles.modalButton} 
+                  onPress={() => handleMissedHabitComplete(missedHabitData!.habitId, new Date())}
                 >
-                  {isCompletingHabit ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.modalButtonText}>
-                      Today
-                    </Text>
-                  )}
+                  <Text style={styles.modalButtonText}>
+                    Today
+                  </Text>
                 </Pressable>
               </View>
             </Pressable>

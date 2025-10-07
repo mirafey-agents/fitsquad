@@ -38,7 +38,7 @@ export function HabitsPreview() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.habitsGrid}
           >
-            {habits && habits.map((habit, index) => (
+            {habits && Object.values(habits).map((habit, index) => (
               <View key={habit.id} style={styles.habitItem}>
                 <Ionicons 
                   name={(habit.icon as any) || "help-circle"} 

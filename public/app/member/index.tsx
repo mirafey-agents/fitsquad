@@ -359,9 +359,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#060712",
   },
   profileImageNew: {
-    width: 120,
-    height: 120,
+    width: 160,
+    height: 160,
     resizeMode: 'contain',
+    marginTop: -28,
+    marginBottom: -28,
   },
   headerTextGroupNew: {
     flex: 1,

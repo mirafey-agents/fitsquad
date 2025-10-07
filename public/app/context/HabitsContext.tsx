@@ -7,6 +7,11 @@ interface HabitCompletion {
   completionId?: string;
 }
 
+interface HabitCompletionResult {
+  success: boolean;
+  habitHistory: Habit[];
+}
+
 export interface Habit {
   id: string;
   title: string;
@@ -22,11 +27,12 @@ export interface Habit {
 }
 
 interface HabitsContextType {
-  habits: Habit[];
+  habits: { [key: string]: Habit };
   loading: boolean;
   error: Error | null;
   refreshHabits: () => Promise<void>;
-  toggleHabitCompletion: (habitId: string, date: Date, completed: boolean, completionId: string) => Promise<void>;
+  toggleHabitCompletion: (habitId: string, date: Date, completed: boolean, completionId: string) => Promise<Habit>;
+  updateHabit: (habitId: string, update: Habit) => void;
   removeHabit: (habitId: string) => Promise<void>;
   addHabit: (title: string, description: string, selectedIcon: string, schedule: string) => Promise<void>;
 }
@@ -58,49 +64,55 @@ const generateScheduleFromCrontab = (crontab: string): any[] => {
 };
 
 export function HabitsProvider({ children }: { children: React.ReactNode }) {
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const [habits, setHabits] = useState<{ [key: string]: Habit }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  const calculateStreak = (habit: Habit) => {
+    // Generate expected schedule dates based on crontab
+    const history = generateScheduleFromCrontab(habit.schedule);
+    // console.log("history", history);
+    // Mark expected dates based on schedule
+    for (const item of history) {
+      const itemDate = item.date.toISOString().split('T')[0];
+      const completion = habit.completions.find(c => {
+        return (new Date(c.date)).toISOString().split('T')[0] === itemDate
+      });
+
+      if (completion) {
+        item.completed = true;
+        item.completionId = completion.completionId;
+      }
+    }
+
+    let streak = 0;
+    while (streak + 1 < history.length && history[streak+1]?.completed) {
+      streak++;
+    }
+
+    if (history[0]?.completed) {
+      streak++;
+    }
+
+    return {
+      ...habit,
+      completionHistory: history,
+      streak,
+      currentCompleted: history[0]?.completionId ? true : false,
+      currentCompletionId: history[0]?.completionId
+    };
+  }
 
   const fetchHabits = async () => {
     setLoading(true);
     try {
       const habitsData = await getHabitsHistory() as Habit[];
-      const habitsWithHistory = habitsData?.map(habit => {
-        // Generate expected schedule dates based on crontab
-        const history = generateScheduleFromCrontab(habit.schedule);
-        // console.log("history", history);
-        // Mark expected dates based on schedule
-        for (const item of history) {
-          const itemDate = item.date.toISOString().split('T')[0];
-          const completion = habit.completions.find(c => {
-            return (new Date(c.date)).toISOString().split('T')[0] === itemDate
-          });
-
-          if (completion) {
-            item.completed = true;
-            item.completionId = completion.completionId;
-          }
-        }
-
-        let streak = 0;
-        while (streak + 1 < history.length && history[streak+1]?.completed) {
-          streak++;
-        }
-
-        if (history[0]?.completed) {
-          streak++;
-        }
-        
-        return {
-          ...habit,
-          completionHistory: history,
-          streak,
-          currentCompleted: history[0]?.completionId ? true : false,
-          currentCompletionId: history[0]?.completionId
-        };
+      const habitsObject: { [key: string]: Habit } = {};
+      habitsData.forEach((habit: Habit) => {
+        habitsObject[habit.id] = calculateStreak(habit);
       });
-      setHabits(habitsWithHistory);
+      setHabits(habitsObject);
+      
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch habits'));
@@ -112,7 +124,19 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   const toggleHabitCompletion = async (habitId: string, date: Date,
     completed: boolean, completionId: string) => {
     try {
-      await setHabitCompletion(habitId, date, !completed, completionId);
+      const result = await setHabitCompletion(habitId, date, !completed, completionId) as HabitCompletionResult;
+      
+      if (result.success && result.habitHistory) {
+        // Update only this specific habit with the returned data
+        const updatedHabit = result.habitHistory[0];
+        if (updatedHabit) {
+          setHabits(prevHabits => ({
+            ...prevHabits,
+            [habitId]: calculateStreak(updatedHabit)
+          }));
+        }
+      }
+      return result.habitHistory[0];
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to toggle habit completion'));
     }
@@ -144,6 +168,12 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     error,
     refreshHabits: fetchHabits,
     toggleHabitCompletion,
+    updateHabit: (habitId: string, update: Habit) => {
+      setHabits(prevHabits => ({
+        ...prevHabits,
+        [habitId]: update
+      }));
+    },
     removeHabit,
     addHabit
   };

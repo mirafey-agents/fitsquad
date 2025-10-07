@@ -77,20 +77,23 @@ const setCompletion = async (data: any, authUserId: string) => {
 
   if (completed == false) {
     await col("habits").doc(`${habitId}/completions/${completionId}`).delete();
-    return {success: true};
+  } else {
+    const completionDocRef = await col(`habits/${habitId}/completions/`).doc();
+    await completionDocRef.set({
+      id: completionDocRef.id,
+      date,
+    });
   }
-
-  const completionDocRef = await col(`habits/${habitId}/completions/`).doc();
-  await completionDocRef.set({
-    id: completionDocRef.id,
-    date,
-  });
-
-  return {success: true};
+  const habitHistory = await getHistory(authUserId, habitId);
+  return {success: true, habitHistory};
 };
 
-const getHistory = async (userId: string) => {
-  const habits = await col("habits").where("userId", "==", userId).get();
+const getHistory = async (userId: string, habitId: string | null = null) => {
+  let qry = col("habits").where("userId", "==", userId);
+  if (habitId != null) {
+    qry = qry.where("id", "==", habitId);
+  }
+  const habits = await qry.get();
   const habitsWithHistory = habits.docs.map(async (doc) => {
     const habit = await doc.data();
     habit.completions = (await col(`habits/${habit.id}/completions/`).get())

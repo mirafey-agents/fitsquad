@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '../../../utils/supabase';
 import { getSquads } from '@/utils/firebase';
 
 interface Squad {

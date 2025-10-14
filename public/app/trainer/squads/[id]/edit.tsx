@@ -108,7 +108,7 @@ export default function EditSquad() {
         style={styles.header}
       >
         <View style={styles.headerContent}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Pressable style={styles.backButton} onPress={() => router.push('../../', {relativeToDirectory: true})}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </Pressable>
           <Text style={styles.title}>Edit Squad</Text>

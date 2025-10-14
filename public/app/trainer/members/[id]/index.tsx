@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { supabase } from '@/utils/supabase';
 import { deleteMember, getMembers } from '@/utils/firebase';
 import { getProfilePicThumbNailURL } from '@/utils/mediaUtils';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -67,7 +66,7 @@ export default function MemberDetails() {
       setMember(memberData[0]);
 
       const {data: allSquads} = await getSquads(null);
-      const squads = (allSquads as []).filter((squad: any) => squad.squad_members.some((member: any) => member.users.id === memberId));
+      const squads = (allSquads as []).filter((squad: any) => squad.squad_members?.some((member: any) => member.users.id === memberId));
       setSquads(squads);
     } catch (error) {
       console.error('Error fetching member details:', error);
